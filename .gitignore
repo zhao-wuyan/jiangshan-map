@@ -12,6 +12,7 @@ _snap_skill_tmp_*.html
 # Maestro workflow runtime (regenerable, not source)
 /.workflow/sessions/
 /.workflow/scratch/*
+/.workflow/specs/.backups/
 /.workflow/search-cache.json
 /.workflow/search-daemon.json
 /.workflow/wiki-index.json

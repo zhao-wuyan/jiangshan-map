@@ -59,3 +59,19 @@ index.html  →  js bundles（按序）→  window.* 全局 API  →  页面 UI 
 - 运行时零依赖；`scripts/search-pinyin` 是唯一带 npm 依赖的隔离包（`pinyin-pro` 固定版本）
 
 ## Entries
+
+<spec-entry category="arch" keywords="session-knowledge,constraint" date="2026-11-10" sid="S-20261110-dc6083b279f711b3" title="Generated bundles (js/atlas_snapshots.js, js/atlas_boot.js, js/event_pinyin.js) are build outputs and must never be hand" sourceRef="session:20261110-init-jiangshan-map:KDC-dc6083b279f711b3">
+
+### Generated bundles (js/atlas_snapshots.js, js/atlas_boot.js, js/event_pinyin.js) are build outputs and must never be hand
+
+Generated bundles (js/atlas_snapshots.js, js/atlas_boot.js, js/event_pinyin.js) are build outputs and must never be hand-edited
+
+</spec-entry>
+
+<spec-entry category="arch" keywords="session-knowledge,constraint" date="2026-11-10" sid="S-20261110-3b2d06385d736acc" title="Asset hashes in index.html must be resynced via node scripts/sync_version.js after any css/js edit" sourceRef="session:20261110-init-jiangshan-map:KDC-3b2d06385d736acc">
+
+### Asset hashes in index.html must be resynced via node scripts/sync_version.js after any css/js edit
+
+Asset hashes in index.html must be resynced via node scripts/sync_version.js after any css/js edit
+
+</spec-entry>

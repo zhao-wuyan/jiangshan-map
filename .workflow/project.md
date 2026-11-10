@@ -34,7 +34,6 @@
 ### Out of Scope
 
 - 精确测绘边界 — 历史疆域与政区为示意性近似，不作为权威边界依据
-- 再分发 CHGIS 郡/州/府边界 — CHGIS V6 条款禁止再分发，默认不导出该图层
 - 运行时后端/数据库 — 站点纯静态托管，无服务端依赖
 
 ## Context
@@ -52,7 +51,6 @@
 - **静态交付**: 运行时零依赖、无构建步骤，`index.html` 直接服务即可 — 保证 GitHub Pages / Docker nginx 均可直开
 - **体积预算**: 首屏同步脚本有 gzip 预算阈值，`scripts/perf_budget.js --check` 把关 — 数据只能懒加载
 - **生成物不可手改**: `js/atlas_snapshots.js`、`js/atlas_boot.js` 由 `scripts/build_atlas.js` 产出；`js/event_pinyin.js` 由 `scripts/search-pinyin/build.cjs` 产出
-- **授权分层**: 代码与自绘数据 GPL-3.0；CHGIS 郡/州/府边界不适用 GPL-3.0，仅本地学术使用，不得再分发
 - **语言**: 简体中文为内容源语言，英文/繁体经 `js/i18n_dict.js` 与 `js/zh_hant.js` 映射，新增文案需三语同步
 - **CI 即门禁**: 拓扑/区划/引用/预算/布局/拼音任一基线偏移即失败，基线文件需随改动同步更新
 
@@ -71,7 +69,6 @@
 | 快照由 `data/atlas` 单向生成（VLQ 拓扑去重） | 单要素跨快照复用，避免数据重复与不一致 | 已验证 |
 | 深链 URL 协议 `?year&place&person` | 让搜索/AI/分享都走同一可复现入口 | 已验证 |
 | 内容三语以简中为源 | 翻译集中在字典，避免内容文件分叉 | 已验证 |
-| CHGIS 图层默认不导出 | 遵守其禁止再分发条款 | 已验证 |
 
 ## Stakeholders
 
