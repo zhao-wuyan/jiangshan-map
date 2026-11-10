@@ -1,0 +1,7 @@
+sessions/
+scratch/*
+search-cache.json
+search-daemon.json
+wiki-index.json
+wiki-index-publisher.lock
+spec-analytics.jsonl
