@@ -8,3 +8,21 @@ _snap_skill_tmp_*.html
 /geojson/*
 !/geojson/demo.html
 !/geojson/jiangshan-locate.js
+
+# Maestro workflow runtime (regenerable, not source)
+/.workflow/sessions/
+/.workflow/scratch/*
+/.workflow/search-cache.json
+/.workflow/search-daemon.json
+/.workflow/wiki-index.json
+/.workflow/wiki-index-publisher.lock
+/.workflow/spec-analytics.jsonl
+/.maestro-lifecycle.coordinator
+
+# GitNexus generated index and skills
+/.gitnexus/
+/.claude/skills/gitnexus-*/
+
+# Agent context files kept local
+/AGENTS.md
+/CLAUDE.md
