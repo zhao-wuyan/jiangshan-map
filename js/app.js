@@ -4334,13 +4334,14 @@
       return idx !== undefined ? idx : null;
     }
 
+    // Invariant: each Event Storyline (`isStory: true` in PERSON_PROFILES) maps to
+    // EXACTLY ONE canonical milestone (`<dynastyKey>:<year>`) for its `[始末]` badge.
+    // Never attach `[始末]` to multiple milestones for the same story (enforced in suite_search_runtime.js).
     _findStoryForMilestone(dynasty, m) {
       if (!dynasty || !m) return null;
       const map = {
-        'tang:755': { key: 'anshi', stopIdx: -1 },
-        'beisong:1127': { key: 'jingkang', stopIdx: -1 },
-        'nansong:1127': { key: 'jingkang', stopIdx: -1 },
-        'nansong:1140': { key: 'jingkang', stopIdx: -1 },
+        'tang:755': { key: 'anshi', stopIdx: -1, titleZh: '安史之乱' },
+        'beisong:1127': { key: 'jingkang', stopIdx: -1, titleZh: '靖康之变' },
       };
       return map[`${dynasty.key}:${m.year}`] || null;
     }
@@ -4468,7 +4469,7 @@
       const storyTitle =
         this.locale === 'en'
           ? 'Open the full multi-act historical storyline on the map'
-          : '点击展开「安史之乱」八年全脉络时空推演';
+          : `点击展开「${(storyHit && storyHit.titleZh) || '大事件'}」全脉络时空推演`;
       const storyLabel = this.locale === 'en' ? 'Story ›' : '始末 ›';
       const storyHtml = storyHit
         ? `<button type="button" class="ep-relic-seal ep-story-seal" title="${storyTitle}"><span class="seal-stamp">事</span><span>${storyLabel}</span></button>`
@@ -5967,7 +5968,7 @@
             : '';
         const storyHit = this._findStoryForMilestone(dynasty, m);
         const storyBadge = storyHit
-          ? `<button type="button" class="ev-seal-tag ev-story-tag" title="${this.locale === 'en' ? 'Event Storyline — click to trace the full multi-act campaign' : '大事件全脉络 · 点击展开安史之乱八年兴亡推演'}">${this.locale === 'en' ? 'Story' : '始末'}</button>`
+          ? `<button type="button" class="ev-seal-tag ev-story-tag" title="${this.locale === 'en' ? 'Event Storyline — click to trace the full multi-act campaign' : `大事件全脉络 · 点击展开「${storyHit.titleZh || '大事件'}」时空推演`}">${this.locale === 'en' ? 'Story' : '始末'}</button>`
           : '';
         li.innerHTML = `<span class="ev-yr">${yrLabel}</span><span>${this.milestoneHeadline(dynasty, m)}${badge}${sealBadge}${storyBadge}</span>`;
         const sealBtn = li.querySelector('.ev-seal-tag:not(.ev-story-tag)');
