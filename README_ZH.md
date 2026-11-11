@@ -277,7 +277,7 @@ mise run desktop:build
 
 1. 将桌面分支及本工作流推送到自己的 fork，设置桌面分支为仓库 **Default branch**。`main` 保持镜像，不合入桌面修改。[定时工作流只从默认分支运行](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)；分支不必叫 `main` 或 `master`。
 2. 在 fork 的 Actions 页面启用工作流；创建 Actions secret **`UPSTREAM_SYNC_TOKEN`**：推荐仅授权本 fork 的 fine-grained PAT，权限为 **Contents: Read and write**、**Workflows: Read and write**。需要 Workflows 写权限，因为镜像上游可能包含工作流文件更新；内置 `GITHUB_TOKEN` 不够。不要在日志、源码或聊天中粘贴令牌。分支保护规则也须允许该令牌所有者正常推送；本工作流不会绕过规则。
-3. 手动运行一次 **Desktop Sync and Build**，选择桌面分支。工作流会先通过内置令牌的 `actions: write` 权限停用继承的 `ci.yml`、`deploy-pages.yml`，然后才推送镜像，避免触发上游 CI / Pages；不会停用桌面工作流。
+3. 手动运行一次 **Desktop Sync and Build**，选择桌面分支。工作流会先查询继承的 `ci.yml`、`deploy-pages.yml` 状态，仅对仍启用的工作流使用内置令牌的 `actions: write` 权限执行停用；已禁用则跳过，避免重复禁用返回 HTTP 403。查询或真正的权限错误仍会停止任务。之后才推送镜像，避免触发上游 CI / Pages；不会停用桌面工作流。
 4. 有冲突时在 Actions 日志与 Summary 查看文件列表，手工解决、校验并推送桌面分支后再运行。不要通过强推或忽略失败绕过门禁。公开仓库长期无活动时 GitHub 可能自动停用定时任务，需在 Actions 页面重新启用。
 
 自动化回归：`mise exec -- node --test .github/scripts/desktop-sync.test.cjs .github/scripts/desktop-release.test.cjs`。
