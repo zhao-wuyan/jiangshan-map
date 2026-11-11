@@ -425,6 +425,11 @@
       this.musicTrackIdx = 0;
       this.musicAudio = null;
       this.terrainMode = true;
+      this.lowPowerMode = Boolean(
+        typeof document !== 'undefined' &&
+          document.documentElement &&
+          document.documentElement.classList.contains('is-low-power')
+      );
       this.hydroData = window.HYDRO_DATA || { rivers: [], lakes: [] };
       this.activeTrace = null;
       this.activePerson = null;
@@ -2375,6 +2380,22 @@
       if (this.svg && this.camera && this.grpCorridors && this.grpSettlements) {
         this._rescaleSvgTypography();
       }
+    }
+
+    setLowPowerMode(enabled) {
+      const next = Boolean(enabled);
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.classList.toggle('is-low-power', next);
+      }
+      if (next === this.lowPowerMode) return;
+      this.lowPowerMode = next;
+      // Invalidate in-flight tile settlement without touching the base relief or rivers.
+      this._terrainTileGen = (this._terrainTileGen || 0) + 1;
+      clearTimeout(this._terrainTargetTimer);
+      clearTimeout(this._terrainStaleTimer);
+      clearTimeout(this._terrainTileTimer);
+      this._updateTerrainTiles();
+      if (this.svg && this.camera) this._applyCamera(true);
     }
 
     _simplifyPolylineRdp(pts, eps) {
@@ -7285,13 +7306,13 @@
         }
       }
       this._commitStageTransform();
-      // Keep typography scale(invScale) synchronized on every zoom frame via the
-      // _zoomScaleNodes fast-path so font sizes scale smoothly without stepping.
+      // Normal mode keeps labels synchronized with each zoom frame. Low-power mode
+      // defers zoom-only work to _finishCameraMotion; new/dirty content still updates.
       const needsTypography =
         forceTypography ||
         this._typoDirty ||
         this._lastTypographyWidth === undefined ||
-        zoomChanged;
+        (!this.lowPowerMode && zoomChanged);
       if (needsTypography) {
         const zoomOnly = !this._typoDirty && this._lastTypographyWidth !== undefined;
         this._rescaleSvgTypography({ zoomOnly });
@@ -7342,6 +7363,7 @@
     // mode: 'commit' applies and stores level hysteresis (the rendered view), 'peek' applies it
     // without storing (predicting a flight's destination), 'free' ignores it (idle prefetch).
     _terrainTileLevel(cam, pxPerUnit, mode) {
+      if (this.lowPowerMode) return null;
       // Keep the default (reset) view on the base image; detail starts once the user zooms in.
       if (cam.w > this._getDefaultCamera().w * 0.8) return null;
       // Data Saver or a 2G/slow-3G link: the base relief is enough.

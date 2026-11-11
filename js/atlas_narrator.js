@@ -60,7 +60,11 @@
         } catch (_) {
           voices = [];
         }
-        const hasUsable = voices.some((v) => /^(?:zh|cmn|en)\b/i.test(String((v && v.lang) || '')));
+        const hasUsable = voices.some(
+          (v) =>
+            (!window.atlasDesktop || (v && v.localService === true)) &&
+            /^(?:zh|cmn|en)\b/i.test(String((v && v.lang) || ''))
+        );
         if (hasUsable) {
           if (btn && btn.classList) btn.classList.remove('is-hidden');
           return true;
@@ -176,6 +180,8 @@
       } catch (_) {
         return [];
       }
+      // Desktop is offline-only: never let synthesis choose an unvetted default voice.
+      if (window.atlasDesktop) voices = voices.filter((v) => v && v.localService === true);
       if (!voices.length) return [];
 
       const isEn = this.locale === 'en';
@@ -242,7 +248,7 @@
       const list = [];
       if (bestPrimary) list.push(bestPrimary);
       if (bestAlt && bestAlt.voice !== bestPrimary) list.push(bestAlt.voice);
-      list.push(null);
+      if (!window.atlasDesktop) list.push(null);
       return list;
     }
 
@@ -441,6 +447,10 @@
 
         const candidates = this._candidateSpeechVoices();
         const voice = candidateIdx < candidates.length ? candidates[candidateIdx] : null;
+        if (window.atlasDesktop && (!voice || voice.localService !== true)) {
+          this._markNarratorUnsupported();
+          return;
+        }
 
         const utter = new window.SpeechSynthesisUtterance(text);
         this._activeUtterance = utter;

@@ -14,3 +14,5 @@ Dockerfile
 docker-compose.yml
 .dockerignore
 .DS_Store
+desktop
+dist

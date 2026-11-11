@@ -1,0 +1,59 @@
+{
+  "name": "jiangshan-atlas-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "江山时序 Windows 离线课堂桌面版",
+  "author": "Jiangshan Atlas contributors",
+  "license": "GPL-3.0-only",
+  "main": "main.cjs",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "prepare:web": "node prepare.cjs",
+    "prestart": "npm run prepare:web",
+    "start": "electron .",
+    "prepack:win": "npm run prepare:web",
+    "pack:win": "electron-builder --win --x64 --publish never",
+    "test:fullscreen": "node --test test-fullscreen.cjs",
+    "test:installer-path": "node --test test-installer-path.cjs"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "org.jiangshan.atlas.desktop",
+    "productName": "江山时序（离线版）",
+    "executableName": "JiangshanAtlas",
+    "asar": true,
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "../dist/desktop"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "web/**/*",
+      "package.json"
+    ],
+    "electronLanguages": ["zh-CN", "zh-TW", "en-US"],
+    "win": {
+      "target": ["nsis", "zip"],
+      "icon": "../assets/icons/icon-512.png",
+      "artifactName": "JiangshanAtlas-${version}-${arch}.${ext}",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "installer.nsh",
+      "createDesktopShortcut": "always",
+      "shortcutName": "江山时序（离线版）",
+      "deleteAppDataOnUninstall": false,
+      "license": "../LICENSE"
+    },
+    "publish": null
+  }
+}

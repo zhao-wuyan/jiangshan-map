@@ -1,0 +1,39 @@
+[tools]
+node = "24.22.2"
+
+[tasks."desktop:install"]
+description = "安装锁定的桌面开发依赖和 Electron 运行时（首次需联网）"
+dir = "desktop"
+run = ["npm ci --no-audit --no-fund",
+  "node node_modules/electron/install.js",
+  "node fetch-fonts.cjs"]
+
+[tasks."assets:sync"]
+description = "同步网页 CSS/JS 的资源内容哈希"
+run = "node scripts/sync_version.js"
+
+[tasks."desktop:prepare"]
+description = "准备完整离线网页资源"
+dir = "desktop"
+run = "npm run prepare:web"
+
+[tasks."desktop:dev"]
+description = "启动离线桌面程序（先运行 desktop:install）"
+dir = "desktop"
+run = "npm start"
+
+[tasks."desktop:build"]
+description = "构建 Windows x64 离线安装包和 ZIP，不自动发布"
+dir = "desktop"
+run = "npm run pack:win"
+
+[tasks."desktop:test-fullscreen"]
+description = "用真实 Electron 窗口验证全屏反复进入与退出"
+dir = "desktop"
+depends = ["desktop:prepare"]
+run = "npm run test:fullscreen"
+
+[tasks."desktop:test-installer-path"]
+description = "验证安装目录自动补全，不安装程序或修改注册表"
+dir = "desktop"
+run = "npm run test:installer-path"

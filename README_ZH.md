@@ -223,6 +223,44 @@ python3 -m http.server 8000
 
 随后在浏览器打开 `http://localhost:8000`。
 
+## Windows 离线桌面版
+
+面向 Windows 10 / 11 **64 位**电脑和希沃 Windows 教学一体机。桌面程序通过 `atlas://app` 读取随包资源，不启动 HTTP 服务器，不需要登录，也没有自动更新服务。网页原有的静态部署方式不变；Electron 工具依赖仅位于 `desktop/`。
+
+### 开发环境与启动
+
+使用 [mise](https://mise.jdx.dev/) 管理环境，`mise.toml` 固定 Node.js 版本并提供启动、资源准备和打包任务。在项目根目录运行：
+
+```sh
+mise trust
+mise install
+mise run desktop:install
+mise run assets:sync
+mise run desktop:dev
+```
+
+首次安装开发依赖、Electron 与原字体文件需要联网（字体哈希经过校验）；之后全部离线。修改 `js/` 或 `css/` 后先运行 `mise run assets:sync`；启动和打包会校验资源哈希，并重新准备 `desktop/web/`，不会修改生成的地图数据 bundle。
+
+桌面全屏回归使用真实 Electron 窗口，不模拟原生全屏事件：`mise run desktop:test-fullscreen`，验证连续三次进入与退出全屏。
+
+### 构建与使用
+
+```sh
+mise run desktop:build
+```
+
+在 Windows 上生成 `dist/desktop/JiangshanAtlas-0.1.0-x64.exe` 安装包和同名 `.zip`。安装包包含运行所需资源；ZIP 必须**完整解压**后运行其中的 `JiangshanAtlas.exe`，不能只复制这一个 EXE。使用成品无需安装 mise、Node.js、Python 或 Docker。当前构建未代码签名，学校安全策略可能阻止运行；不要为运行程序关闭学校安全软件，请由设备管理员按校内流程处理。
+
+安装器会把所选目录补全为独立的 `JiangshanAtlas` 文件夹：选择 `D:\` 将安装到 `D:\JiangshanAtlas`；选择 `D:\My Program\` 将安装到 `D:\My Program\JiangshanAtlas`。如果所选目录最后一级已经是 `JiangshanAtlas`，不会重复创建。
+
+- **桌面设置 → 流畅模式**：默认关闭，保持网页原有样式。低配设备可手动开启，减少动画、模糊及缩放过程中的文字更新，暂不加载高精地形瓦片；地图数据、基础地形和水系保留。
+- **桌面设置 → 显卡兼容模式**：遇到黑屏、花屏时尝试；确认后重启并禁用硬件加速，不保证提速。取消不会更改设置。
+- **进入全屏 / F11**：切换全屏；Esc 退出全屏。桌面设置面板也可触摸操作。
+- 流畅模式与显卡兼容偏好保存在当前用户配置目录的 `atlas-preferences.json`，不写入安装目录。
+- 原网页使用的字体随程序打包；音频、地形和懒加载脚本同样来自本机。语音讲解只使用已安装的本地声线，没有可用声线时禁用；外部参考链接须确认后交给系统浏览器，仍需要联网。
+
+**课堂验收**：在实际希沃设备上，断网首次启动，保持希沃白板 / PPT 打开，检查全屏切换、触控拖动与双指缩放、年份切换、搜索、人物行迹和需要的音频，并连续使用一节课。尚未承诺任何机型的最低配置或帧率；4K 大屏和旧显卡驱动必须实测。
+
 ## 使用 Docker 运行
 
 无需本地依赖，用 Docker Compose 一条命令构建并启动：

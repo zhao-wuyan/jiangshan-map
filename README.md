@@ -223,6 +223,28 @@ python3 -m http.server 8000
 
 Then open `http://localhost:8000` in your browser.
 
+## Offline Windows Desktop
+
+The optional Electron host targets Windows 10/11 x64, including Windows-based Seewo classroom displays. It reads bundled resources through `atlas://app`, without an HTTP server or automatic updates. The static website remains independent of desktop tooling.
+
+Use the pinned environment and tasks in `mise.toml`:
+
+```sh
+mise trust
+mise install
+mise run desktop:install
+mise run assets:sync
+mise run desktop:dev
+# Build a fully offline installer and ZIP; never publish automatically:
+mise run desktop:build
+```
+
+Artifacts are written to `dist/desktop/`. Extract the **entire ZIP** before running `JiangshanAtlas.exe`; end users do not need mise or Node. The desktop preserves the website's control sizes, rendering and fonts, with the original fonts bundled locally. Low-power mode is opt-in, retaining geographic content while reducing motion effects and detailed terrain. GPU compatibility mode requires a confirmed restart and is not a speed guarantee. Desktop settings currently use Chinese; the atlas retains its existing language choices. The native fullscreen regression is available through `mise run desktop:test-fullscreen`.
+
+The installer appends a `JiangshanAtlas` subfolder unless the selected path already ends with that directory name (case-insensitive). For example, `D:\` becomes `D:\JiangshanAtlas`, and `D:\My Program\` becomes `D:\My Program\JiangshanAtlas`. Verify the native directory edge cases with `mise run desktop:test-installer-path`.
+
+See the [Chinese desktop instructions](README_ZH.md#windows-离线桌面版) for controls, unsigned-build caveats, and classroom acceptance checks. Actual Seewo touch behavior and performance require testing on the target device.
+
 ## Run with Docker
 
 No local dependency needed. Build and start with Docker Compose:

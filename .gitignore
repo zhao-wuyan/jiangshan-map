@@ -27,3 +27,9 @@ _snap_skill_tmp_*.html
 # Agent context files kept local
 /AGENTS.md
 /CLAUDE.md
+
+# Offline desktop dependencies and generated bundles
+/desktop/node_modules/
+/desktop/web/
+/dist/
+/desktop/fonts/
