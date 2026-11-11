@@ -157,8 +157,10 @@ jobs:
       - name: Install locked desktop dependencies and offline fonts
         run: mise run desktop:install
 
-      - name: Build EXE and ZIP
-        run: mise run desktop:build
+      - name: Build versioned EXE and ZIP
+        env:
+          UPSTREAM_RELEASE_TAG: ${{ needs.sync.outputs.release_tag }}
+        run: mise run desktop:build-release
 
       - name: Publish upstream release information and desktop packages
         env:

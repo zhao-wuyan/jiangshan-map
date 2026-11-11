@@ -251,7 +251,18 @@ JS、CSS、HTML 通过 `.gitattributes` 固定使用 LF 换行，保证 Linux �
 mise run desktop:build
 ```
 
-在 Windows 上生成 `dist/desktop/JiangshanAtlas-0.1.0-x64.exe` 安装包和同名 `.zip`。安装包包含运行所需资源；ZIP 必须**完整解压**后运行其中的 `JiangshanAtlas.exe`，不能只复制这一个 EXE。使用成品无需安装 mise、Node.js、Python 或 Docker。当前构建未代码签名，学校安全策略可能阻止运行；不要为运行程序关闭学校安全软件，请由设备管理员按校内流程处理。
+本地开发构建在 Windows 上生成 `dist/desktop/JiangshanAtlas-0.1.0-x64.exe` 安装包和同名 `.zip`，使用源码中的开发版本。安装包包含运行所需资源；ZIP 必须**完整解压**后运行其中的 `JiangshanAtlas.exe`，不能只复制这一个 EXE。使用成品无需安装 mise、Node.js、Python 或 Docker。当前构建未代码签名，学校安全策略可能阻止运行；不要为运行程序关闭学校安全软件，请由设备管理员按校内流程处理。
+
+CI 正式发布使用 `mise run desktop:build-release`，从本次上游正式 Release 的 `UPSTREAM_RELEASE_TAG` 和 Actions 的 `GITHUB_RUN_NUMBER` 注入版本，不修改、提交源码中的 `package.json` 或锁文件。以上游 `v1.2.0`、运行序号 `42` 为例：
+
+| 项目 | 构建结果 |
+|---|---|
+| 软件版本 | `1.2.0` |
+| Windows 文件版本 | `1.2.0.42` |
+| EXE | `JiangshanAtlas-1.2.0-desktop.42-x64.exe` |
+| ZIP | `JiangshanAtlas-1.2.0-desktop.42-x64.zip` |
+
+普通同步不涨软件版本；同一次 Actions 运行重试仍使用相同构建号。版本 tag 须为 `X.Y.Z` 或 `vX.Y.Z`；Windows 四段数字各不超过 `65535`，构建号从 `1` 起。缺失、格式不符或超出范围会停止，绝不静默回退开发版本。CI 开启 EXE 资源编辑以写入实际版本，代码签名仍关闭；发布步骤只接受本次版本、构建号对应的两个包，并在 Release 说明中记录版本。
 
 安装器会把所选目录补全为独立的 `JiangshanAtlas` 文件夹：选择 `D:\` 将安装到 `D:\JiangshanAtlas`；选择 `D:\My Program\` 将安装到 `D:\My Program\JiangshanAtlas`。如果所选目录最后一级已经是 `JiangshanAtlas`，不会重复创建。
 
@@ -282,7 +293,7 @@ mise run desktop:build
 3. 手动运行一次 **Desktop Sync and Build**，选择桌面分支。工作流会先查询继承的 `ci.yml`、`deploy-pages.yml` 状态，仅对仍启用的工作流使用内置令牌的 `actions: write` 权限执行停用；已禁用则跳过，避免重复禁用返回 HTTP 403。查询或真正的权限错误仍会停止任务。之后才推送镜像，避免触发上游 CI / Pages；不会停用桌面工作流。
 4. 有冲突时在 Actions 日志与 Summary 查看文件列表，手工解决、校验并推送桌面分支后再运行。不要通过强推或忽略失败绕过门禁。公开仓库长期无活动时 GitHub 可能自动停用定时任务，需在 Actions 页面重新启用。
 
-自动化回归：`mise exec -- node --test .github/scripts/desktop-sync.test.cjs .github/scripts/desktop-release.test.cjs .github/scripts/desktop-checkout.test.cjs`。检出回归使用真实 Git、`core.autocrlf=true` 验证跨平台哈希一致，并确认真正的资源改动仍会被拒绝。
+自动化回归：`mise exec -- node --test .github/scripts/desktop-sync.test.cjs .github/scripts/desktop-release.test.cjs .github/scripts/desktop-checkout.test.cjs desktop/build-version.test.cjs`。检出回归使用真实 Git、`core.autocrlf=true` 验证跨平台哈希一致，并确认真正的资源改动仍会被拒绝；版本回归覆盖 Windows 数值边界、不合法版本及同次运行重试不变号。
 
 ## 使用 Docker 运行
 

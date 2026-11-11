@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { createCheckpoint, decideRelease } = require('./desktop-release.cjs');
+const { readBuildVersion } = require('../../desktop/build-version.cjs');
 
 async function publish({ env = process.env, cwd = process.cwd(), fetchImpl = globalThis.fetch,
   run = (args) => execFileSync('gh', args, { cwd, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) } = {}) {
@@ -45,14 +46,14 @@ async function publish({ env = process.env, cwd = process.cwd(), fetchImpl = glo
     throw new Error('The selected upstream Release is no longer a matching stable release.');
   }
   const directory = path.join(cwd, 'dist', 'desktop');
-  const names = fs.readdirSync(directory);
-  const installers = names.filter(name => /^JiangshanAtlas-.+\.exe$/.test(name));
-  const archives = names.filter(name => /^JiangshanAtlas-.+\.zip$/.test(name));
-  if (installers.length !== 1 || archives.length !== 1 || installers[0].slice(0, -4) !== archives[0].slice(0, -4)) {
-    throw new Error('Expected one matching JiangshanAtlas EXE and ZIP pair; refusing an incomplete or ambiguous release.');
-  }
-  const files = [installers[0], archives[0]].map(name => ({ name, filename: path.join(directory, name),
-    size: fs.statSync(path.join(directory, name)).size }));
+  const version = readBuildVersion(env);
+  const files = ['exe', 'zip'].map(extension => {
+    const name = `${version.artifactBase}-x64.${extension}`;
+    const filename = path.join(directory, name);
+    const stat = fs.statSync(filename);
+    if (!stat.isFile()) throw new Error(`Desktop package is not a regular file: ${name}`);
+    return { name, filename, size: stat.size };
+  });
   if (files.some(file => file.size === 0)) throw new Error('Desktop release packages must not be empty.');
 
   const marker = `<!-- jiangshan-desktop-release ${JSON.stringify({
@@ -77,6 +78,7 @@ async function publish({ env = process.env, cwd = process.cwd(), fetchImpl = glo
 
   const notes = `${release.body || ''}\n\n---\n\n## Windows 离线桌面版\n\n`
     + `上游 Release：[${state.release_tag}](${release.html_url})\n\n`
+    + `软件版本：${version.version}；桌面构建号：${version.buildNumber}；Windows 文件版本：${version.buildVersion}\n\n`
     + `实际桌面构建源码：[${state.source_sha}](https://github.com/${fork}/commit/${state.source_sha})\n\n`
     + '请在 Assets 下载 EXE 安装包，或完整解压 ZIP 后运行。无需安装 Node.js、Python 或 Docker。'
     + '适用于 Windows 10 / 11 64 位；安装包未代码签名。\n\n'

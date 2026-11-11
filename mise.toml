@@ -27,6 +27,11 @@ description = "构建 Windows x64 离线安装包和 ZIP，不自动发布"
 dir = "desktop"
 run = "npm run pack:win"
 
+[tasks."desktop:build-release"]
+description = "按上游正式 Release 和 Actions 构建号生成 Windows 离线安装包"
+dir = "desktop"
+run = "npm run pack:win -- --config ci-build-config.cjs"
+
 [tasks."desktop:test-fullscreen"]
 description = "用真实 Electron 窗口验证全屏反复进入与退出"
 dir = "desktop"
