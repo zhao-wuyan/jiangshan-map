@@ -269,7 +269,9 @@ mise run desktop:build
 - 默认分支使用 `feat/offline-desktop`（也可另取桌面分支名）。先同步镜像 `main`，再将它合入桌面分支。桌面专属工作流保留，不让上游工作流替换桌面自动化；业务代码冲突则撤销本次合并，列出冲突文件，不推送桌面分支，**不打包**。
 - 只有同步、合并及网页快速校验全部成功，且上游存在尚未成功打包的**正式 Release**，才启动 Windows 构建。普通提交只同步代码；草稿、预发布和同一个 Release 的正文修改都不触发打包。
 - 构建检出本次成功合并的确切 commit，不使用旧桌面代码。Release 是触发条件，实际构建源码是已同步的桌面分支，不保证等同于上游 tag 的纯净源码。
-- EXE、ZIP 上传为该次运行的 Actions artifact，保留 90 天，不自动发布 GitHub Release。只有构建、上传及成功记录推送全部完成，`.github/desktop-release-state.json` 才代表已打包；任何失败均不推进远程成功记录，下次仍会尝试该 Release。首次没有记录时会打包当前最新正式 Release。
+- 同步上游 Release 的 tag、标题与更新说明，在本 fork 的 **Releases → Assets** 发布 EXE 和 ZIP，不复制上游附件，不再存为 Actions artifact。说明中附实际桌面构建 commit 与安装提示；已有同名 tag 不移动，因此自动生成的 Source code 不一定包含桌面改动。
+- 发布采用“创建草稿 → 上传并确认两个完整包 → 正式发布”。上传失败只留下草稿，不公开残缺版本；已公开的资产不会覆盖。只有正式发布及成功记录推送全部完成，`.github/desktop-release-state.json` 才代表已打包；失败不推进远程成功记录。首次没有记录时会发布当前最新正式 Release 对应的桌面包。
+- 已有同名、非本桌面工作流创建的 Release 会停止并报错，不覆盖你的其他发布。上游仅编辑同一个 Release 的说明不会重新构建或自动更新已发布说明。
 
 启用步骤：
 

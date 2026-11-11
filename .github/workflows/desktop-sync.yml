@@ -146,18 +146,16 @@ jobs:
       - name: Build EXE and ZIP
         run: mise run desktop:build
 
-      - name: Upload complete offline packages
-        uses: actions/upload-artifact@v4
-        with:
-          name: JiangshanAtlas-upstream-${{ needs.sync.outputs.release_id }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            dist/desktop/JiangshanAtlas-*.exe
-            dist/desktop/JiangshanAtlas-*.zip
-          if-no-files-found: error
-          retention-days: 90
+      - name: Publish upstream release information and desktop packages
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+          UPSTREAM_RELEASE_ID: ${{ needs.sync.outputs.release_id }}
+          UPSTREAM_RELEASE_TAG: ${{ needs.sync.outputs.release_tag }}
+          BUILT_SHA: ${{ needs.sync.outputs.source_sha }}
+        run: node .github/scripts/desktop-publish.cjs
 
   record:
-    name: Record the successfully uploaded Release build
+    name: Record the successfully published desktop Release
     needs: [sync, build]
     runs-on: ubuntu-latest
     timeout-minutes: 10
