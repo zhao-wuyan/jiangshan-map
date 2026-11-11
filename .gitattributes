@@ -1,3 +1,8 @@
+# Content hashes must identify the same bytes on Linux and Windows checkouts.
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
 # Collapse generated bundles and static SEO snapshots in GitHub PR diffs
 js/atlas_snapshots.js linguist-generated=true
 js/atlas_boot.js linguist-generated=true

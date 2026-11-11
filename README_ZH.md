@@ -241,6 +241,8 @@ mise run desktop:dev
 
 首次安装开发依赖、Electron 与原字体文件需要联网（字体哈希经过校验）；之后全部离线。修改 `js/` 或 `css/` 后先运行 `mise run assets:sync`；启动和打包会校验资源哈希，并重新准备 `desktop/web/`，不会修改生成的地图数据 bundle。
 
+JS、CSS、HTML 通过 `.gitattributes` 固定使用 LF 换行，保证 Linux 同步任务与 Windows 构建检出相同的资源字节。不要为了绕过构建错误关闭哈希校验，或仅在 Windows 构建目录重写哈希；真正修改资源后仍须运行 `mise run assets:sync`。
+
 桌面全屏回归使用真实 Electron 窗口，不模拟原生全屏事件：`mise run desktop:test-fullscreen`，验证连续三次进入与退出全屏。
 
 ### 构建与使用
@@ -280,7 +282,7 @@ mise run desktop:build
 3. 手动运行一次 **Desktop Sync and Build**，选择桌面分支。工作流会先查询继承的 `ci.yml`、`deploy-pages.yml` 状态，仅对仍启用的工作流使用内置令牌的 `actions: write` 权限执行停用；已禁用则跳过，避免重复禁用返回 HTTP 403。查询或真正的权限错误仍会停止任务。之后才推送镜像，避免触发上游 CI / Pages；不会停用桌面工作流。
 4. 有冲突时在 Actions 日志与 Summary 查看文件列表，手工解决、校验并推送桌面分支后再运行。不要通过强推或忽略失败绕过门禁。公开仓库长期无活动时 GitHub 可能自动停用定时任务，需在 Actions 页面重新启用。
 
-自动化回归：`mise exec -- node --test .github/scripts/desktop-sync.test.cjs .github/scripts/desktop-release.test.cjs`。
+自动化回归：`mise exec -- node --test .github/scripts/desktop-sync.test.cjs .github/scripts/desktop-release.test.cjs .github/scripts/desktop-checkout.test.cjs`。检出回归使用真实 Git、`core.autocrlf=true` 验证跨平台哈希一致，并确认真正的资源改动仍会被拒绝。
 
 ## 使用 Docker 运行
 
