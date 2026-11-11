@@ -1,0 +1,191 @@
+name: Desktop Sync and Build
+
+on:
+  schedule:
+    # 04:23 China Standard Time; avoid the busy top of the hour.
+    - cron: '23 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-upstream-sync
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPOSITORY: DeanChensj/jiangshan-map
+  UPSTREAM_BRANCH: main
+  TARGET_BRANCH: ${{ github.ref_name }}
+
+jobs:
+  mirror:
+    name: Fast-forward the upstream mirror
+    if: github.repository == 'zhao-wuyan/jiangshan-map' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: write
+    outputs:
+      upstream_sha: ${{ steps.mirror.outputs.upstream_sha }}
+    steps:
+      - name: Check branch and push credentials
+        env:
+          SYNC_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+        run: |
+          if [[ "$TARGET_BRANCH" == "$UPSTREAM_BRANCH" ]]; then
+            echo '::error::Run this workflow from the desktop branch, not the main mirror.'
+            exit 1
+          fi
+          if [[ -z "$SYNC_TOKEN" ]]; then
+            echo '::error::Set UPSTREAM_SYNC_TOKEN with Contents and Workflows write permission.'
+            exit 1
+          fi
+
+      - name: Disable inherited workflows before pushing main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/disable"
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/actions/workflows/deploy-pages.yml/disable"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Mirror upstream without overwriting divergent commits
+        id: mirror
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+        run: |
+          git fetch --no-tags "https://github.com/$UPSTREAM_REPOSITORY.git" \
+            "refs/heads/$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+          upstream_sha=$(git rev-parse "refs/remotes/upstream/$UPSTREAM_BRANCH")
+          if ! git merge-base --is-ancestor HEAD "$upstream_sha"; then
+            echo '::error::main has diverged from upstream. Resolve it manually; no force push is allowed.'
+            echo 'main diverged from upstream; desktop sync and build were stopped.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          gh auth setup-git
+          git push origin "$upstream_sha:refs/heads/$UPSTREAM_BRANCH"
+          echo "upstream_sha=$upstream_sha" >> "$GITHUB_OUTPUT"
+          printf 'main mirrors upstream commit `%s`.\n' "$upstream_sha" >> "$GITHUB_STEP_SUMMARY"
+
+  sync:
+    name: Merge main into the desktop branch
+    needs: mirror
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      source_sha: ${{ steps.source.outputs.source_sha }}
+      should_build: ${{ steps.release.outputs.should_build }}
+      release_id: ${{ steps.release.outputs.release_id }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: jdx/mise-action@v5
+
+      - name: Configure merge author
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Merge the synchronized main; abort on business conflicts
+        env:
+          UPSTREAM_REPOSITORY: ${{ github.repository }}
+        run: node .github/scripts/desktop-sync.cjs
+
+      - name: Validate the merged website
+        run: node scripts/validate_atlas.js --fast
+
+      - name: Publish the successfully merged desktop commit
+        id: source
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+          UPSTREAM_SHA: ${{ needs.mirror.outputs.upstream_sha }}
+        run: |
+          git merge-base --is-ancestor "$UPSTREAM_SHA" HEAD
+          source_sha=$(git rev-parse HEAD)
+          gh auth setup-git
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          printf 'Desktop branch `%s` synchronized at `%s`.\n' "$TARGET_BRANCH" "$source_sha" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check for an unbuilt upstream stable Release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/desktop-release.cjs check
+
+  build:
+    name: Build Windows offline installers
+    needs: sync
+    # Default success() semantics are intentional: failed/conflicting sync never builds.
+    if: needs.sync.outputs.should_build == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.sync.outputs.source_sha }}
+          persist-credentials: false
+
+      - uses: jdx/mise-action@v5
+
+      - name: Install locked desktop dependencies and offline fonts
+        run: mise run desktop:install
+
+      - name: Build EXE and ZIP
+        run: mise run desktop:build
+
+      - name: Upload complete offline packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: JiangshanAtlas-upstream-${{ needs.sync.outputs.release_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dist/desktop/JiangshanAtlas-*.exe
+            dist/desktop/JiangshanAtlas-*.zip
+          if-no-files-found: error
+          retention-days: 90
+
+  record:
+    name: Record the successfully uploaded Release build
+    needs: [sync, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UPSTREAM_RELEASE_ID: ${{ needs.sync.outputs.release_id }}
+      UPSTREAM_RELEASE_TAG: ${{ needs.sync.outputs.release_tag }}
+      BUILT_SHA: ${{ needs.sync.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: jdx/mise-action@v5
+
+      - name: Record success only on a descendant of the built commit
+        run: |
+          git merge-base --is-ancestor "$BUILT_SHA" HEAD
+          node .github/scripts/desktop-release.cjs record
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/desktop-release-state.json
+          git commit -m "chore: record desktop build for $UPSTREAM_RELEASE_TAG"
+
+      - name: Publish the success checkpoint without force pushing
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
+        run: |
+          gh auth setup-git
+          git push origin "HEAD:refs/heads/$TARGET_BRANCH"

@@ -261,6 +261,25 @@ mise run desktop:build
 
 **课堂验收**：在实际希沃设备上，断网首次启动，保持希沃白板 / PPT 打开，检查全屏切换、触控拖动与双指缩放、年份切换、搜索、人物行迹和需要的音频，并连续使用一节课。尚未承诺任何机型的最低配置或帧率；4K 大屏和旧显卡驱动必须实测。
 
+### 每日同步与 Release 打包
+
+`.github/workflows/desktop-sync.yml` 每天北京时间 **04:23** 运行，也支持 Actions 页面手动运行；GitHub 定时任务可能延迟，不是准点服务。
+
+- `main` 仅镜像 `DeanChensj/jiangshan-map` 的 `main`，只允许快进推送；如果镜像已有分叉提交，停止，绝不强制覆盖。
+- 默认分支使用 `feat/offline-desktop`（也可另取桌面分支名）。先同步镜像 `main`，再将它合入桌面分支。桌面专属工作流保留，不让上游工作流替换桌面自动化；业务代码冲突则撤销本次合并，列出冲突文件，不推送桌面分支，**不打包**。
+- 只有同步、合并及网页快速校验全部成功，且上游存在尚未成功打包的**正式 Release**，才启动 Windows 构建。普通提交只同步代码；草稿、预发布和同一个 Release 的正文修改都不触发打包。
+- 构建检出本次成功合并的确切 commit，不使用旧桌面代码。Release 是触发条件，实际构建源码是已同步的桌面分支，不保证等同于上游 tag 的纯净源码。
+- EXE、ZIP 上传为该次运行的 Actions artifact，保留 90 天，不自动发布 GitHub Release。只有构建、上传及成功记录推送全部完成，`.github/desktop-release-state.json` 才代表已打包；任何失败均不推进远程成功记录，下次仍会尝试该 Release。首次没有记录时会打包当前最新正式 Release。
+
+启用步骤：
+
+1. 将桌面分支及本工作流推送到自己的 fork，设置桌面分支为仓库 **Default branch**。`main` 保持镜像，不合入桌面修改。[定时工作流只从默认分支运行](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)；分支不必叫 `main` 或 `master`。
+2. 在 fork 的 Actions 页面启用工作流；创建 Actions secret **`UPSTREAM_SYNC_TOKEN`**：推荐仅授权本 fork 的 fine-grained PAT，权限为 **Contents: Read and write**、**Workflows: Read and write**。需要 Workflows 写权限，因为镜像上游可能包含工作流文件更新；内置 `GITHUB_TOKEN` 不够。不要在日志、源码或聊天中粘贴令牌。分支保护规则也须允许该令牌所有者正常推送；本工作流不会绕过规则。
+3. 手动运行一次 **Desktop Sync and Build**，选择桌面分支。工作流会先通过内置令牌的 `actions: write` 权限停用继承的 `ci.yml`、`deploy-pages.yml`，然后才推送镜像，避免触发上游 CI / Pages；不会停用桌面工作流。
+4. 有冲突时在 Actions 日志与 Summary 查看文件列表，手工解决、校验并推送桌面分支后再运行。不要通过强推或忽略失败绕过门禁。公开仓库长期无活动时 GitHub 可能自动停用定时任务，需在 Actions 页面重新启用。
+
+自动化回归：`mise exec -- node --test .github/scripts/desktop-sync.test.cjs .github/scripts/desktop-release.test.cjs`。
+
 ## 使用 Docker 运行
 
 无需本地依赖，用 Docker Compose 一条命令构建并启动：
