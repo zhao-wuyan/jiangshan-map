@@ -47,8 +47,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api --method PUT "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/disable"
-          gh api --method PUT "repos/$GITHUB_REPOSITORY/actions/workflows/deploy-pages.yml/disable"
+          for workflow in ci.yml deploy-pages.yml; do
+            endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/$workflow"
+            state=$(gh api "$endpoint" --jq '.state')
+            case "$state" in
+              active)
+                gh api --method PUT "$endpoint/disable"
+                ;;
+              disabled_*)
+                printf '%s already disabled (%s); skipping.\n' "$workflow" "$state"
+                ;;
+              *)
+                echo "::error::Unexpected state for $workflow: $state"
+                exit 1
+                ;;
+            esac
+          done
 
       - uses: actions/checkout@v4
         with:
