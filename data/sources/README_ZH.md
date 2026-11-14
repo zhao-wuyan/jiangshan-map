@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-这里记录地图上各条史实的出处。文件只存于仓库，网站不会加载，补多少条都不影响页面速度。
+这里记录地图上各条史实的出处。网站不直接读取这些文件。`node scripts/audit_sources.js --fix` 会从中生成 `js/milestone_sources.js`（只含大事出处的书名与卷次），中文界面在首屏之后加载它，在选中的大事下方显示一行出处。补多少条都不影响首屏速度。
 
 ## 文件
 
@@ -40,7 +40,7 @@
 - `w`：书目 id，须已登记在 `works.json`
 - `loc`：卷次、篇名或页码
 - `url`：可选，在线原文
-- `note`：可选，简短说明（如诸书记载的分歧）
+- `note`：可选，简短说明诸书记载的分歧，以 60 字以内为宜。若是地图文字本身有误，请写在 PR 描述里，不必写进 note
 
 一个键一行，键按字母排序。运行 `node scripts/audit_sources.js --fix` 会自动整理。
 
@@ -56,7 +56,7 @@
 node scripts/audit_sources.js                # 覆盖率
 node scripts/audit_sources.js --by-dynasty   # 按朝代查看覆盖率
 node scripts/audit_sources.js --check        # CI
-node scripts/audit_sources.js --fix          # 整理格式
+node scripts/audit_sources.js --fix          # 整理格式，并重新生成 js/milestone_sources.js（与 index.html 一并提交）
 node scripts/audit_sources.js --update       # 下调基线
 ```
 

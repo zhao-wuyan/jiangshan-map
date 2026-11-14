@@ -858,7 +858,7 @@ async function runCartographyUiSuite(ctx) {
     }
 
     // Tang 29 map change milestones
-    const expectedTangMapChanges = [618, 621, 630, 635, 640, 648, 657, 663, 668, 670, 676, 679, 686, 690, 692, 698, 702, 705, 713, 738, 755, 757, 763, 764, 790, 848, 881, 885, 907];
+    const expectedTangMapChanges = [618, 621, 630, 635, 640, 648, 657, 663, 668, 670, 676, 679, 686, 690, 692, 698, 702, 705, 713, 738, 755, 757, 763, 764, 790, 840, 848, 881, 885, 907];
     const actualTangMapChanges = (tangDyn.milestones || []).filter((m) => m.isMapChange).map((m) => m.year);
     assert.strictEqual(
       JSON.stringify(actualTangMapChanges),
@@ -2130,6 +2130,24 @@ async function runCartographyUiSuite(ctx) {
         snapshots.s_xihan_c.polities.some((p) => p.title === '西域都护府' && p.role === 'protectorate'),
       'Protectorate of the Western Regions (西域都护府) must not appear before -60 BCE (s_xihan_c)'
     );
+    // Eastern Han: Protector-General 91–107, withdrawn 107–123, Chief Clerk (西域长史) from 123.
+    const xiyuRole = (sk, title) => (snapshots[sk].polities.find((p) => p.title === title) || {}).role;
+    assert(
+      xiyuRole('s_donghan', '西域都护府') === 'protectorate' &&
+        xiyuRole('s_donghan_107', '西域诸国（役属北匈奴）') === 'neighbor' &&
+        !snapshots.s_donghan_107.polities.some((p) => /都护|长史/.test(p.title)) &&
+        xiyuRole('s_donghan_123', '西域长史府') === 'protectorate' &&
+        !snapshots.s_donghan_123.polities.some((p) => p.title === '西域都护府'),
+      'Eastern Han Western Regions: 西域都护府 in 91–107, 西域诸国（役属北匈奴） in 107–123, 西域长史府 from 123'
+    );
+    // Uyghur Khaganate falls in 840: Ordu-Baliq [102.66, 47.43] passes to 黠戛斯; 回鹘 survives west of the Altai.
+    assert(hasPt('s_tang_b', '回鹘', 102.66, 47.43), 's_tang_b (790–840): Ordu-Baliq must still be 回鹘');
+    for (const sk of ['s_tang_840', 's_tang_c', 's_tang_d1', 's_tang_d2']) {
+      assert(
+        hasPt(sk, '黠戛斯', 102.66, 47.43) && !hasPt(sk, '回鹘', 102.66, 47.43) && hasPt(sk, '回鹘', 86.0, 48.0),
+        `${sk}: after 840 Ordu-Baliq must belong to 黠戛斯 and 回鹘 must remain only west of the Altai`
+      );
+    }
     assert(
       !hasPt('s_xihan_b3', '汉', 125.751, 39.031) &&
         hasPt('s_xihan_b', '汉', 125.751, 39.031) &&
@@ -2385,6 +2403,25 @@ async function runCartographyUiSuite(ctx) {
         hasPolPt('s_yuan_c', '元', 109.577, 19.521),
       's_yuan_c must keep Zhou (Zhang Shicheng) and Fang Guozhen until 1367 and restrict Chen Youding strictly to Fujian while Guangdong/Guangxi/Hainan stay in Yuan'
     );
+    // 1367: Zhang Shicheng and Fang Guozhen are absorbed by 吴（朱元璋）; 1335 on: Kamakura and the Ilkhanate are gone.
+    const yuanTitles = (sk) => snapshots[sk].polities.map((p) => p.title);
+    assert(
+      hasPolPt('s_yuan_1367', '吴（朱元璋）', 120.62, 31.3) &&
+        hasPolPt('s_yuan_1367', '吴（朱元璋）', 121.55, 29.87) &&
+        !yuanTitles('s_yuan_1367').includes('周（张士诚）') &&
+        !yuanTitles('s_yuan_1367').includes('方国珍') &&
+        yuanTitles('s_yuan_1367').includes('明夏（明升）'),
+      's_yuan_1367: Pingjiang and Qingyuan must be 吴（朱元璋）, with no 周 / 方国珍 polity and 明夏 under 明升'
+    );
+    for (const sk of ['s_yuan_1335', 's_yuan_b', 's_yuan_c', 's_yuan_1367']) {
+      assert(
+        yuanTitles(sk).includes('日本（南北朝）') &&
+          !yuanTitles(sk).includes('日本（镰仓幕府）') &&
+          !yuanTitles(sk).includes('伊利汗国') &&
+          !yuanTitles(sk).includes('蒲甘'),
+        `${sk}: after 1335 the map must not show Kamakura Japan, the Ilkhanate or Pagan`
+      );
+    }
 
     // 5. Mongol Empire & Western Liao / Yuan interior continuity (zero Lop Nor / Qilian hollow cavities or vertical keyhole cuts)
     assert(
@@ -2668,6 +2705,14 @@ async function runCartographyUiSuite(ctx) {
           hasPolPt(sk, '楚', 107.021, 33.071) &&
           !hasPolPt(sk, '楚', 105.84, 32.44),
         `${sk} must split 蜀 (Chengdu, Jiameng) and 巴 (Jiangzhou, Langzhong) and keep Hanzhong in 楚 without overlapping Jiameng`
+      );
+      // The 巴|蜀 border follows the Fu–Jialing divide: 蜀's Jinniu road (梓潼) and 僰道 stay in 蜀; 遂宁 and 泸州 are 巴.
+      assert(
+        hasPolPt(sk, '蜀', 105.17, 31.64) &&
+          hasPolPt(sk, '蜀', 104.63, 28.77) &&
+          hasPolPt(sk, '巴', 105.57, 30.5) &&
+          hasPolPt(sk, '巴', 105.44, 28.87),
+        `${sk}: Zitong and Bodao must be 蜀; Suining and Luzhou must be 巴`
       );
     }
     assert(
