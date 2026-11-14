@@ -373,8 +373,8 @@ async function runCartographyUiSuite(ctx) {
       // 1) Dunhuang ([94.66, 40.14]) & Yangguan ([94.13, 39.93]) inside Hexi / regular prefectures (25-880 CE)
       for (const [sk, title] of [
         ['s_donghan_a', '东汉'],
-        ['s_donghan_d1', '马腾(凉州)'],
-        ['s_donghan_f', '曹操(北方)'],
+        ['s_donghan_d1', '马腾（凉州）'],
+        ['s_donghan_f', '曹操（北方）'],
         ['s_sanguo', '魏'],
         ['s_xijin_a', '晋'],
         ['s_dongjin_a', '前凉'],
@@ -399,7 +399,7 @@ async function runCartographyUiSuite(ctx) {
       }
       // 2) Post-215 CE Hetao & Alashan contraction (Jian'an 20): Jiuyuan/Wuyuan ([108.27, 41.10]), Shengle ([111.82, 40.48]), Alashan ([105.60, 39.50]), & Gobi north of Yinshan ([108.50, 42.00]) in Xianbei; Zhongwei ([105.19, 37.51]) & Xinzhou ([112.73, 38.42]) kept
       for (const [sk, coreTitle] of [
-        ['s_donghan_e', '曹操(北方)'],
+        ['s_donghan_e', '曹操（北方）'],
         ['s_sanguo', '魏'],
         ['s_xijin_a', '晋'],
       ]) {
@@ -438,7 +438,7 @@ async function runCartographyUiSuite(ctx) {
       }
       assert(
         hasPolAt('s_sui_c', '隋', 93.51, 42.82) &&
-          hasPolAt('s_sui_c', '西海·鄯善等四郡', 99.82, 36.85) &&
+          hasPolAt('s_sui_c', '西海、鄯善等四郡', 99.82, 36.85) &&
           hasPolAt('s_sui_c', '吐谷浑', 99.2, 34.1) &&
           !hasPolAt('s_sui_c', '吐谷浑', 92.0, 34.0),
         's_sui_c (609-618 CE): Hami must belong to 隋, Qinghai Lake to 西海·鄯善等四郡, and Fuyun remnant to southeastern Bayan Har / Hequ ([99.2, 34.1])'
@@ -497,9 +497,9 @@ async function runCartographyUiSuite(ctx) {
         ['s_donghan_b2', '东汉', '北匈奴'],
         ['s_donghan_c', '东汉', '北匈奴'],
         ['s_donghan', '东汉', '鲜卑'],
-        ['s_donghan_d1', '马腾(凉州)', '鲜卑'],
-        ['s_donghan_d2', '马腾·韩遂(关陇)', '鲜卑'],
-        ['s_donghan_e1', '曹操(北方)', '鲜卑'],
+        ['s_donghan_d1', '马腾（凉州）', '鲜卑'],
+        ['s_donghan_d2', '马腾 · 韩遂（关陇）', '鲜卑'],
+        ['s_donghan_e1', '曹操（北方）', '鲜卑'],
       ]) {
         assert(
           hasPolAt(sk, hexiPol, 101.05, 41.95) &&
@@ -610,7 +610,7 @@ async function runCartographyUiSuite(ctx) {
       }
       // De-provincialize modern Gansu Mazongshan ([96.80, 41.80]) & modern Minqin-Tengger spike ([103.90, 39.30]) across Han–Five Dynasties + Ming
       const deProvCoreSet = new Set([
-        '汉（郡国并行）', '汉', '新（王莽）', '隗嚣 · 窦融', '东汉', '马腾(凉州)', '马腾·韩遂(关陇)', '曹操(北方)',
+        '汉（郡国并行）', '汉', '新（王莽）', '隗嚣 · 窦融', '东汉', '马腾（凉州）', '马腾 · 韩遂（关陇）', '曹操（北方）',
         '魏', '晋', '汉赵', '前赵', '后赵', '前凉', '前秦（苻氏）', '前秦', '后凉', '西凉', '北凉',
         '北魏', '西魏', '北周', '隋', '凉（李轨）', '唐', '武周', '吐蕃', '归义军（张议潮）',
         '沙州归义军', '甘州回鹘', '凉州（六谷部）', '明', '哈密卫（关西七卫）', '大顺（李自成）',
@@ -1133,18 +1133,18 @@ async function runCartographyUiSuite(ctx) {
     const sanguoSpotChecks = [
       [{ lng: 118.801, lat: 32.061, year: 229 }, '吴'], // Jianye
       [{ lng: 119.451, lat: 32.201, year: 229 }, '吴'], // Jingkou
-      [{ lng: 112.121, lat: 32.011, year: 208 }, '曹操(北方)'], // Xiangyang post-208
+      [{ lng: 112.121, lat: 32.011, year: 208 }, '曹操（北方）'], // Xiangyang post-208
       [{ lng: 112.121, lat: 32.011, year: 229 }, '魏'], // Xiangyang in Three Kingdoms
-      [{ lng: 123.171, lat: 41.271, year: 196 }, '公孙氏(辽东)'], // Xiangping (Liaodong)
-      [{ lng: 113.261, lat: 23.131, year: 200 }, '士燮(交州)'], // Panyu (Jiaozhou) 189-210
-      [{ lng: 113.261, lat: 23.131, year: 211 }, '孙权(江东)'], // Panyu submits to Sun Quan 211
-      [{ lng: 103.82, lat: 36.06, year: 208 }, '马腾·韩遂(关陇)'], // Guanlong before Tong Pass
-      [{ lng: 103.82, lat: 36.06, year: 211 }, '曹操(北方)'], // Guanlong after Tong Pass (211)
-      [{ lng: 107.021, lat: 33.071, year: 200 }, '张鲁(汉中)'], // Nanzheng (Hanzhong) 196-214
-      [{ lng: 107.021, lat: 33.071, year: 215 }, '曹操(北方)'], // Hanzhong taken by Cao Cao (215)
-      [{ lng: 107.021, lat: 33.071, year: 219 }, '刘备(益州)'], // Hanzhong taken by Liu Bei (219)
-      [{ lng: 111.698, lat: 29.032, year: 215 }, '刘备(荆益)'], // Wuling west of Xiang River (215)
-      [{ lng: 112.941, lat: 28.231, year: 215 }, '孙权(江东)'], // Changsha east of Xiang River (215)
+      [{ lng: 123.171, lat: 41.271, year: 196 }, '公孙氏（辽东）'], // Xiangping (Liaodong)
+      [{ lng: 113.261, lat: 23.131, year: 200 }, '士燮（交州）'], // Panyu (Jiaozhou) 189-210
+      [{ lng: 113.261, lat: 23.131, year: 211 }, '孙权（江东）'], // Panyu submits to Sun Quan 211
+      [{ lng: 103.82, lat: 36.06, year: 208 }, '马腾 · 韩遂（关陇）'], // Guanlong before Tong Pass
+      [{ lng: 103.82, lat: 36.06, year: 211 }, '曹操（北方）'], // Guanlong after Tong Pass (211)
+      [{ lng: 107.021, lat: 33.071, year: 200 }, '张鲁（汉中）'], // Nanzheng (Hanzhong) 196-214
+      [{ lng: 107.021, lat: 33.071, year: 215 }, '曹操（北方）'], // Hanzhong taken by Cao Cao (215)
+      [{ lng: 107.021, lat: 33.071, year: 219 }, '刘备（益州）'], // Hanzhong taken by Liu Bei (219)
+      [{ lng: 111.698, lat: 29.032, year: 215 }, '刘备（荆益）'], // Wuling west of Xiang River (215)
+      [{ lng: 112.941, lat: 28.231, year: 215 }, '孙权（江东）'], // Changsha east of Xiang River (215)
     ];
     for (const [opts, expPol] of sanguoSpotChecks) {
       const info = ctrl.inspect(opts);
@@ -2402,6 +2402,85 @@ async function runCartographyUiSuite(ctx) {
         hasPolPt('s_yuan_c', '元', 110.291, 25.271) &&
         hasPolPt('s_yuan_c', '元', 109.577, 19.521),
       's_yuan_c must keep Zhou (Zhang Shicheng) and Fang Guozhen until 1367 and restrict Chen Youding strictly to Fujian while Guangdong/Guangxi/Hainan stay in Yuan'
+    );
+    // Five Dynasties: Guizhou is not Chu's; 桂管 (Guilin, Liuzhou, Wuzhou, Lianzhou) is Chu's until 951, Nan Han's afterwards.
+    for (const sk of ['s_wudai_a', 's_wudai_b', 's_wudai_c', 's_wudai_d']) {
+      assert(
+        hasPolPt(sk, '楚（马楚）', 110.29, 25.27) &&
+          hasPolPt(sk, '楚（马楚）', 109.4, 24.3) &&
+          hasPolPt(sk, '楚（马楚）', 111.3, 23.48) &&
+          hasPolPt(sk, '楚（马楚）', 112.38, 24.78) &&
+          hasPolPt(sk, '南汉', 108.3, 22.8) &&
+          hasPolPt(sk, '南汉', 111.5, 23.43) &&
+          hasPolPt(sk, '黔中诸部（羁縻）', 106.7, 26.6) &&
+          !hasPolPt(sk, '楚（马楚）', 106.9, 27.7),
+        `${sk}: 桂管 must be 楚, Yongzhou and Fengzhou 南汉, and Guizhou outside 楚`
+      );
+    }
+    for (const sk of ['s_wudai_e', 's_wudai_e2']) {
+      assert(
+        hasPolPt(sk, '南汉', 110.29, 25.27) &&
+          hasPolPt(sk, '武平（湖南）', 112.94, 28.2) &&
+          hasPolPt(sk, '黔中诸部（羁縻）', 106.7, 26.6),
+        `${sk}: after 951 Guilin is 南汉 and Guizhou is outside 武平`
+      );
+    }
+    // 荆南 (江陵, 峡, 归) is its own state and 施州 is Shu's; 鄂州 is Wu / Southern Tang's, and so are 黄 and 蕲 until 958.
+    for (const [sk, south] of [['s_wudai_a', '吴'], ['s_wudai_c', '南唐'], ['s_wudai_e', '南唐']]) {
+      assert(
+        hasPolPt(sk, '荆南（南平）', 112.2, 30.35) &&
+          hasPolPt(sk, '荆南（南平）', 110.75, 30.95) &&
+          !hasPolPt(sk, '荆南（南平）', 109.48, 30.3) &&
+          hasPolPt(sk, south, 114.3, 30.55) &&
+          hasPolPt(sk, south, 114.87, 30.45) &&
+          hasPolPt(sk, south, 115.43, 30.23),
+        `${sk}: Jiangling and Guizhou (秭归) must be 荆南, Shizhou not; Ezhou, Huangzhou and Qizhou must be ${south}`
+      );
+    }
+    // 大宁 (宁城) is 明 under the 大宁都司 in 1388-1407, and outside 明 again in 1616-1644 as in 1449-1616.
+    assert(
+      hasPolPt('s_ming_a0', '明', 119.0, 41.6) &&
+        !hasPolPt('s_ming_a0', '北元（鞑靼 · 瓦剌）', 119.0, 41.6) &&
+        !hasPolPt('s_ming_b', '明', 119.0, 41.6) &&
+        !hasPolPt('s_ming_c0', '明', 119.0, 41.6) &&
+        !hasPolPt('s_ming_c2', '明', 119.0, 41.6),
+      '大宁 must be 明 in 1388-1407 and outside 明 in 1449-1644'
+    );
+    // Neighbour names must fit the snapshot's years.
+    for (const [sk, has, lacks] of [
+      ['s_zhanguo_a', '波斯（阿契美尼德）', '安息'],
+      ['s_sanguo', '萨珊波斯', '安息'],
+      ['s_nanbei_e', '突厥', '柔然'],
+      ['s_tang_a5', '倭马亚王朝（大食）', '萨珊波斯'],
+      ['s_tang_b', '室利佛逝', '三佛齐'],
+      ['s_wudai_c', '高丽', '新罗'],
+      ['s_wudai_c', '日本（平安）', '大和（日本）'],
+      ['s_nansong_e', '日本（镰仓幕府）', '日本（平安）'],
+      ['s_ming_0c', '高丽', '朝鲜'],
+      ['s_ming_a', '日本（室町幕府）', '萨法维波斯'],
+      ['s_ming_c', '日本（江户幕府）', '日本（战国）'],
+      ['s_qing_g', '大韩帝国', '朝鲜'],
+    ]) {
+      const titles = snapshots[sk].polities.map((p) => p.title);
+      assert(titles.includes(has) && !titles.includes(lacks), `${sk}: expected neighbour ${has}, not ${lacks}`);
+    }
+    // 秦/凤/阶/成 are 后蜀's in 947-955 and 后周's from 955; 泉/漳 form 清源军 from 947.
+    for (const sk of ['s_wudai_d', 's_wudai_e']) {
+      assert(
+        hasPolPt(sk, '后蜀', 105.72, 34.58) && hasPolPt(sk, '后蜀', 106.52, 33.91) && hasPolPt(sk, '后蜀', 104.93, 33.4),
+        `${sk}: Qinzhou, Fengzhou and Jiezhou must be 后蜀 in 947-955`
+      );
+    }
+    assert(hasPolPt('s_wudai_955', '后周', 105.72, 34.58) && !hasPolPt('s_wudai_955', '后蜀', 106.52, 33.91), 's_wudai_955: Qin and Feng must be 后周');
+    for (const sk of ['s_wudai_d', 's_wudai_e', 's_wudai_955', 's_wudai_e1', 's_wudai_e2']) {
+      assert(
+        hasPolPt(sk, '清源军', 118.6, 24.9) && hasPolPt(sk, '清源军', 117.65, 24.5) && !hasPolPt(sk, '南唐', 118.6, 24.9),
+        `${sk}: Quanzhou and Zhangzhou must be 清源军, not 南唐`
+      );
+    }
+    assert(
+      hasPolPt('s_wudai_e1', '南唐', 114.3, 30.55) && hasPolPt('s_wudai_e1', '后周', 114.87, 30.45),
+      's_wudai_e1 (958): Ezhou stays 南唐 while Huangzhou passes to 后周'
     );
     // 1367: Zhang Shicheng and Fang Guozhen are absorbed by 吴（朱元璋）; 1335 on: Kamakura and the Ilkhanate are gone.
     const yuanTitles = (sk) => snapshots[sk].polities.map((p) => p.title);

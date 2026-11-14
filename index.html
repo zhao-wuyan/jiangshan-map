@@ -3,6 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    // Deep links (?year=, ?place=, …) need the full snapshot bundle: fetch it now, in parallel with
+    // the first-paint scripts, and hide the Warring States placeholder text until js/app.js jumps.
+    // scripts/sync_version.js keeps the ?v= below in step with data-v-snapshots.
+    (function () {
+      if (!/[?&](year|place|lng|person|event|journey|trace|q)=/.test(location.search)) return;
+      var root = document.documentElement;
+      root.classList.add('deeplink-boot');
+      setTimeout(function () { root.classList.remove('deeplink-boot'); }, 8000);
+      var link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'script';
+      link.fetchPriority = 'low'; // after the first-paint scripts, not competing with them
+      link.href = 'js/atlas_snapshots.js?v=56dc16c8';
+      document.head.appendChild(link);
+    })();
+  </script>
   <title>江山时序 · 中国历史地图时间轴（战国至现代历代疆域、州郡政区与古今地名沿革）</title>
   <meta name="description" id="meta-description" content="交互式中国历史地图时间轴（公元前403年战国三家分晋至现代）：浏览18个朝代多阶段历史疆域、州郡道省政区、黄河改道水系、历代古城古今地名对照（点地溯源）、天下名关与青史人物行迹，支持现代省界对照、古地名挑战与中英双语。" />
   <meta name="keywords" content="江山时序,江山时序历史地图,中国历史地图,历史地图时间轴,历代疆域变迁,中国历代地图,古今地名对照,政区沿革查询,点地溯源,古诗词路线地图,战国七雄地图,秦朝郡县地图,西汉地图,西域都护府,三国地图,东晋十六国地图,南北朝地图,唐朝地图,五代十国地图,燕云十六州,北宋地图,南宋地图,大理国地图,元朝行省地图,明朝地图,清朝地图,名关雄隘,函谷关,潼关,剑门关,雁门关,玉门关,山海关,张骞出使西域路线,诸葛亮北伐路线,玄奘西行路线,李白壮游路线,杜甫闻官军收河南河北路线,苏轼贬谪路线,文天祥过零丁洋路线,王阳明行迹,长平之战地图,赤壁之战地图,淝水之战地图,Historical Atlas of China,Chinese History Map Timeline,Jiangshan Atlas" />
@@ -216,9 +233,9 @@
         {
           "@type": "ListItem",
           "position": 19,
-          "name": "秦始皇一统六国行迹 (Qin Shi Huang's Unification Campaigns) · 前238年 — 前221年（秦王政九年至二十六年）",
-          "description": "途经节点：咸阳（今陕西咸阳） → 邺城（今河北临漳西南） → 新郑（今河南新郑） → 邯郸（今河北邯郸） → 蓟城（今北京西南） → 大梁（今河南开封） → 寿春（今安徽寿县） → 襄平（今辽宁辽阳） → 临淄（今山东淄博临淄）",
-          "url": "https://deanchen.me/jiangshan-map/?person=qinshihuang"
+          "name": "秦灭六国 (Qin's Conquest of the Six States) · 前238年 — 前221年（秦王政九年至二十六年）",
+          "description": "事件全脉络：咸阳（今陕西咸阳） → 邺城（今河北临漳西南） → 新郑（今河南新郑） → 邯郸（今河北邯郸） → 蓟城（今北京西南） → 大梁（今河南开封） → 寿春（今安徽寿县） → 襄平（今辽宁辽阳） → 临淄（今山东淄博临淄） → 咸阳（称始皇帝）",
+          "url": "https://deanchen.me/jiangshan-map/?event=qintongyi"
         },
         {
           "@type": "ListItem",
@@ -273,7 +290,7 @@
           "name": "江山时序是什么网站？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、204幅多阶段疆域与州郡政区快照、526条编年大事、726处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
+            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、205幅多阶段疆域与州郡政区快照、526条编年大事、726处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
           }
         },
         {
@@ -308,7 +325,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=%20%26%27CDEFHJKMNPQRSTWYabcdefghilmnoprstuvxy%E4%B8%89%E4%B8%9C%E4%B8%AD%E4%BA%94%E4%BA%BA%E4%BB%A3%E5%85%83%E5%85%AD%E5%85%B1%E5%8C%97%E5%8D%81%E5%8D%8E%E5%8D%97%E5%92%8C%E5%94%90%E5%9B%BD%E5%AE%8B%E5%B1%B1%E5%BA%8F%E6%88%98%E6%97%B6%E6%98%8E%E6%99%8B%E6%9C%9D%E6%B0%91%E6%B1%89%E6%B1%9F%E6%B8%85%E7%A7%A6%E8%A5%BF%E9%9A%8B&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=2127fc94" />
+  <link rel="stylesheet" href="css/style.css?v=a5c67284" />
   <!-- Analytics: Vercount, anonymous click counter (workers/stats) & Cloudflare Web Analytics -->
   <script defer src="https://events.vercount.one/js"></script>
   <script defer src="js/atlas_track.js?v=4b2c3de3"></script>
@@ -674,7 +691,6 @@
       <section>
         <h3>二、点人溯事：历史人物生平行迹图（Person Chronicles）</h3>
         <ul>
-          <li><a href="https://deanchen.me/jiangshan-map/?person=qinshihuang"><strong>秦始皇一统六国行迹（Qin Shi Huang&#39;s Unification Campaigns · 前238年 — 前221年（秦王政九年至二十六年））</strong></a> — 咸阳（今陕西咸阳） → 邺城（今河北临漳西南） → 新郑（今河南新郑） → 邯郸（今河北邯郸） → 蓟城（今北京西南） → 大梁（今河南开封） → 寿春（今安徽寿县） → 襄平（今辽宁辽阳） → 临淄（今山东淄博临淄）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=zhangqian"><strong>张骞凿空西域行迹（Zhang Qian&#39;s Mission to the Western Regions · 前138年 — 前126年（西汉建元三年至元朔三年））</strong></a> — 长安（今陕西西安） → 陇西（今甘肃临洮） → 姑臧（今甘肃武威） → 焉耆（今新疆焉耆） → 大宛贰师城（今费尔干纳盆地） → 康居（今锡尔河中游） → 大月氏蓝氏城（今阿富汗巴尔赫） → 于阗（今新疆和田） → 长安（今陕西西安）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=zhugeliang"><strong>诸葛亮出山北伐行迹（Zhuge Liang&#39;s Southern &amp; Northern Campaigns · 207年 — 234年（东汉建安十二年至蜀汉建兴十二年））</strong></a> — 隆中（今湖北襄阳） → 柴桑（今江西九江） → 赤壁（今湖北赤壁） → 成都（今四川成都） → 成都（今四川成都） → 白帝城（今重庆奉节） → 滇池（今云南昆明） → 汉中（今陕西汉中） → 祁山（今甘肃礼县） → 木门道（今甘肃天水西南） → 五丈原（今陕西宝鸡岐山）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=xuanzang"><strong>玄奘西行求法行迹（Xuanzang&#39;s Pilgrimage to the Western Regions · 627年 — 645年（唐贞观元年至贞观十九年））</strong></a> — 长安（今陕西西安） → 凉州（今甘肃武威） → 瓜州（今甘肃瓜州） → 高昌王城（今新疆吐鲁番） → 龟兹（今新疆库车） → 碎叶城（今吉尔吉斯斯坦托克马克） → 缚喝（今阿富汗巴尔赫） → 健驮逻（今巴基斯坦白沙瓦） → 那烂陀寺（今印度比哈尔邦那烂陀） → 曲女城（今印度北方邦卡瑙季） → 于阗（今新疆和田） → 长安（今陕西西安）。</li>
@@ -753,7 +769,6 @@
           <li><a href="https://deanchen.me/jiangshan-map/topics/qing.html"><strong>清历史地图（1644—1912）疆域政区与古今地名表（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/roc.html"><strong>中华民国历史地图（1912—1949）疆域政区与古今地名表（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/prc.html"><strong>中华人民共和国历史地图（1949—）疆域政区与古今地名表（静态专题页）</strong></a></li>
-          <li><a href="https://deanchen.me/jiangshan-map/topics/journey-qinshihuang.html"><strong>秦始皇一统六国行迹（前238年 — 前221年 · 秦王政九年至二十六年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-zhangqian.html"><strong>张骞凿空西域行迹（前138年 — 前126年 · 西汉建元三年至元朔三年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-zhugeliang.html"><strong>诸葛亮出山北伐行迹（207年 — 234年 · 东汉建安十二年至蜀汉建兴十二年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-xuanzang.html"><strong>玄奘西行求法行迹（627年 — 645年 · 唐贞观元年至贞观十九年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
@@ -765,11 +780,11 @@
     </nav>
 
   <script src="js/china_geo_data.js?v=a2d3dc62"></script>
-  <script src="js/atlas_boot.js?v=e91bdb31"></script>
-  <script src="js/map_data.js?v=b9a91625"></script>
-  <script src="js/lore_core.js?v=3d767ef5"></script>
-  <script id="atlas-app-script" src="js/app.js?v=438a80b5" data-v-snapshots="598e411e" data-v-i18n="c968dbbd" data-v-lore="af38c93b" data-v-pinyin="a6752672" data-v-hant="3afdab47" data-v-quiz="7699273f" data-v-narrator="12cdf69d" data-v-sources="598c394b"></script>
-  <script src="js/atlas_trace.js?v=437065be"></script>
+  <script src="js/atlas_boot.js?v=cfa92817"></script>
+  <script src="js/map_data.js?v=5a857d18"></script>
+  <script src="js/lore_core.js?v=e8d7fe0e"></script>
+  <script id="atlas-app-script" src="js/app.js?v=fbf42554" data-v-snapshots="56dc16c8" data-v-i18n="a0a823ae" data-v-lore="8ef9a8a0" data-v-pinyin="8634667c" data-v-hant="3afdab47" data-v-quiz="ce09fba8" data-v-narrator="12cdf69d" data-v-sources="598c394b"></script>
+  <script src="js/atlas_trace.js?v=984c0863"></script>
   <script src="js/atlas_search.js?v=432e3c8b"></script>
   <script src="js/atlas_api.js?v=01e2f38b"></script>
 </body>

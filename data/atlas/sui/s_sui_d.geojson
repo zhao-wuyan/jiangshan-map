@@ -58,7 +58,7 @@
       "properties": {
         "title": "隋",
         "role": "main",
-        "tint": "#a86c24",
+        "tint": "#8a6d3b",
         "anchor": [105.5, 30.8]
       },
       "geometry": {
@@ -7200,7 +7200,7 @@
       "type": "Feature",
       "id": "吐蕃",
       "properties": {
-        "title": "吐蕃",
+        "title": "青藏诸部",
         "tint": null,
         "role": "neighbor",
         "anchor": [89.92, 31.88]

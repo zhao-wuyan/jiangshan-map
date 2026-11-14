@@ -485,9 +485,14 @@
         this._attachListeners();
         this.applyLocale();
 
-        this.jumpToYear(this.dynasties[0].focusYear);
+        // A ?year= link boots at that year, so the Warring States map is never drawn first.
+        const linkedYear = this._linkedBootYear();
+        this.jumpToYear(linkedYear !== null ? linkedYear : this.dynasties[0].focusYear);
         this._bootDone = true;
         this._restoreFromQuery();
+        if (typeof document !== 'undefined' && document.documentElement) {
+          document.documentElement.classList.remove('deeplink-boot');
+        }
         if (this.embed) this._initEmbedChrome();
       });
       if (!this.embed) this._maybeShowStartGuide();
@@ -2884,6 +2889,21 @@
       });
     }
 
+    _linkedBootYear() {
+      if (typeof location === 'undefined' || typeof this._parseYearList !== 'function') return null;
+      const raw = new URLSearchParams(location.search).get('year');
+      const years = raw ? this._parseYearList(raw) : [];
+      return years.length ? years[0] : null;
+    }
+
+    // Until a snapshot arrives (the full bundle loads after first paint), hide the borders and key
+    // instead of leaving another era's on screen. _renderPolitiesAndPrefectures shows them again.
+    _markAwaitingSnapshot(snapKey) {
+      if (this.snapshots && this.snapshots[snapKey]) return;
+      if (this.svg && this.svg.classList) this.svg.classList.add('is-awaiting-snapshot');
+      if (this.mapKey && this.mapKey.classList) this.mapKey.classList.add('is-awaiting-snapshot');
+    }
+
     _withSnapshot(snapKey, cb) {
       if (this.snapshots && this.snapshots[snapKey]) {
         const snap = this.snapshots[snapKey];
@@ -2912,6 +2932,7 @@
       this._renderMilestones(dynasty);
       const snapKey = this._resolveSnapKey(dynasty, this.year);
       this.activeSnapKey = snapKey;
+      this._markAwaitingSnapshot(snapKey);
       this._withSnapshot(snapKey, (snap) => {
         if (this.dynasties[this.dynastyIdx] !== dynasty || this._resolveSnapKey(dynasty, this.year) !== snapKey) {
           return;
@@ -3184,6 +3205,8 @@
     }
 
     _renderPolitiesAndPrefectures(dynasty, snap) {
+      if (this.svg && this.svg.classList) this.svg.classList.remove('is-awaiting-snapshot');
+      if (this.mapKey && this.mapKey.classList) this.mapKey.classList.remove('is-awaiting-snapshot');
       this._setPolityFocus(null);
       this._clearHoveredPrefecture();
       this.grpPolities.innerHTML = '';
@@ -4352,6 +4375,7 @@
     _findStoryForMilestone(dynasty, m) {
       if (!dynasty || !m) return null;
       const map = {
+        'zhanguo:-230': { key: 'qintongyi', stopIdx: -1, titleZh: '秦灭六国' },
         'qin:-206': { key: 'chuhan', stopIdx: -1, titleZh: '楚汉之争' },
         'tang:755': { key: 'anshi', stopIdx: -1, titleZh: '安史之乱' },
         'beisong:1127': { key: 'jingkang', stopIdx: -1, titleZh: '靖康之变' },
@@ -4967,11 +4991,11 @@
         闽越: ['无诸', '百越', '鸿沟', '垓下'],
         赤眉军: ['赤眉', '昆阳', '更始', '刘秀'],
         '隗嚣 · 窦融': ['隗嚣', '窦融', '昆阳', '更始', '刘秀'],
-        '马腾(凉州)': ['董卓', '长安', '凉州'],
-        '刘表(荆州)': ['荆州', '隆中对', '赤壁', '三顾茅庐'],
-        '刘焉(益州)': ['益州', '董卓'],
-        '刘繇·孙氏(江东)': ['孙策', '江东'],
-        '士燮(交州)': ['交州', '赤壁', '荆州'],
+        '马腾（凉州）': ['董卓', '长安', '凉州'],
+        '刘表（荆州）': ['荆州', '隆中对', '赤壁', '三顾茅庐'],
+        '刘焉（益州）': ['益州', '董卓'],
+        '刘繇 · 孙氏（江东）': ['孙策', '江东'],
+        '士燮（交州）': ['交州', '赤壁', '荆州'],
         '吴（杜伏威）': ['杜伏威', '江都', '瓦岗'],
         '秦（薛举）': ['薛举', '李渊', '大兴'],
         '凉（李轨）': ['李轨', '河西', '李渊'],
@@ -6105,17 +6129,17 @@
 
     // Place Genealogy & Person Chronicles methods are attached by js/atlas_trace.js.
 
-    // "据《资治通鉴》卷81；《晋书》卷26、卷43" for one entry of js/milestone_sources.js.
+    // "据《资治通鉴》卷81 《晋书》卷26、卷43" for one entry of js/milestone_sources.js.
+    // Each work is one unbreakable unit; the line wraps only between works (css/style.css).
     _milestoneSourceHtml(groups) {
       if (!Array.isArray(groups) || !groups.length) return '';
       const esc = (s) =>
         String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-      // A title is never split from its first chapter; longer lists may still wrap between chapters.
-      const parts = groups.map(([title, chapters]) => {
-        const [first = '', ...rest] = chapters.filter(Boolean).map(esc);
-        return `<span class="ev-src-work">《${esc(title)}》${first}</span>${rest.map((c) => `、${c}`).join('')}`;
-      });
-      return `据${parts.join('；')}`;
+      const parts = groups.map(
+        ([title, chapters], i) =>
+          `<span class="ev-src-work">${i ? '' : '据'}《${esc(title)}》${chapters.filter(Boolean).map(esc).join('、')}</span>`
+      );
+      return parts.join(' ');
     }
 
     // Source line under the highlighted milestone; Chinese locales only.
@@ -6807,6 +6831,7 @@
           if (nextSnapKey !== this.activeSnapKey) {
             const prevSnap = this.lastRenderedSnap;
             this.activeSnapKey = nextSnapKey;
+            this._markAwaitingSnapshot(nextSnapKey);
             this._withSnapshot(nextSnapKey, (snap) => {
               if (
                 this.dynasties[this.dynastyIdx] !== cur ||

@@ -2288,7 +2288,7 @@
       "type": "Feature",
       "id": "西海·鄯善等四郡",
       "properties": {
-        "title": "西海·鄯善等四郡",
+        "title": "西海、鄯善等四郡",
         "tint": "#8a6d3b",
         "role": "protectorate",
         "anchor": [95.5, 37.2]
@@ -4438,7 +4438,7 @@
       "type": "Feature",
       "id": "吐蕃",
       "properties": {
-        "title": "吐蕃",
+        "title": "青藏诸部",
         "tint": null,
         "role": "neighbor",
         "anchor": [89.92, 31.88]

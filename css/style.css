@@ -614,6 +614,20 @@ h2 {
 }
 
 /* Terrain Shaded Relief & Hydrology Layer */
+/* Deep links: the static page is the Warring States view; hide its year text until js/app.js jumps. */
+html.deeplink-boot #chronicle-pane,
+html.deeplink-boot #scrubber-Bubble,
+html.deeplink-boot #inp-year {
+  visibility: hidden;
+}
+
+/* No borders rather than another era's while a snapshot downloads (see _markAwaitingSnapshot). */
+#atlas-svg.is-awaiting-snapshot #grp-polities,
+#atlas-svg.is-awaiting-snapshot #grp-prefectures,
+#map-key.is-awaiting-snapshot {
+  visibility: hidden;
+}
+
 #grp-terrain {
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -625,7 +639,7 @@ h2 {
 }
 
 #terrain-relief-layer {
-  opacity: 0.48;
+  opacity: 0.62;
   pointer-events: none;
 }
 
@@ -980,7 +994,7 @@ h2 {
 }
 
 #atlas-svg.terrain-active .polity-shape {
-  fill-opacity: 0.3;
+  fill-opacity: 0.24;
   mix-blend-mode: multiply;
   stroke-width: 1.9;
 }
@@ -991,7 +1005,7 @@ h2 {
 }
 
 #atlas-svg.terrain-active .polity-shape.rival {
-  fill-opacity: 0.28;
+  fill-opacity: 0.22;
   stroke-width: 1.75;
 }
 
@@ -1002,7 +1016,7 @@ h2 {
 }
 
 #atlas-svg.terrain-active .polity-shape.protectorate {
-  fill-opacity: 0.2;
+  fill-opacity: 0.16;
 }
 
 .polity-shape.neighbor {
@@ -2805,10 +2819,16 @@ h2 {
   color: var(--text-muted);
   font-size: 11.5px;
   line-height: 1.5;
+  text-align: right;
 }
 
 #milestone-list .ev-src-work {
   white-space: nowrap;
+}
+
+/* The gap sits before a work, so a wrapped line still ends flush with the right edge. */
+#milestone-list .ev-src-work + .ev-src-work {
+  margin-left: 0.6em;
 }
 
 .disclaimer-box {
@@ -5085,7 +5105,7 @@ html[lang="en"] #act-toggle-pane .tp-label {
 
 @media (max-width: 640px) {
   #terrain-relief-layer {
-    opacity: 0.48;
+    opacity: 0.62;
   }
 
   /* Slim down non-scaling border & corridor strokes by ~38% so lines don't overpower text */
@@ -5862,6 +5882,11 @@ button.story-inline-person:hover {
   color: var(--actor-color, #b53826);
   background: color-mix(in srgb, var(--actor-color, #b53826) 11%, transparent);
   text-decoration-color: var(--actor-color, #b53826);
+}
+
+span.story-inline-person {
+  font-weight: 700;
+  color: var(--actor-color, #8c2d19);
 }
 
 .story-camp-legend {
