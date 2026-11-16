@@ -1704,6 +1704,59 @@ async function runSearchRuntimeSuite(ctx) {
         }
       }
 
+      // Deep links fetch the borders before the relief image, the terrain tiles and the lore bundles.
+      {
+        assert(
+          indexHtml.includes('<image id="terrain-relief-img" data-href="assets/terrain_relief.webp"') &&
+            !/<image id="terrain-relief-img"[^>]*\shref=/.test(indexHtml) &&
+            indexHtml.indexOf("relief.href = 'assets/terrain_relief.webp'") > 0 &&
+            indexHtml.indexOf("relief.href = 'assets/terrain_relief.webp'") < indexHtml.indexOf('css/style.css'),
+          'index.html: #terrain-relief-img takes its href from data-href (deep links wait for the borders); other pages preload it from <head>'
+        );
+        const flags = () => {
+          const set = new Set();
+          return { add: (c) => set.add(c), remove: (c) => set.delete(c), contains: (c) => set.has(c) };
+        };
+        const saved = {
+          svg: ctrl.svg,
+          held: ctrl._deferredLoadsHeld,
+          released: ctrl._deferredLoadsReleased,
+          setTimeout: sandbox.setTimeout,
+          document: sandbox.document,
+        };
+        const timers = [];
+        try {
+          sandbox.setTimeout = (fn, ms) => timers.push(ms);
+          sandbox.document = undefined;
+          ctrl._deferredLoadsHeld = false;
+          ctrl._deferredLoadsReleased = false;
+          ctrl.svg = { classList: flags() };
+          ctrl._holdDeferredLoads();
+          assert(!ctrl._deferredLoadsHeld && timers.length === 0, 'nothing is held back when the borders are already drawn');
+          ctrl.svg.classList.add('is-awaiting-snapshot');
+          ctrl._holdDeferredLoads();
+          assert(
+            ctrl._deferredLoadsHeld === true &&
+              ctrl.svg.classList.contains('is-terrain-pending') &&
+              ctrl._terrainReady() === false &&
+              timers.length === 1 &&
+              timers[0] === 6000,
+            'awaited borders hold back the relief and terrain tiles, with a 6 s fallback release'
+          );
+          ctrl._releaseDeferredLoads();
+          assert(
+            ctrl._deferredLoadsHeld === false && ctrl._deferredLoadsReleased === true,
+            'the hold is released once'
+          );
+        } finally {
+          ctrl.svg = saved.svg;
+          ctrl._deferredLoadsHeld = saved.held;
+          ctrl._deferredLoadsReleased = saved.released;
+          sandbox.setTimeout = saved.setTimeout;
+          sandbox.document = saved.document;
+        }
+      }
+
       // CUJ 45: High-resolution terrain tiles — reset view stays on the base relief, Data Saver is
       // respected, every indexed tile exists, and the base relief shares the tiles' projection.
       {
@@ -2008,6 +2061,26 @@ async function runSearchRuntimeSuite(ctx) {
         assert(
           grpPref.children.length === 0 && lazyCtrl._deferredPrefectureSnap === tangSnap0 && prefPathCreates === 0,
           'Hidden #grp-prefectures must defer prefecture SVG DOM creation during _renderPolitiesAndPrefectures'
+        );
+        // Map captions use half-width brackets (they cost ~3 characters a pair in letter-spaced
+        // labels); the title in the data, used for lookups and panels, keeps full-width ones.
+        const bracketCaps = grpPol
+          .querySelectorAll('.polity-caption')
+          .filter((cap) => /（/.test(cap.dataset.polityTitle));
+        assert(
+          bracketCaps.length >= 3 &&
+            bracketCaps.every(
+              (cap) =>
+                cap.textContent === lazyCtrl._mapText(cap.dataset.polityTitle) &&
+                !/[（）]/.test(cap.textContent)
+            ),
+          `Polity captions must render （） as (), got ${JSON.stringify(bracketCaps.map((cap) => cap.textContent))}`
+        );
+        assert(
+          proto._mapText.call({ locale: 'zh' }, '马腾 · 韩遂（关陇）') === '马腾·韩遂(关陇)' &&
+            proto._mapText.call({ locale: 'en' }, 'Mongols · Moghulistan') === 'Mongols · Moghulistan' &&
+            proto._mapText.call({ locale: 'zh' }, null) === '',
+          'Map text must tighten " · " to "·" in Chinese and leave English separators alone'
         );
         grpPref.classList.remove('is-hidden');
         const expectedPrefCount = (tangSnap0.prefectures || []).length;

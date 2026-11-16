@@ -488,6 +488,7 @@
         // A ?year= link boots at that year, so the Warring States map is never drawn first.
         const linkedYear = this._linkedBootYear();
         this.jumpToYear(linkedYear !== null ? linkedYear : this.dynasties[0].focusYear);
+        this._holdDeferredLoads();
         this._bootDone = true;
         this._restoreFromQuery();
         if (typeof document !== 'undefined' && document.documentElement) {
@@ -500,7 +501,37 @@
       if (typeof window !== 'undefined' && !this._fullSnapshotsLoaded) {
         setTimeout(() => this._ensureFullSnapshots(), 50);
       }
-      if (typeof window !== 'undefined' && !this._isLoreDetailLoaded()) {
+      if (!this._deferredLoadsHeld) this._releaseDeferredLoads();
+    }
+
+    // A deep link whose borders are still downloading holds back the relief image, the terrain
+    // tiles and the lore bundles, so the snapshot bundle gets the bandwidth. Released as soon as
+    // the borders are drawn (_renderPolitiesAndPrefectures), or after 6 s whatever happens.
+    _holdDeferredLoads() {
+      if (!this.svg || !this.svg.classList || !this.svg.classList.contains('is-awaiting-snapshot')) return;
+      this._deferredLoadsHeld = true;
+      this.svg.classList.add('is-terrain-pending');
+      setTimeout(() => this._releaseDeferredLoads(), 6000);
+    }
+
+    _releaseDeferredLoads() {
+      if (this._deferredLoadsReleased) return;
+      this._deferredLoadsReleased = true;
+      this._deferredLoadsHeld = false;
+      if (typeof window === 'undefined' || typeof document === 'undefined') return;
+      const relief = this._id('terrain-relief-img');
+      const reliefShown = () => {
+        if (this.svg && this.svg.classList) this.svg.classList.remove('is-terrain-pending');
+      };
+      if (relief && !relief.getAttribute('href') && relief.getAttribute('data-href')) {
+        relief.addEventListener('load', reliefShown, { once: true });
+        relief.addEventListener('error', reliefShown, { once: true });
+        relief.setAttribute('href', relief.getAttribute('data-href'));
+      } else {
+        reliefShown();
+      }
+      this._updateTerrainTiles();
+      if (!this._isLoreDetailLoaded()) {
         const scheduleIdle =
           typeof window.requestIdleCallback === 'function'
             ? (fn) => window.requestIdleCallback(fn, { timeout: 200 })
@@ -1113,6 +1144,14 @@
         return this.enLocale.strings[key];
       }
       return this._zh(fallback);
+    }
+
+    // Text drawn on the map (and its key) is letter-spaced and tightly packed: a pair of
+    // full-width brackets costs about three characters there, and " · " about two. Data and
+    // panels keep （） and the spaced dot; English labels keep their spaces.
+    _mapText(text) {
+      const out = String(text == null ? '' : text).replace(/（/g, '(').replace(/）/g, ')');
+      return this.locale === 'en' ? out : out.replace(/\s*·\s*/g, '·');
     }
 
     trTerm(text) {
@@ -2134,12 +2173,12 @@
         if (node.dataset.rawName) node.textContent = this.trTerm(node.dataset.rawName);
       });
       this.grpNeighbors.querySelectorAll('.neighbor-caption').forEach((node) => {
-        if (node.dataset.rawName) node.textContent = this.trTerm(node.dataset.rawName);
+        if (node.dataset.rawName) node.textContent = this._mapText(this.trTerm(node.dataset.rawName));
       });
       if (this.grpRivers) {
         this.grpRivers.querySelectorAll('.hydro-label').forEach((node) => {
           node.textContent =
-            this.locale === 'en' ? node.dataset.en || '' : this._zh(node.dataset.zh || '');
+            this.locale === 'en' ? node.dataset.en || '' : this._mapText(this._zh(node.dataset.zh || ''));
         });
       }
 
@@ -2372,7 +2411,7 @@
           },
           this.grpRivers
         );
-        tNode.textContent = this.locale === 'en' ? en : this._zh(zh);
+        tNode.textContent = this.locale === 'en' ? en : this._mapText(this._zh(zh));
       }
     }
 
@@ -2854,7 +2893,7 @@
             this.grpNeighbors
           );
           lbl.dataset.rawName = item.title;
-          lbl.textContent = this.trTerm(item.title);
+          lbl.textContent = this._mapText(this.trTerm(item.title));
         }
       }
       this._invalidateTypographyLayout();
@@ -3185,11 +3224,13 @@
             regGroup
           );
           rLbl._regShape = reg.shape;
-          rLbl.textContent = isQiao
-            ? this.locale === 'en'
-              ? `${this.trTerm(reg.title)} (Emigre)`
-              : this._zh(`${reg.title}·侨`)
-            : this.trTerm(reg.title);
+          rLbl.textContent = this._mapText(
+            isQiao
+              ? this.locale === 'en'
+                ? `${this.trTerm(reg.title)} (Emigre)`
+                : this._zh(`${reg.title}·侨`)
+              : this.trTerm(reg.title)
+          );
         }
       }
     }
@@ -3207,6 +3248,7 @@
     _renderPolitiesAndPrefectures(dynasty, snap) {
       if (this.svg && this.svg.classList) this.svg.classList.remove('is-awaiting-snapshot');
       if (this.mapKey && this.mapKey.classList) this.mapKey.classList.remove('is-awaiting-snapshot');
+      if (this._deferredLoadsHeld) this._releaseDeferredLoads();
       this._setPolityFocus(null);
       this._clearHoveredPrefecture();
       this.grpPolities.innerHTML = '';
@@ -3249,7 +3291,7 @@
           lbl._polShape = pol.shape;
           lbl.dataset.polityTitle = pol.title;
           lbl.dataset.polityRole = pol.role;
-          lbl.textContent = this.trTerm(pol.title);
+          lbl.textContent = this._mapText(this.trTerm(pol.title));
         }
       }
       // Prefectures and first-level regions come from a different base map than the polity
@@ -3679,10 +3721,11 @@
           { class: 'name', x: dx, y: dy1, 'text-anchor': anchor },
           node
         );
-        nameEl.textContent =
+        nameEl.textContent = this._mapText(
           dynasty.key === 'roc' || dynasty.key === 'prc'
             ? this.trModernCity(ancientZh)
-            : this.trTerm(ancientZh);
+            : this.trTerm(ancientZh)
+        );
 
         if (isHintCap) {
           const tagG = this._svgNode(
@@ -3783,7 +3826,7 @@
             { class: 'name pass-name', x: dx, y: dy1, 'text-anchor': anchor },
             pNode
           );
-          nameEl.textContent = passDisplay;
+          nameEl.textContent = this._mapText(passDisplay);
         }
       }
       group.querySelectorAll('.settlement-node.is-capital').forEach((capNode) => {
@@ -3836,7 +3879,7 @@
             },
             group
           );
-          lbl.textContent = this.corridorTitle(corr);
+          lbl.textContent = this._mapText(this.corridorTitle(corr));
         }
       }
       this._rescaleSvgTypography();
@@ -5726,7 +5769,7 @@
         sw.style.background = `${p.tint}55`;
         if (p.role === 'protectorate') sw.style.borderStyle = 'dashed';
         entry.appendChild(sw);
-        entry.appendChild(document.createTextNode(this.trTerm(p.title)));
+        entry.appendChild(document.createTextNode(this._mapText(this.trTerm(p.title))));
         entry.addEventListener('pointerenter', (e) => {
           if (e.pointerType !== 'touch') this._setPolityFocus(p.title);
         });
@@ -5777,7 +5820,7 @@
       if (snap.note) {
         const n = document.createElement('div');
         n.className = 'key-note';
-        n.innerHTML = `${SVG_ICONS.dashedBox} <span>${this.trTerm(snap.note)}</span>`;
+        n.innerHTML = `${SVG_ICONS.dashedBox} <span>${this._mapText(this.trTerm(snap.note))}</span>`;
         this.mapKey.appendChild(n);
       }
 
@@ -7414,7 +7457,8 @@
 
     _terrainReady() {
       return Boolean(
-        this.terrainTileLayer &&
+        !this._deferredLoadsHeld &&
+          this.terrainTileLayer &&
           this.svg &&
           typeof document !== 'undefined' &&
           typeof document.createElementNS === 'function' &&
