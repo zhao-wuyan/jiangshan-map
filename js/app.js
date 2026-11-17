@@ -359,6 +359,12 @@
       '<svg class="ico-svg" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M13 8H3.5M7.5 4l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     arrowRight:
       '<svg class="ico-svg" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 8h9.5M8.5 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    expand:
+      '<svg class="ico-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5L8.8 7.2M6.5 13.5h-4v-4M2.5 13.5l4.7-4.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    collapse:
+      '<svg class="ico-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M13.5 6.5h-4v-4M9.5 6.5l4.5-4.5M2.5 9.5h4v4M6.5 9.5L2 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    refresh:
+      '<svg class="ico-svg" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M12.6 6.2A5 5 0 1 0 13 9.6M12.8 3.2v3.1H9.7" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
   class HistoricalAtlasController {
@@ -851,6 +857,9 @@
               }
             }
           }
+          if (this.locale === 'en') {
+            this._syncSeoDirectoryLocale();
+          }
           return (typeof window !== 'undefined' && window.ATLAS_LORE_DATA) || {};
         });
       }
@@ -1058,7 +1067,9 @@
       this.grpProvinces = this._id('grp-provinces');
       this.grpProvNames = this._id('grp-prov-names');
       this.grpPolities = this._id('grp-polities');
+      this.grpPolityLabels = this._id('grp-polity-labels');
       this.grpPrefectures = this._id('grp-prefectures');
+      this.grpRegionLabels = this._id('grp-region-labels');
       this.prefClipPath = this._id('prefecture-clip-path');
       this.grpGhostDiff = this._id('grp-ghost-diff');
       this.grpCorridors = this._id('grp-corridors');
@@ -3180,6 +3191,8 @@
       }
 
       const regGroup = this._regOverlayGroup;
+      if (this.grpRegionLabels) this.grpRegionLabels.innerHTML = '';
+      const regLabelParent = this.grpRegionLabels || regGroup;
       // Captions stay unclipped; only the lines and hover shapes are cut to the polities.
       const clipAttr = this._prefClipActive ? { 'clip-path': 'url(#prefecture-clip)' } : {};
       const shapesGroup = this._prefShapesGroup;
@@ -3221,7 +3234,7 @@
               'data-base-x': baseX.toFixed(1),
               'data-base-y': baseY.toFixed(1),
             },
-            regGroup
+            regLabelParent
           );
           rLbl._regShape = reg.shape;
           rLbl.textContent = this._mapText(
@@ -3252,8 +3265,10 @@
       this._setPolityFocus(null);
       this._clearHoveredPrefecture();
       this.grpPolities.innerHTML = '';
+      if (this.grpPolityLabels) this.grpPolityLabels.innerHTML = '';
 
       const polGroup = this._svgNode('g', {}, this.grpPolities);
+      const polLabelParent = this.grpPolityLabels || polGroup;
       const zOrder = { neighbor: 0, main: 1, rival: 2, protectorate: 3 };
       const sorted = (snap.polities || [])
         .slice()
@@ -3286,7 +3301,7 @@
               'data-base-x': cx.toFixed(1),
               'data-base-y': cy.toFixed(1),
             },
-            polGroup
+            polLabelParent
           );
           lbl._polShape = pol.shape;
           lbl.dataset.polityTitle = pol.title;
@@ -3314,6 +3329,7 @@
           this._regOverlayGroup = null;
           this._renderedPrefecturesRef = null;
         }
+        if (this.grpRegionLabels) this.grpRegionLabels.innerHTML = '';
         this._deferredPrefectureSnap = snap;
       } else {
         this._deferredPrefectureSnap = null;
@@ -3705,7 +3721,7 @@
           this._svgNode('circle', { class: 'cap-ring', r: 4.5 }, node);
           this._svgNode('polygon', { class: 'dot', points: '0,-3.2 3.2,0 0,3.2 -3.2,0' }, node);
         } else if (isTier2) {
-          this._svgNode('circle', { class: 'dot', r: 1.7 }, node);
+          this._svgNode('circle', { class: 'dot', r: 1.55 }, node);
         } else {
           this._svgNode('circle', { class: 'dot', r: 2.2 }, node);
         }
@@ -3890,7 +3906,7 @@
       if (!dynasty || !Array.isArray(dynasty.settlements)) return null;
       const z = 1000 / this.camera.w;
       const tier2MinZoom =
-        typeof window !== 'undefined' && window.innerWidth <= 900 ? 3.15 : 2.18;
+        typeof window !== 'undefined' && window.innerWidth <= 900 ? 3.2 : 2.22;
       const showTier2 = z >= tier2MinZoom;
       let best = null;
       let bestKm = maxKm;
@@ -4816,23 +4832,24 @@
       } else if (!targetTitle && this.eraFocus) {
         targetTitle = this._eraFocusTitle();
       }
+      const focusTargets = [this.grpPolities, this.grpPolityLabels].filter(Boolean);
       if (!targetTitle) {
-        this.grpPolities.classList.remove('has-polity-focus');
-        this.grpPolities
-          .querySelectorAll('.is-focused')
-          .forEach((el) => el.classList.remove('is-focused'));
+        for (const grp of focusTargets) {
+          grp.classList.remove('has-polity-focus');
+          grp.querySelectorAll('.is-focused').forEach((el) => el.classList.remove('is-focused'));
+        }
         return;
       }
-      this.grpPolities.classList.add('has-polity-focus');
-      this.grpPolities
-        .querySelectorAll('.polity-shape, .polity-caption')
-        .forEach((el) => {
+      for (const grp of focusTargets) {
+        grp.classList.add('has-polity-focus');
+        grp.querySelectorAll('.polity-shape, .polity-caption').forEach((el) => {
           const match =
             targetTitle === '__neighbors__'
               ? el.dataset.polityRole === 'neighbor'
               : el.dataset.polityTitle === targetTitle;
           el.classList.toggle('is-focused', match);
         });
+      }
     }
 
     _zoomToPolity(polityTitle, snap = this.lastRenderedSnap) {
@@ -5939,9 +5956,11 @@
           nav.innerHTML = this._seoDirZhHtml;
           nav.dataset.locale = 'zh';
         }
+        delete nav.dataset.enDetail;
         return;
       }
-      if (nav.dataset.locale === 'en') return;
+      const hasLoreDetail = this._isLoreDetailLoaded();
+      if (nav.dataset.locale === 'en' && (!hasLoreDetail || nav.dataset.enDetail === '1')) return;
       nav.setAttribute(
         'aria-label',
         'Historical Dynasties, Person Chronicles & Strategic Passes Directory'
@@ -5984,7 +6003,8 @@
           const y = p.focusYear !== undefined ? p.focusYear : p.appear || -200;
           const c0 = p.coord ? p.coord[0] : 110;
           const c1 = p.coord ? p.coord[1] : 34;
-          return `<li><a href="${baseSiteUrl}?year=${y}&amp;trace=${c0},${c1}&amp;lang=en"><strong>${p.ancientEn} (now ${p.modernEn})</strong></a> — ${p.rangeEn}: ${p.chokepointEn}</li>`;
+          const descSuffix = p.chokepointEn ? `: ${p.chokepointEn}` : '';
+          return `<li><a href="${baseSiteUrl}?year=${y}&amp;trace=${c0},${c1}&amp;lang=en"><strong>${p.ancientEn} (now ${p.modernEn})</strong></a> — ${p.rangeEn}${descSuffix}</li>`;
         })
         .join('');
       nav.innerHTML =
@@ -5994,6 +6014,7 @@
         `<section><h3>2. Person Chronicles &amp; Life Routes</h3><ul>${journeyItems}</ul></section>` +
         `<section><h3>3. 20 Strategic Mountain &amp; River Passes</h3><ul>${passItems}</ul></section>`;
       nav.dataset.locale = 'en';
+      nav.dataset.enDetail = hasLoreDetail ? '1' : '0';
     }
 
     _renderChroniclePane(dynasty) {
@@ -7851,11 +7872,34 @@
       const mobileTypoBoost = isNarrowMobile ? 1.46 : isMobile ? 1.22 : 1.0;
       const s = (1 / Math.sqrt(z)) * mobileTypoBoost;
       const invScale = s.toFixed(3);
-      const tier2MinZoom = isMobile ? 3.15 : 2.18;
+      const tier2MinZoom = isMobile ? 3.2 : 2.22;
       const showTier2 = z >= tier2MinZoom;
       const passMinZoom = isMobile ? 3.25 : 2.28;
       const showPasses = z >= passMinZoom;
       const showMobilePrefDetail = !isMobile || z >= 3.55;
+      const effZ = z / (isNarrowMobile ? 1.42 : isMobile ? 1.18 : 1.0);
+      const tier2Decay = showTier2
+        ? Math.pow(Math.max(0, Math.min(1, (5.8 - effZ) / (5.8 - 2.22))), 1.15)
+        : 1;
+      const tier2PadX = 9.6 * tier2Decay * s;
+      const tier2PadY = 5.8 * tier2Decay * s;
+      const tier2MaxOv = effZ < 3.6 ? 0.03 : effZ < 5.8 ? 0.09 : 0.18;
+      const tier2Bucket = !showTier2
+        ? 0
+        : effZ < 2.75
+          ? 1
+          : effZ < 3.45
+            ? 2
+            : effZ < 4.4
+              ? 3
+              : effZ < 5.7
+                ? 4
+                : effZ < 7.5
+                  ? 5
+                  : effZ < 10.5
+                    ? 6
+                    : 7;
+      const tier2BucketChanged = this._lastTier2Bucket !== tier2Bucket;
       const showCorridors = !this.grpCorridors.classList.contains('is-hidden');
       this.svg.classList.toggle('is-zoomed-cities', showTier2);
       this.svg.classList.toggle('is-zoomed-passes', showPasses);
@@ -7874,7 +7918,7 @@
           (!this.grpProvNames.classList || !this.grpProvNames.classList.contains('is-hidden'))
       );
       const narrowMobileCull = isNarrowMobile && z < 3.4;
-      const zoomStateKey = `${showTier2 ? 1 : 0}|${showPasses ? 1 : 0}|${showMobilePrefDetail ? 1 : 0}|${narrowMobileCull ? 1 : 0}|${showCorridors ? 1 : 0}|${showSettlements ? 1 : 0}|${showPrefectures ? 1 : 0}|${showPolities ? 1 : 0}|${showMilestones ? 1 : 0}|${showRivers ? 1 : 0}|${showProvNames ? 1 : 0}`;
+      const zoomStateKey = `${showTier2 ? 1 : 0}|${tier2Bucket}|${showPasses ? 1 : 0}|${showMobilePrefDetail ? 1 : 0}|${narrowMobileCull ? 1 : 0}|${showCorridors ? 1 : 0}|${showSettlements ? 1 : 0}|${showPrefectures ? 1 : 0}|${showPolities ? 1 : 0}|${showMilestones ? 1 : 0}|${showRivers ? 1 : 0}|${showProvNames ? 1 : 0}`;
 
       // Fast path for pure zoom frames when no visibility tier threshold crossed:
       // only update scale(invScale) on visible nodes without re-querying DOM or flipping labels.
@@ -7963,6 +8007,32 @@
           if (oy > 0) total += ox * oy;
         }
         return total;
+      };
+      // City-to-city breathing halos keep visible settlements comfortably spaced at mid-zoom
+      // without penalizing lakeside/riverside regional seats (苏州/太湖, 洪州/鄱阳, 汴州/通济渠).
+      const cityHaloBoxes = [];
+      const cityHaloOverlap = (box) => {
+        let total = 0;
+        for (let i = 0; i < cityHaloBoxes.length; i++) {
+          const b = cityHaloBoxes[i];
+          const ox = Math.min(box.x2, b.x2) - Math.max(box.x1, b.x1);
+          if (ox <= 0) continue;
+          const oy = Math.min(box.y2, b.y2) - Math.max(box.y1, b.y1);
+          if (oy > 0) total += ox * oy;
+        }
+        return total;
+      };
+      const pushCityHalo = (box, scale = 1) => {
+        if (tier2PadX > 0.05) {
+          const px = tier2PadX * scale;
+          const py = tier2PadY * scale;
+          cityHaloBoxes.push({
+            x1: box.x1 - px,
+            y1: box.y1 - py,
+            x2: box.x2 + px,
+            y2: box.y2 + py,
+          });
+        }
       };
 
       const settlementNodes = Array.from(this.svg.querySelectorAll('.settlement-node'));
@@ -8054,19 +8124,6 @@
         });
       }
       const regionCaptionNodes = Array.from(this.svg.querySelectorAll('.region-caption'));
-      if (zoomOnly && showPrefectures) {
-        for (const node of regionCaptionNodes) {
-          if (node.dataset.placed === '1' && !node.classList.contains('is-crowded-hidden')) {
-            const cx = parseFloat(node.getAttribute('data-x'));
-            const cy = parseFloat(node.getAttribute('data-y'));
-            if (!isNaN(cx) && !isNaN(cy)) {
-              const hw = (this._estimateLocalTextWidth(node.textContent, 8.8, 1.8) * 0.5 + 3) * s;
-              const hh = 6.2 * s;
-              occupied.push({ x1: cx - hw, y1: cy - hh, x2: cx + hw, y2: cy + hh });
-            }
-          }
-        }
-      }
 
       const pinnedCoords = [];
       if (this.grpJourney && this.grpJourney.firstChild) {
@@ -8140,8 +8197,10 @@
           return;
         }
         const tier = node.dataset.tier || '1';
-        const f1 = tier === '0' ? 9.6 : tier === '2' || tier === 'pass' ? 7.4 : 8.2;
+        const isTier2City = tier === '2' && !isPass && !node.classList.contains('is-trace-city');
+        const f1 = tier === '0' ? 9.6 : tier === '2' ? 7.6 : tier === 'pass' ? 7.4 : 8.2;
         const wLocal = this._estimateLocalTextWidth(nameEl.textContent, f1, 0.45) + 7;
+        const useCityHalo = isTier2City && allowCull;
 
         const hasHintTag = node.classList.contains('has-trace-hint');
         if (hasHintTag) {
@@ -8215,18 +8274,26 @@
           const bestDir = node.dataset.chosenDir;
           const best = dirSpec(bestDir);
           if (allowCull && node.classList.contains('is-label-crowded')) {
-            return;
-          }
-          if (overlapArea(best.box) <= 4.0 * s * s) {
-            node.classList.remove('is-label-crowded');
-            if (node.dataset.appliedDir !== bestDir) {
-              node.dataset.appliedDir = bestDir;
-              setSvgAttribute(nameEl, 'x', String(best.dx));
-              setSvgAttribute(nameEl, 'y', String(best.dy1));
-              setSvgAttribute(nameEl, 'text-anchor', best.anchor);
+            if (!(isTier2City && tier2BucketChanged)) {
+              return;
             }
-            occupied.push(best.box);
-            return;
+          } else {
+            const zoomOv = overlapArea(best.box) + (useCityHalo ? cityHaloOverlap(best.box) : 0);
+            const zoomTol = isTier2City
+              ? Math.max(0.05, (best.box.x2 - best.box.x1) * (best.box.y2 - best.box.y1) * maxOverlapRatio)
+              : 4.0 * s * s;
+            if (zoomOv <= zoomTol) {
+              node.classList.remove('is-label-crowded');
+              if (node.dataset.appliedDir !== bestDir) {
+                node.dataset.appliedDir = bestDir;
+                setSvgAttribute(nameEl, 'x', String(best.dx));
+                setSvgAttribute(nameEl, 'y', String(best.dy1));
+                setSvgAttribute(nameEl, 'text-anchor', best.anchor);
+              }
+              occupied.push(best.box);
+              if (!isPass) pushCityHalo(best.box, isTier2City ? 1 : 0.45);
+              return;
+            }
           }
         }
 
@@ -8236,7 +8303,7 @@
         let bestOverlap = Infinity;
         for (let i = 0; i < dirs.length; i++) {
           const spec = dirSpec(dirs[i]);
-          const rawOv = overlapArea(spec.box);
+          const rawOv = overlapArea(spec.box) + (useCityHalo ? cityHaloOverlap(spec.box) : 0);
           const score = rawOv + (node.dataset.explicitAlign === '1' ? 24.0 : 0.01) * i * s * s;
           if (score < bestScore) {
             bestScore = score;
@@ -8261,6 +8328,7 @@
           setSvgAttribute(nameEl, 'text-anchor', best.anchor);
         }
         occupied.push(best.box);
+        if (!isPass) pushCityHalo(best.box, isTier2City ? 1 : 0.45);
       };
 
       // Tier 1: Capitals first (never culled), then Tier-1 primary cities (gently culled on narrow mobile overview if unavoidable)
@@ -8278,7 +8346,8 @@
       }
 
       // Tier 2: Polity captions (main & rival first, then protectorate & neighbor)
-      const polNodes = Array.from(this.grpPolities.querySelectorAll('.polity-caption')).sort(
+      const polLabelGroup = this.grpPolityLabels || this.grpPolities;
+      const polNodes = Array.from(polLabelGroup.querySelectorAll('.polity-caption')).sort(
         (a, b) => {
           const rank = (el) =>
             el.classList.contains('main')
@@ -8456,12 +8525,15 @@
       for (const node of settlementNodes) {
         if (!node.classList.contains('is-tier2')) continue;
         if (!showSettlements || (!showTier2 && !node.classList.contains('is-trace-city'))) {
+          node._dotBox = null;
           continue;
         }
         const cx = parseFloat(node.getAttribute('data-x'));
         const cy = parseFloat(node.getAttribute('data-y'));
-        const r = 3.0 * s;
-        occupied.push({ x1: cx - r, y1: cy - r, x2: cx + r, y2: cy + r });
+        const r = 2.6 * s;
+        const dotBox = { x1: cx - r, y1: cy - r, x2: cx + r, y2: cy + r };
+        node._dotBox = dotBox;
+        occupied.push(dotBox);
       }
 
       // Tier 2b: Modern neighboring country watermarks (dodge ancient polities/cities or hide when same-named historical polity is active)
@@ -8609,18 +8681,7 @@
         }
       });
 
-      // Tier 4: Tier-2 secondary cities (visible when z >= tier2MinZoom or traced; auto-flip or cull text if crowded)
-      for (const node of settlementNodes) {
-        if (node.classList.contains('is-tier2')) {
-          if (showTier2 || node.classList.contains('is-trace-city')) {
-            layoutSettlementLabel(node, !node.classList.contains('is-trace-city'));
-          } else if (!zoomOnly) {
-            delete node.dataset.chosenDir;
-          }
-        }
-      }
-
-      // Tier 5: Region / prefecture watermarks (dodge or hide when crowded)
+      // Tier 4: First-level macro-region captions (道/州/路/行省) settle before minor prefectures so regional names keep breathing room
       const regOffsets = [
         [0, 0],
         [0, -14],
@@ -8650,9 +8711,15 @@
           if (!node.classList.contains('is-crowded-hidden')) {
             const cx = parseFloat(node.getAttribute('data-x'));
             const cy = parseFloat(node.getAttribute('data-y'));
-            applyNodeScale(node, cx.toFixed(1), cy.toFixed(1));
+            const candBox = { x1: cx - hw, y1: cy - hh, x2: cx + hw, y2: cy + hh };
+            if (overlapArea(candBox) <= (candBox.x2 - candBox.x1) * (candBox.y2 - candBox.y1) * 0.08) {
+              applyNodeScale(node, cx.toFixed(1), cy.toFixed(1));
+              occupied.push(candBox);
+              continue;
+            }
+          } else {
+            continue;
           }
-          continue;
         }
         let placed = false;
         for (let i = 0; i < regOffsets.length; i++) {
@@ -8685,6 +8752,33 @@
           setSvgAttribute(node, 'data-x', bxStr);
           setSvgAttribute(node, 'data-y', byStr);
           node.classList.add('is-crowded-hidden');
+        }
+      }
+
+      // Tier 5: Tier-2 secondary cities, ordered by historical administrative rank (circuit/province/commandery seats first)
+      const tier2Rank = (el) => {
+        const rm = (el.dataset && el.dataset.remark) || '';
+        if (!rm) return 0;
+        if (
+          /(道治|路治|行省治|布政使司|省会|巡抚|总督|陪都|行都|留守|大都护府|节度使治所|观察使治所|经略使治所|刺史部|牧治|副省级|经济特区)/.test(
+            rm
+          )
+        ) {
+          return 3;
+        }
+        if (/(治所|首府|节度使|观察使|都督府|都护府|名郡|重镇|门户|锁钥)/.test(rm)) {
+          return 2;
+        }
+        return 1;
+      };
+      const tier2SettlementNodes = settlementNodes
+        .filter((n) => n.classList.contains('is-tier2'))
+        .sort((a, b) => tier2Rank(b) - tier2Rank(a));
+      for (const node of tier2SettlementNodes) {
+        if (showTier2 || node.classList.contains('is-trace-city')) {
+          layoutSettlementLabel(node, !node.classList.contains('is-trace-city'), tier2MaxOv);
+        } else if (!zoomOnly) {
+          delete node.dataset.chosenDir;
         }
       }
 
@@ -8786,6 +8880,7 @@
       });
       this._zoomScaleNodes = scaleNodes;
       this._lastZoomStateKey = zoomStateKey;
+      this._lastTier2Bucket = tier2Bucket;
       this._lastInvScale = invScale;
       // City names may have moved or appeared: let an open event balloon re-check them.
       if (this.activeMilestone && this.milestoneBalloon && !this.milestoneBalloon.classList.contains('is-hidden')) {
@@ -8821,6 +8916,7 @@
         ox: Number(n.getAttribute('data-base-ox') || 0),
         oy: Number(n.getAttribute('data-base-oy') || 0),
         isPill: n.classList.contains('is-intersect'),
+        isPeerSync: n.classList.contains('is-peer-sync'),
         isBead: n.classList.contains('is-multi-bead'),
       }));
       for (let iter = 0; iter < 12; iter++) {
@@ -8904,7 +9000,11 @@
         .slice()
         .sort((a, b) => {
           const rank = (item) =>
-            item.n.classList.contains('is-current') ? 0 : item.isPill ? 1 : 2;
+            item.n.classList.contains('is-current')
+              ? 0
+              : item.isPill || item.isPeerSync
+                ? 1
+                : 2;
           return rank(a) - rank(b);
         });
       for (const p of labelOrder) {
@@ -8964,7 +9064,7 @@
             fallbackRect = r;
           }
         }
-        if (!chosenSlot && (isCur || p.isPill)) {
+        if (!chosenSlot && (isCur || p.isPill || p.isPeerSync)) {
           chosenSlot = fallbackSlot || orderedSlots[0];
           chosenRect = fallbackRect;
         }
@@ -9051,7 +9151,7 @@
         clientX !== undefined && clientY !== undefined
           ? this._clientToSvgPoint(clientX, clientY, cam)
           : [cam.x + cam.w * 0.5, cam.y + cam.h * 0.5];
-      const nextW = Math.max(100, Math.min(1300, cam.w / factor));
+      const nextW = Math.max(50, Math.min(1300, cam.w / factor));
       const k = nextW / cam.w;
       const targetCam = {
         x: mx - (mx - cam.x) * k,
@@ -9244,7 +9344,7 @@
             const tagText = `${this.dynastyBadge(sampleItem.dynasty)} · ${tagKind}`;
             li.innerHTML =
               `<div><span class="sr-eg-pill">${egLabel}</span><span class="sr-main">${escHtml(mainText)}</span>${subText ? `<span class="sr-sub">${escHtml(subText)}</span>` : ''}</div>` +
-              `<span class="sr-right-meta"><span class="sr-tag">${escHtml(tagText)}</span><button type="button" class="sr-cycle-btn" title="${cycleTitle}" aria-label="${cycleTitle}">↻</button></span>`;
+              `<span class="sr-right-meta"><span class="sr-tag">${escHtml(tagText)}</span><button type="button" class="sr-cycle-btn" title="${cycleTitle}" aria-label="${cycleTitle}">${SVG_ICONS.refresh}</button></span>`;
             const cycleBtn = li.querySelector('.sr-cycle-btn');
             if (cycleBtn) {
               cycleBtn.addEventListener('mousedown', (e) => {
@@ -9352,13 +9452,11 @@
           return;
         }
         const pinyinQuery = this._eventPinyinQuery(q);
-        if (/[a-z]/i.test(q) && !this._hasEnDict()) {
-          if (this._canMatchEventPinyin(pinyinQuery)) this._ensureEventPinyin();
-          this._ensureEnglishLocale().then(renderSearchDropdown);
-          return;
-        }
         currentResults = this._queryQuickSearch(q);
         const pendingSearchData = [];
+        if (/[a-z]/i.test(q) && !this._hasEnDict()) {
+          pendingSearchData.push(this._ensureEnglishLocale());
+        }
         if (!this._isLoreDetailLoaded()) pendingSearchData.push(this._ensureLoreDetail());
         if (/[\u4e00-\u9fff]/.test(q) && !this._hasZhHant()) {
           pendingSearchData.push(this._ensureZhHant());
@@ -9571,6 +9669,9 @@
       bindToggle('chk-prov-names', this.grpProvNames);
       this._id('chk-polities').addEventListener('change', (e) => {
         this.grpPolities.classList.toggle('is-hidden', !e.target.checked);
+        if (this.grpPolityLabels) {
+          this.grpPolityLabels.classList.toggle('is-hidden', !e.target.checked);
+        }
         if (this.grpGhostDiff) {
           this.grpGhostDiff.classList.toggle('is-hidden', !e.target.checked);
         }
@@ -9578,6 +9679,9 @@
       });
       this._id('chk-prefectures').addEventListener('change', (e) => {
         this.grpPrefectures.classList.toggle('is-hidden', !e.target.checked);
+        if (this.grpRegionLabels) {
+          this.grpRegionLabels.classList.toggle('is-hidden', !e.target.checked);
+        }
         if (e.target.checked) this._materializeDeferredPrefectures();
         else this._clearHoveredPrefecture();
         this._rescaleSvgTypography();
@@ -9922,7 +10026,7 @@
           // its existing sensitivity and per-event limit.
           const delta = e.ctrlKey ? rawDelta : Math.max(-220, Math.min(220, rawDelta));
           const factor = Math.exp(-delta * (e.ctrlKey ? 0.01 : 0.002));
-          const nextW = Math.max(100, Math.min(1300, this.camera.w / factor));
+          const nextW = Math.max(50, Math.min(1300, this.camera.w / factor));
           const k = nextW / this.camera.w;
           this.camera = {
             x: mx - (mx - this.camera.x) * k,
@@ -10025,7 +10129,7 @@
           const pts = Array.from(this.activePointers.values());
           const dist = Math.max(10, Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y));
           const factor = dist / this.pinchState.startDist;
-          const nextW = Math.max(100, Math.min(1300, this.pinchState.camW / factor));
+          const nextW = Math.max(50, Math.min(1300, this.pinchState.camW / factor));
           const k = nextW / this.pinchState.camW;
           const midX = (pts[0].x + pts[1].x) * 0.5;
           const midY = (pts[0].y + pts[1].y) * 0.5;
@@ -10147,7 +10251,7 @@
                 : `${sIdx + 1}. `;
             const intNote =
               this.activePerson.isMulti && ev.intersection
-                ? `<div class="tt-sub" style="color:#b5452f;font-weight:700">${
+                ? `<div class="tt-sub" style="color:#d97b66;font-weight:700">${
                     ev.intersection.kind === 'same_time'
                       ? isEn
                         ? '✦ Contemporaneous Spacetime Intersection'
@@ -10438,7 +10542,19 @@
                 this.personTimer = null;
                 this._updateAutoplayUi();
               }
-              this.selectPersonEvent(Number(journeyNodeEl.dataset.stopIdx), true);
+              let targetStopIdx = Number(journeyNodeEl.dataset.stopIdx);
+              if (journeyNodeEl.dataset.peerIdxs) {
+                const peerList = journeyNodeEl.dataset.peerIdxs
+                  .split(',')
+                  .filter(Boolean)
+                  .map(Number)
+                  .filter((n) => !Number.isNaN(n));
+                const curPos = peerList.indexOf(this.activePersonEventIdx);
+                if (curPos >= 0 && peerList.length > 1) {
+                  targetStopIdx = peerList[(curPos + 1) % peerList.length];
+                }
+              }
+              this.selectPersonEvent(targetStopIdx, true);
               return;
             }
           }

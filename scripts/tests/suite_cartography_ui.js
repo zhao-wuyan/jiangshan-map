@@ -1883,6 +1883,272 @@ async function runCartographyUiSuite(ctx) {
       !qinlingNode.classList.contains('is-crowded-hidden'),
       '秦岭 must reappear after zooming back in past the pass gate (zoomOnly frame)'
     );
+
+    // CUJ 31c: Polity and region captions sit in dedicated SVG label groups above rivers/borders/corridors
+    const idxPref = indexHtml.indexOf('<g id="grp-prefectures"></g>');
+    const idxRiv = indexHtml.indexOf('<g id="grp-rivers"></g>');
+    const idxCorr = indexHtml.indexOf('<g id="grp-corridors"></g>');
+    const idxProvNames = indexHtml.indexOf('<g id="grp-prov-names"');
+    const idxRegLbl = indexHtml.indexOf('<g id="grp-region-labels"></g>');
+    const idxPolLbl = indexHtml.indexOf('<g id="grp-polity-labels"></g>');
+    const idxSettle = indexHtml.indexOf('<g id="grp-settlements"></g>');
+    assert(
+      idxPref > 0 &&
+        idxRiv > idxPref &&
+        idxCorr > idxRiv &&
+        idxProvNames > idxCorr &&
+        idxRegLbl > idxProvNames &&
+        idxPolLbl > idxRegLbl &&
+        idxSettle > idxPolLbl,
+      'index.html must order #grp-region-labels and #grp-polity-labels above borders/rivers/corridors and below #grp-settlements'
+    );
+    assert(
+      styleCss.includes('#grp-polity-labels.is-hidden') &&
+        styleCss.includes('#grp-region-labels.is-hidden') &&
+        styleCss.includes('#grp-polity-labels.has-polity-focus .polity-caption:not(.is-focused)') &&
+        styleCss.includes('#atlas-svg.is-awaiting-snapshot #grp-polity-labels') &&
+        styleCss.includes('#atlas-svg.is-awaiting-snapshot #grp-region-labels'),
+      'css/style.css must synchronize hidden, snapshot-awaiting, and focus styles on #grp-polity-labels and #grp-region-labels'
+    );
+    const fakeNode = (tag, attrs = {}) => {
+      const cls = new Set(String(attrs.class || '').split(/\s+/).filter(Boolean));
+      const children = [];
+      const el = {
+        tagName: tag,
+        attributes: { ...attrs },
+        dataset: {},
+        children,
+        textContent: '',
+        classList: {
+          add: (...c) => c.forEach((x) => cls.add(x)),
+          remove: (...c) => c.forEach((x) => cls.delete(x)),
+          toggle: (x, force) => (force === undefined ? (cls.has(x) ? cls.delete(x) : cls.add(x)) : force ? cls.add(x) : cls.delete(x)),
+          contains: (x) => cls.has(x),
+        },
+        setAttribute: (k, v) => {
+          el.attributes[k] = String(v);
+          if (k === 'class') {
+            cls.clear();
+            String(v).split(/\s+/).filter(Boolean).forEach((x) => cls.add(x));
+          }
+        },
+        getAttribute: (k) => (k in el.attributes ? el.attributes[k] : null),
+        appendChild: (c) => {
+          c.parentNode = el;
+          children.push(c);
+          return c;
+        },
+        querySelectorAll: (sel) => {
+          const want = sel.split(',').map((s) => s.trim().replace(/^\./, ''));
+          const out = [];
+          const walk = (n) => {
+            for (const ch of n.children || []) {
+              if (want.some((w) => ch.classList && ch.classList.contains(w))) out.push(ch);
+              walk(ch);
+            }
+          };
+          walk(el);
+          return out;
+        },
+      };
+      return el;
+    };
+    const mockGrpPol = fakeNode('g');
+    const mockGrpPolLbl = fakeNode('g');
+    const mockGrpPref = fakeNode('g');
+    const mockGrpRegLbl = fakeNode('g');
+    const zCtrl = Object.create(proto);
+    Object.assign(zCtrl, {
+      locale: 'zh',
+      year: 317,
+      projector: ctrl.projector,
+      svg: fakeNode('svg'),
+      mapKey: fakeNode('div'),
+      grpPolities: mockGrpPol,
+      grpPolityLabels: mockGrpPolLbl,
+      grpPrefectures: mockGrpPref,
+      grpRegionLabels: mockGrpRegLbl,
+      prefClipPath: fakeNode('path'),
+      _svgNode: (tag, attrs, parent) => {
+        const n = fakeNode(tag, attrs);
+        if (parent) parent.appendChild(n);
+        return n;
+      },
+      _mapText: (s) => s,
+      trTerm: (s) => s,
+      _zh: (s) => s,
+      _clearHoveredPrefecture: () => {},
+      _buildPrefectureBoundaryPath: () => '',
+      _buildRegionBoundaryPath: () => '',
+      _renderLegendBox: () => {},
+      _syncTracedPrefecture: () => {},
+      _rescaleSvgTypography: () => {},
+    });
+    const fakeSnap = {
+      polities: [
+        {
+          title: '东晋',
+          role: 'main',
+          tint: '#6b9e78',
+          anchor: [115.0, 29.5],
+          shape: { type: 'Polygon', coordinates: [[[110, 25], [120, 25], [120, 33], [110, 33], [110, 25]]] },
+        },
+        {
+          title: '汉赵',
+          role: 'rival',
+          tint: '#b87664',
+          anchor: [111.5, 36.5],
+          shape: { type: 'Polygon', coordinates: [[[106, 34], [116, 34], [116, 40], [106, 40], [106, 34]]] },
+        },
+      ],
+      regions: [
+        {
+          title: '司州',
+          category: '州',
+          anchor: [113.0, 35.0],
+          shape: { type: 'Polygon', coordinates: [[[110, 34], [115, 34], [115, 37], [110, 37], [110, 34]]] },
+        },
+      ],
+      prefectures: [],
+    };
+    zCtrl._renderPolitiesAndPrefectures(dynasties[0], fakeSnap);
+    assert.strictEqual(mockGrpPol.querySelectorAll('.polity-caption').length, 0, 'polity captions must not sit inside #grp-polities');
+    assert.strictEqual(mockGrpPolLbl.querySelectorAll('.polity-caption').length, 2, 'polity captions must render inside #grp-polity-labels');
+    assert.strictEqual(mockGrpPref.querySelectorAll('.region-caption').length, 0, 'region captions must not sit inside #grp-prefectures');
+    assert.strictEqual(mockGrpRegLbl.querySelectorAll('.region-caption').length, 1, 'region captions must render inside #grp-region-labels');
+    zCtrl._setPolityFocus('东晋');
+    assert(
+      mockGrpPol.classList.contains('has-polity-focus') &&
+        mockGrpPolLbl.classList.contains('has-polity-focus') &&
+        mockGrpPolLbl.children[0].classList.contains('is-focused') &&
+        !mockGrpPolLbl.children[1].classList.contains('is-focused'),
+      '_setPolityFocus must highlight matching .polity-caption inside #grp-polity-labels'
+    );
+
+    // CUJ 31d: Progressive Tier-2 prefecture density — spacious at mid-zoom, monotonically unlocked across zoomOnly frames, 100% visible at deep zoom (desktop & mobile)
+    const tangActive = (tangDyn.settlements || []).filter(
+      (s) => (s.appear === undefined || 787 >= s.appear) && (s.vanish === undefined || 787 < s.vanish)
+    );
+    const makeTangSettlementNodes = () =>
+      tangActive.map((item) => {
+        const [sx, sy] = ctrl.projector.toScreen(item.coord[0], item.coord[1]);
+        const isCap = Boolean(item.isCapital);
+        const isT2 = !isCap && item.tier === 2;
+        const nameEl = {
+          textContent: item.ancient,
+          attrs: {},
+          setAttribute(k, v) {
+            this.attrs[k] = String(v);
+          },
+          getAttribute(k) {
+            return this.attrs[k] || null;
+          },
+        };
+        const cls = makeCls(['settlement-node', ...(isCap ? ['is-capital'] : isT2 ? ['is-tier2'] : [])]);
+        const attrs = { 'data-x': sx.toFixed(1), 'data-y': sy.toFixed(1) };
+        return {
+          _item: item,
+          classList: cls,
+          dataset: {
+            tier: isCap ? '0' : isT2 ? '2' : '1',
+            remark: item.remark || '',
+            prefAlign: item.align || 'r',
+            ...(item.align ? { explicitAlign: '1' } : {}),
+            lng: String(item.coord[0]),
+            lat: String(item.coord[1]),
+          },
+          getAttribute: (k) => (k in attrs ? attrs[k] : null),
+          setAttribute: (k, v) => {
+            attrs[k] = String(v);
+          },
+          querySelector: (sel) => (sel === '.name' ? nameEl : null),
+        };
+      });
+    const tangNodes = makeTangSettlementNodes();
+    const jnT2Nodes = tangNodes.filter(
+      (n) =>
+        n.classList.contains('is-tier2') &&
+        n._item.coord[0] >= 115 &&
+        n._item.coord[0] <= 122.5 &&
+        n._item.coord[1] >= 27.5 &&
+        n._item.coord[1] <= 33.2
+    );
+    const [jndX, jndY] = ctrl.projector.toScreen(120.2, 29.8);
+    const jndRegion = makeCaptionNode(['region-caption'], '江南东道', jndX, jndY, {});
+    const progCtrl = {
+      ...mockCtrl,
+      camera: { x: 280, y: 200, w: 1000 / 2.35, h: 700 / 2.35, zoom: 2.35 },
+      svg: {
+        classList: makeCls(),
+        querySelectorAll: (sel) =>
+          sel === '.settlement-node'
+            ? tangNodes
+            : sel === '.region-caption'
+              ? [jndRegion]
+              : [],
+      },
+      grpPolities: { classList: makeCls(), querySelectorAll: () => [] },
+      grpNeighbors: { querySelectorAll: () => [] },
+    };
+    proto._rescaleSvgTypography.call(progCtrl);
+    const visAt235 = jnT2Nodes.filter((n) => !n.classList.contains('is-label-crowded')).length;
+    assert(
+      visAt235 >= 5 && visAt235 <= Math.floor(jnT2Nodes.length * 0.65),
+      `Mid-zoom (z=2.35) must thin dense Jiangnan Tier-2 labels for breathing room (got ${visAt235}/${jnT2Nodes.length})`
+    );
+    assert(
+      !jndRegion.classList.contains('is-crowded-hidden'),
+      'Macro-region caption 江南东道 must settle before minor Tier-2 prefectures and remain visible at z=2.35'
+    );
+    for (const majorSeat of ['魏州', '青州', '苏州', '杭州', '洪州', '潭州']) {
+      const seatNode = tangNodes.find((n) => n._item.ancient === majorSeat);
+      assert(
+        seatNode && !seatNode.classList.contains('is-label-crowded'),
+        `Circuit/jiedushi seat ${majorSeat} must win priority at mid-zoom z=2.35`
+      );
+    }
+    // Zooming in via zoomOnly frames must progressively unlock crowded Tier-2 labels up to 100%
+    progCtrl.camera = { x: 350, y: 240, w: 1000 / 3.6, h: 700 / 3.6, zoom: 3.6 };
+    proto._rescaleSvgTypography.call(progCtrl, { zoomOnly: true });
+    const visAt36 = jnT2Nodes.filter((n) => !n.classList.contains('is-label-crowded')).length;
+    progCtrl.camera = { x: 420, y: 280, w: 1000 / 12, h: 700 / 12, zoom: 12 };
+    proto._rescaleSvgTypography.call(progCtrl, { zoomOnly: true });
+    const allT2Nodes = tangNodes.filter((n) => n.classList.contains('is-tier2'));
+    const visAt12 = allT2Nodes.filter((n) => !n.classList.contains('is-label-crowded')).length;
+    assert(
+      visAt36 > visAt235 && visAt12 === allT2Nodes.length,
+      `Zooming in via zoomOnly must monotonically reveal Tier-2 labels up to 100% at z=12 (${visAt235} -> ${visAt36} -> ${visAt12}/${allT2Nodes.length})`
+    );
+    // Narrow mobile viewport (390px) compatibility: thinned at z=3.5, 100% revealed at deep pinch zoom (z=18, w=55.6)
+    const prevInnerW = sandbox.window.innerWidth;
+    try {
+      sandbox.window.innerWidth = 390;
+      const mobNodes = makeTangSettlementNodes();
+      const mobCtrl = {
+        ...progCtrl,
+        _lastTypographyWidth: undefined,
+        _lastViewportWidth: undefined,
+        _lastZoomStateKey: undefined,
+        _lastTier2Bucket: undefined,
+        camera: { x: 320, y: 220, w: 1000 / 3.5, h: 700 / 3.5, zoom: 3.5 },
+        svg: {
+          classList: makeCls(),
+          querySelectorAll: (sel) => (sel === '.settlement-node' ? mobNodes : []),
+        },
+      };
+      proto._rescaleSvgTypography.call(mobCtrl);
+      const mobT2 = mobNodes.filter((n) => n.classList.contains('is-tier2'));
+      const mobMid = mobT2.filter((n) => !n.classList.contains('is-label-crowded')).length;
+      mobCtrl.camera = { x: 420, y: 280, w: 1000 / 18, h: 700 / 18, zoom: 18 };
+      proto._rescaleSvgTypography.call(mobCtrl, { zoomOnly: true });
+      const mobDeep = mobT2.filter((n) => !n.classList.contains('is-label-crowded')).length;
+      assert(
+        mobMid < mobT2.length && mobDeep === mobT2.length,
+        `Narrow mobile (390px) must thin Tier-2 labels at z=3.5 (${mobMid}/${mobT2.length}) and reveal 100% at z=18 (${mobDeep}/${mobT2.length})`
+      );
+    } finally {
+      sandbox.window.innerWidth = prevInnerW;
+    }
   }
 
   // CUJ 32: Timeline & Person Chronicle Playback Speed Control (1x -> 2x -> 0.25x -> 0.5x -> 1x)

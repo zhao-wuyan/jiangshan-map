@@ -2899,7 +2899,176 @@ async function runSearchRuntimeSuite(ctx) {
         ctrl.activePerson.sameTimeCount,
         'When personSharedOnly is active, _getNavigablePersonEventIdxs must step strictly across shared encounters'
       );
-      ctrl.closeGenealogyCard();
+      ctrl.personSharedOnly = false;
+      const prevSvgNode = ctrl._svgNode;
+      const prevGrpJourney = ctrl.grpJourney;
+      const prevTypo = ctrl._rescaleSvgTypography;
+      const prevLoc = ctrl.locale;
+      const recordedSvg = [];
+      try {
+        ctrl.locale = 'zh';
+        ctrl.grpJourney = { innerHTML: '', querySelectorAll: () => [] };
+        ctrl._rescaleSvgTypography = () => {};
+        ctrl._svgNode = (tag, attrs = {}) => {
+          const node = {
+            tag,
+            attrs,
+            style: {},
+            dataset: {},
+            textContent: '',
+            appendChild() {},
+            setAttribute(k, v) {
+              this.attrs[k] = v;
+            },
+          };
+          recordedSvg.push(node);
+          return node;
+        };
+        ctrl.selectPersonEvent(-1, false);
+        const multiNums = recordedSvg.filter((n) => n.attrs && n.attrs.class === 'jn-num');
+        assert(
+          multiNums.length >= 10,
+          `Multi-person overview must render numbered map pins (.jn-num), got ${multiNums.length}`
+        );
+        assert.strictEqual(
+          ControllerClass.PERSON_TRACK_PALETTE[0],
+          '#9e3a26',
+          'PERSON_TRACK_PALETTE must use muted mineral pigment tones'
+        );
+
+        // Simultaneous peer coordinate anchors on multi-person single step (e.g. Du Fu 759 Qinzhou -> Li Bai @ Baidicheng)
+        recordedSvg.length = 0;
+        ctrl.selectPersonEvent(17, false);
+        const ldgSyncAnchors = ctrl._getSimultaneousPeerAnchors(
+          ctrl.activePerson,
+          17,
+          ctrl.activePerson.events[17]
+        );
+        assert(
+          ldgSyncAnchors.some((a) => a.profile.key === 'libai' && a.ev.siteZh.includes('白帝')) &&
+            ldgSyncAnchors.some((a) => a.profile.key === 'gaoshi' && a.ev.siteZh.includes('扬州')),
+          'At 759 CE Qinzhou (Du Fu), _getSimultaneousPeerAnchors must anchor Li Bai at Baidicheng (759) and Gao Shi at Yangzhou (757)'
+        );
+        const peerSyncLabels = recordedSvg.filter(
+          (n) => n.attrs && String(n.attrs.class || '').includes('is-peer-sync-label')
+        );
+        assert(
+          peerSyncLabels.some((n) => n.textContent.includes('白帝城·李白')),
+          'Single-step map must light up simultaneous peer coordinate with concise "<City>·<Name>" label'
+        );
+        ctrl.closeGenealogyCard();
+
+        // Chronological tie-break: Liu Bang @ Xianyang (206 BCE, stop 4) must anchor Xiang Yu at prior Julu (207 BCE) rather than future Chenxian
+        const prevId = ctrl._id;
+        const fakeLore = {
+          innerHTML: '',
+          classList: {
+            hidden: true,
+            add(c) {
+              if (c === 'is-hidden') this.hidden = true;
+            },
+            remove(c) {
+              if (c === 'is-hidden') this.hidden = false;
+            },
+          },
+          querySelectorAll: () => [],
+        };
+        const fakeBody = { scrollTop: 99 };
+        const prevDoc = sandbox.document;
+        try {
+          sandbox.document = {
+            createElement: () => ({
+              className: '',
+              dataset: {},
+              style: { setProperty() {} },
+              innerHTML: '',
+              addEventListener() {},
+              querySelector: () => null,
+              querySelectorAll: () => [],
+              scrollIntoView() {
+                fakeBody.scrollTop = 500;
+              },
+            }),
+          };
+          const fakeTimeline = {
+            innerHTML: '',
+            children: [],
+            appendChild(ch) {
+              this.children.push(ch);
+            },
+          };
+          ctrl._id = (id) => {
+            if (id === 'genealogy-lore') return fakeLore;
+            if (id === 'genealogy-timeline') return fakeTimeline;
+            if (id === 'genealogy-body') return fakeBody;
+            return null;
+          };
+          ctrl.openPersonChronicle(['liubang', 'xiangyu'], -1);
+          assert(
+            fakeLore.classList.hidden === false &&
+              fakeLore.innerHTML.includes('同世交集') &&
+              fakeLore.innerHTML.includes('mp-span-chart') &&
+              fakeLore.innerHTML.includes('际会：'),
+            'Multi-person #genealogy-lore must render Co-Lifespan ruler (同世交集) and inline encounter links (际会：)'
+          );
+          assert.strictEqual(
+            fakeBody.scrollTop,
+            0,
+            'Multi-person overview open must keep scrollTop at 0 instead of clipping top rows via firstSharedLi.scrollIntoView'
+          );
+          const lxEvs = ctrl.activePerson.events;
+          const xianyangIdx = lxEvs.findIndex(
+            (e) => e.personKey === 'liubang' && e.siteZh.includes('咸阳')
+          );
+          const xyAnchors = ctrl._getSimultaneousPeerAnchors(
+            ctrl.activePerson,
+            xianyangIdx,
+            lxEvs[xianyangIdx]
+          );
+          assert(
+            xyAnchors.length === 1 && xyAnchors[0].ev.siteZh.includes('巨鹿'),
+            'At Liu Bang’s entry into Xianyang (206 BCE), Xiang Yu’s simultaneous anchor must be prior Julu (207 BCE) rather than future Chenxian'
+          );
+        } finally {
+          ctrl._id = prevId;
+          sandbox.document = prevDoc;
+        }
+        ctrl.closeGenealogyCard();
+
+        // Solo multi-visit capital stacking (.jn-stack-ring) & >6-year scraped arrow suppression
+        recordedSvg.length = 0;
+        ctrl.openPersonChronicle('hanwudi', -1);
+        const wudiEvs = ctrl.activePerson.events;
+        const wudiNodes = recordedSvg.filter(
+          (n) => n.tag === 'g' && String(n.attrs.class || '').includes('journey-node')
+        );
+        const wudiStackRings = recordedSvg.filter(
+          (n) => n.attrs && n.attrs.class === 'jn-stack-ring'
+        );
+        assert(
+          wudiNodes.length < wudiEvs.length && wudiStackRings.length >= 1,
+          'Solo chronicle with repeated Chang’an events (hanwudi) must collapse co-located pins into a concentric .jn-stack-ring node'
+        );
+        const longGapIdx = wudiEvs.findIndex(
+          (ev, idx) => idx > 0 && Math.abs(ev.year - wudiEvs[idx - 1].year) > 6
+        );
+        assert(
+          longGapIdx > 0 &&
+            ctrl._getSoloStepOriginCoord(
+              ctrl.activePerson,
+              wudiEvs,
+              longGapIdx,
+              wudiEvs[longGapIdx]
+            ) === null,
+          'Non-journey scraped solo events separated by >6 years must suppress misleading cross-country trajectory arrows'
+        );
+        ctrl.closeGenealogyCard();
+      } finally {
+        ctrl.locale = prevLoc;
+        ctrl._svgNode = prevSvgNode;
+        ctrl.grpJourney = prevGrpJourney;
+        ctrl._rescaleSvgTypography = prevTypo;
+      }
     }
   }
 

@@ -81,6 +81,7 @@ function loadAtlasRuntime() {
     'lore_core.js',
     'lore_detail.js',
     'i18n_dict.js',
+    'zh_hant.js',
     ...CONTROLLER_SCRIPTS.map((rel) => path.basename(rel)),
   ]) {
     const code = fs.readFileSync(path.join(JS_DIR, file), 'utf8');

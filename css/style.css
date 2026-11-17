@@ -623,7 +623,9 @@ html.deeplink-boot #inp-year {
 
 /* No borders rather than another era's while a snapshot downloads (see _markAwaitingSnapshot). */
 #atlas-svg.is-awaiting-snapshot #grp-polities,
+#atlas-svg.is-awaiting-snapshot #grp-polity-labels,
 #atlas-svg.is-awaiting-snapshot #grp-prefectures,
+#atlas-svg.is-awaiting-snapshot #grp-region-labels,
 #map-key.is-awaiting-snapshot {
   visibility: hidden;
 }
@@ -981,12 +983,15 @@ html.deeplink-boot #inp-year {
   stroke-linejoin: round;
 }
 
-#grp-polities {
+#grp-polities,
+#grp-polity-labels {
   transition: opacity 0.25s;
 }
 
 #grp-polities.is-hidden,
+#grp-polity-labels.is-hidden,
 #grp-prefectures.is-hidden,
+#grp-region-labels.is-hidden,
 #grp-settlements.is-hidden,
 #grp-corridors.is-hidden,
 #grp-milestones.is-hidden {
@@ -1865,8 +1870,17 @@ html.deeplink-boot #inp-year {
 
 .settlement-node.is-tier2 .dot {
   fill: #f6efe2;
-  stroke: #4e453d;
-  stroke-width: 0.95;
+  stroke: #6b5e52;
+  stroke-width: 0.85;
+}
+
+.settlement-node.is-tier2.is-label-crowded .dot {
+  opacity: 0.68;
+}
+
+.settlement-node.is-tier2.is-label-crowded:hover .dot {
+  opacity: 1;
+  stroke: var(--vermilion);
 }
 
 .settlement-node.is-capital .dot {
@@ -1895,10 +1909,12 @@ html.deeplink-boot #inp-year {
 }
 
 .settlement-node.is-tier2 .name {
-  font-size: 8px;
-  font-weight: 600;
-  fill: #2c251f;
-  stroke-width: 2px;
+  font-size: 7.6px;
+  font-weight: 500;
+  fill: #483d33;
+  fill-opacity: 0.9;
+  stroke: rgba(249, 244, 234, 0.92);
+  stroke-width: 1.9px;
 }
 
 .settlement-node.is-capital .name {
@@ -2029,7 +2045,7 @@ html.deeplink-boot #inp-year {
   position: absolute;
   left: 14px;
   top: 12px;
-  width: 248px;
+  width: 264px;
   z-index: 9;
   transition: width 0.18s ease;
 }
@@ -2258,8 +2274,9 @@ html.deeplink-boot #inp-year {
   border: 1px solid rgba(124, 108, 90, 0.28);
   background: rgba(255, 252, 245, 0.72);
   color: var(--text-secondary);
-  font-family: var(--sans-stack);
+  font-family: var(--serif-stack);
   font-size: 11px;
+  font-weight: 600;
   line-height: 1.3;
   padding: 1px 6px;
   border-radius: 999px;
@@ -2278,9 +2295,9 @@ html.deeplink-boot #inp-year {
   border: none;
   background: transparent;
   padding: 1px 2px;
-  font-family: var(--sans-stack);
+  font-family: var(--serif-stack);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
   color: #7c4d1e;
   cursor: pointer;
   white-space: nowrap;
@@ -2432,9 +2449,13 @@ html.deeplink-boot #inp-year {
   }
 
   #start-guide .sg-close {
+    position: sticky;
+    right: -8px;
     margin-left: auto;
     flex-shrink: 0;
-    padding: 0 2px 0 4px;
+    padding: 2px 6px 2px 5px;
+    background: linear-gradient(90deg, rgba(243, 238, 228, 0) 0%, rgba(243, 238, 228, 0.95) 28%);
+    border-radius: 0 999px 999px 0;
   }
 }
 
@@ -3347,6 +3368,29 @@ html.is-embed .timeline-crop-mask {
   animation: none;
 }
 
+/* Traditional Chinese (zh-Hant): Ma Shan Zheng lacks several Traditional glyphs (e.g. 時/戰/國/東/漢/華);
+   use bold Song-style serif across brand seal and dynasty headings for uniform stroke weight. */
+html[lang="zh-Hant"] .brand-group .seal-mark {
+  font-family: var(--serif-stack);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+html[lang="zh-Hant"] #dynasty-title {
+  font-family: var(--serif-stack);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+@media (min-width: 901px) {
+  html[lang="zh-Hant"] .brand-group .seal-mark {
+    font-size: 23px;
+  }
+  html[lang="zh-Hant"] #dynasty-title {
+    font-size: 32px;
+  }
+}
+
 /* English Locale Typography Adjustments */
 html[lang="en"] .brand-group .subtitle-mark {
   letter-spacing: 0.04em;
@@ -3815,7 +3859,8 @@ html[lang="en"] .genealogy-list li {
   stroke-opacity: 0.22 !important;
 }
 
-#grp-polities.has-polity-focus .polity-caption:not(.is-focused) {
+#grp-polities.has-polity-focus .polity-caption:not(.is-focused),
+#grp-polity-labels.has-polity-focus .polity-caption:not(.is-focused) {
   fill-opacity: 0.18 !important;
 }
 
@@ -3824,7 +3869,8 @@ html[lang="en"] .genealogy-list li {
   stroke-width: 2.6 !important;
 }
 
-#grp-polities.has-polity-focus .polity-caption.is-focused {
+#grp-polities.has-polity-focus .polity-caption.is-focused,
+#grp-polity-labels.has-polity-focus .polity-caption.is-focused {
   fill-opacity: 1 !important;
 }
 
@@ -3859,9 +3905,16 @@ html[lang="en"] .genealogy-list li {
   gap: 8px;
 }
 
-#chronicle-pane.is-polity-mode #dynasty-title.is-long {
+#chronicle-pane.is-polity-mode #dynasty-title {
+  font-family: var(--serif-stack);
   font-size: 30px;
+  font-weight: 700;
   line-height: 1.15;
+}
+
+#chronicle-pane.is-polity-mode #dynasty-title.is-long {
+  font-size: 25px;
+  line-height: 1.2;
 }
 
 .polity-row {
@@ -4365,8 +4418,9 @@ html[lang="en"] #act-toggle-pane .tp-label {
   border: 1px solid var(--hairline);
   background: rgba(255, 255, 255, 0.85);
   color: var(--text-secondary);
-  font-family: var(--sans-stack);
+  font-family: var(--serif-stack);
   font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: border-color 0.14s, color 0.14s;
@@ -5081,9 +5135,11 @@ html[lang="en"] #act-toggle-pane .tp-label {
   }
 
   .settlement-node.is-tier2 .name {
-    font-size: 8.5px;
-    fill: #241e18;
-    stroke-width: 2.1px;
+    font-size: 8.3px;
+    font-weight: 500;
+    fill: #3e342b;
+    fill-opacity: 0.92;
+    stroke-width: 2px;
   }
 
   .region-caption {
@@ -5548,15 +5604,22 @@ html[lang="en"] .genealogy-list li.person-ev-row {
 .person-track-tag {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--track-color, #bd2d22);
-  color: #fffaf2;
+  padding: 0.5px 5.5px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--track-color, #9e3a26) 32%, transparent);
+  background: color-mix(in srgb, var(--track-color, #9e3a26) 11%, rgba(255, 250, 240, 0.78));
+  color: var(--track-color, #9e3a26);
   font-family: var(--serif-stack);
-  font-size: 10.5px;
+  font-size: 10.4px;
   font-weight: 700;
   line-height: 1.3;
   white-space: nowrap;
+}
+
+.genealogy-list li.person-ev-row.is-current .person-track-tag {
+  background: var(--track-color, #9e3a26);
+  border-color: var(--track-color, #9e3a26);
+  color: #fffaf2;
 }
 
 .person-yr-sub {
@@ -5978,4 +6041,181 @@ span.story-inline-person {
 
 .genealogy-list li.person-ev-row[style*="--camp-color"] .person-ev-quote {
   border-left-color: color-mix(in srgb, var(--camp-color) 42%, transparent);
+}
+
+/* Mineral Pigment Pins, Stack Rings & Numbered Multi-Person Rows */
+.mp-era-top {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.mp-row-num {
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  margin-top: 1px;
+  font-size: 9.6px;
+  flex-shrink: 0;
+  color: var(--track-color, #7a4b38);
+  border-color: color-mix(in srgb, var(--track-color, #7a4b38) 32%, transparent);
+  background: color-mix(in srgb, var(--track-color, #7a4b38) 8%, rgba(255, 250, 240, 0.85));
+}
+
+.genealogy-list li.person-ev-row.is-current .mp-row-num {
+  background: var(--track-color, var(--vermilion));
+  border-color: var(--track-color, var(--vermilion));
+  color: #fffaf2;
+}
+
+.jn-disc {
+  fill: #f8f1e3;
+  stroke-width: 1.3px;
+}
+
+.jn-meet-pill {
+  fill: #f8f1e3;
+  stroke: rgba(82, 62, 46, 0.62);
+  stroke-width: 1.2px;
+}
+
+.jn-stack-ring {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.85px;
+  stroke-opacity: 0.48;
+  pointer-events: none;
+}
+
+/* Multi-Person Co-Lifespan Ruler, Encounter Links & Simultaneous Peer Pins */
+.mp-span-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 3.5px;
+  margin-top: 4px;
+  padding: 2px 0 1px;
+}
+
+.mp-span-row {
+  display: grid;
+  grid-template-columns: minmax(34px, max-content) 1fr auto;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--serif-stack);
+  font-size: 10.5px;
+  line-height: 1.2;
+}
+
+.mp-span-name {
+  max-width: 86px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mp-span-track {
+  position: relative;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(96, 76, 56, 0.12);
+}
+
+.mp-span-overlap {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  background: rgba(158, 58, 38, 0.11);
+  border-left: 1px solid rgba(158, 58, 38, 0.26);
+  border-right: 1px solid rgba(158, 58, 38, 0.26);
+}
+
+.mp-span-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  opacity: 0.86;
+}
+
+.mp-span-yrs {
+  font-size: 9.8px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mp-meet-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(120, 92, 68, 0.2);
+  font-family: var(--serif-stack);
+  font-size: 10.8px;
+  line-height: 1.4;
+}
+
+.mp-lore-lbl {
+  font-family: var(--serif-stack);
+  font-size: 10.6px;
+  color: var(--text-muted);
+}
+
+html[lang="en"] .mp-lore-lbl {
+  margin-right: 3.5px;
+}
+
+.mp-inline-link {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0 1px;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: #5c3d28;
+  text-decoration: underline;
+  text-decoration-color: rgba(126, 76, 48, 0.34);
+  text-underline-offset: 2.5px;
+  cursor: pointer;
+  transition: color 0.14s ease, text-decoration-color 0.14s ease;
+}
+
+.mp-inline-link:hover {
+  color: var(--vermilion);
+  text-decoration-color: var(--vermilion);
+}
+
+.mp-dot-sep {
+  margin: 0 3.5px;
+  color: rgba(110, 86, 66, 0.55);
+  user-select: none;
+}
+
+.jn-peer-halo {
+  fill: color-mix(in srgb, currentColor 9%, transparent);
+  stroke: currentColor;
+  stroke-width: 0.95px;
+  stroke-opacity: 0.62;
+  stroke-dasharray: 2.2 1.8;
+}
+
+.journey-node.is-peer-sync .jn-disc.is-peer-sync-disc {
+  fill: #f8f1e3;
+  stroke: currentColor;
+  stroke-width: 1.65px;
+}
+
+.journey-node.is-peer-sync .jn-num.is-peer-sync-num {
+  fill: currentColor;
+  font-weight: 700;
+}
+
+.jn-label.is-peer-sync-label {
+  font-size: 9.6px;
+  fill: currentColor;
+  font-weight: 700;
 }

@@ -299,7 +299,7 @@
           "name": "江山时序是什么网站？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、205幅多阶段疆域与州郡政区快照、526条编年大事、726处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
+            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、205幅多阶段疆域与州郡政区快照、526条编年大事、733处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
           }
         },
         {
@@ -336,7 +336,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=%20%26%27CDEFHJKMNPQRSTWYabcdefghilmnoprstuvxy%E4%B8%89%E4%B8%9C%E4%B8%AD%E4%BA%94%E4%BA%BA%E4%BB%A3%E5%85%83%E5%85%AD%E5%85%B1%E5%8C%97%E5%8D%81%E5%8D%8E%E5%8D%97%E5%92%8C%E5%94%90%E5%9B%BD%E5%AE%8B%E5%B1%B1%E5%BA%8F%E6%88%98%E6%97%B6%E6%98%8E%E6%99%8B%E6%9C%9D%E6%B0%91%E6%B1%89%E6%B1%9F%E6%B8%85%E7%A7%A6%E8%A5%BF%E9%9A%8B&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="css/style.css?v=29413ab5" />
+  <link rel="stylesheet" href="css/style.css?v=0429be96" />
   <!-- Analytics: Vercount, anonymous click counter (workers/stats) & Cloudflare Web Analytics -->
   <script defer src="https://events.vercount.one/js"></script>
   <script defer src="js/atlas_track.js?v=4b2c3de3"></script>
@@ -486,6 +486,8 @@
               <g id="grp-ghost-diff"></g>
               <g id="grp-corridors"></g>
               <g id="grp-prov-names" class="is-hidden"></g>
+              <g id="grp-region-labels"></g>
+              <g id="grp-polity-labels"></g>
               <g id="grp-settlements"></g>
               <g id="grp-milestones"></g>
               <g id="grp-journey"></g>
@@ -551,7 +553,9 @@
               <div id="genealogy-heading" class="genealogy-title"></div>
             </div>
             <div class="genealogy-header-actions">
-              <button id="act-expand-genealogy" class="icon-close gen-expand-btn" type="button" title="展开/收起沿革面板" aria-expanded="false" aria-label="展开或收起沿革面板">⤢</button>
+              <button id="act-expand-genealogy" class="icon-close gen-expand-btn" type="button" title="展开/收起沿革面板" aria-expanded="false" aria-label="展开或收起沿革面板">
+                <svg class="ico-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5L8.8 7.2M6.5 13.5h-4v-4M2.5 13.5l4.7-4.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
               <button id="act-close-genealogy" class="icon-close" type="button" title="关闭" aria-label="关闭">
                 <svg class="ico-svg" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
               </button>
@@ -801,9 +805,9 @@
   <script src="js/atlas_boot.js?v=cfa92817"></script>
   <script src="js/map_data.js?v=0654ae26"></script>
   <script src="js/lore_core.js?v=e8d7fe0e"></script>
-  <script id="atlas-app-script" src="js/app.js?v=a6a2f2b6" data-v-snapshots="12ad4a8d" data-v-i18n="3c38f9a3" data-v-lore="65ce5e0f" data-v-pinyin="cdf39e44" data-v-hant="3afdab47" data-v-quiz="22c91db9" data-v-narrator="12cdf69d" data-v-sources="fa2af0b5"></script>
-  <script src="js/atlas_trace.js?v=22c3d133"></script>
-  <script src="js/atlas_search.js?v=432e3c8b"></script>
-  <script src="js/atlas_api.js?v=1ea4fca0"></script>
+  <script id="atlas-app-script" src="js/app.js?v=7b836bb8" data-v-snapshots="12ad4a8d" data-v-i18n="3c38f9a3" data-v-lore="4e42bc02" data-v-pinyin="e42b58c5" data-v-hant="3afdab47" data-v-quiz="706065c1" data-v-narrator="12cdf69d" data-v-sources="fa2af0b5"></script>
+  <script src="js/atlas_trace.js?v=49f14ee7"></script>
+  <script src="js/atlas_search.js?v=e16087a7"></script>
+  <script src="js/atlas_api.js?v=68e59f35"></script>
 </body>
 </html>
