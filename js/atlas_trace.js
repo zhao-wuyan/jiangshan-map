@@ -2272,6 +2272,24 @@
             this.locale === 'en' ? ev.siteEn || this.trTerm(ev.siteZh) : this._zh(ev.siteZh);
           const baseSite = fullLbl.replace(/\s*[（(][^）)]*[）)]\s*/g, '').trim() || fullLbl;
           let compactLbl = isCur ? fullLbl : baseSite;
+          if (isStory && isStepOrigin && curEv) {
+            if (idx === stepOriginIdx && (curEv.fromLabelZh || curEv.fromLabelEn)) {
+              compactLbl =
+                this.locale === 'en'
+                  ? curEv.fromLabelEn || fullLbl
+                  : this._zh(curEv.fromLabelZh || fullLbl);
+            } else if (Array.isArray(curEv.prongs)) {
+              const matchPr = curEv.prongs.find(
+                (p) => p && p.fromStopIdx === idx && (p.fromLabelZh || p.fromLabelEn)
+              );
+              if (matchPr) {
+                compactLbl =
+                  this.locale === 'en'
+                    ? matchPr.fromLabelEn || fullLbl
+                    : this._zh(matchPr.fromLabelZh || fullLbl);
+              }
+            }
+          }
           if (isPeerSync && syncPeersAtIdx) {
             const peerNames = syncPeersAtIdx
               .map((a) => (this.locale === 'en' ? a.profile.en : this._zh(a.profile.zh)))
@@ -3188,7 +3206,10 @@
       for (const m of d.milestones || []) {
         const mCoords = this._milestoneCoords(m);
         const veryClose = mCoords.some((mc) => isCloseCoord(mc, 28));
-        const siteMatch = matchesSiteName(m.site);
+        // Guard site-name matching by coordinate proximity so historical homonyms
+        // (e.g. Northern Song 南京应天府 at Shangqiu vs. Jiangsu Nanjing) do not leak across regions.
+        const siteMatch =
+          matchesSiteName(m.site) && (!mCoords.length || mCoords.some((mc) => isCloseCoord(mc, 100)));
         if (siteMatch || veryClose || (!nearCity && mCoords.some((mc) => isCloseCoord(mc, 48)))) {
           results.push({
             year: m.year,

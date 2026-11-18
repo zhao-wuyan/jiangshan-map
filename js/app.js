@@ -2016,6 +2016,8 @@
       setMoreCopy('sub-more-story', 'From textbook maps to Jiangshan', '从课本插图到开源历史地图');
       setMoreCopy('lbl-more-about', 'About & More Projects', '作者博客 · 更多作品');
       setMoreCopy('sub-more-about', 'deanchen.me', 'deanchen.me');
+      setMoreCopy('lbl-more-contact', 'Contact & Feedback', '联系作者 · 勘误反馈');
+      setMoreCopy('sub-more-contact', 'deancsj@gmail.com · Click to copy', 'deancsj@gmail.com · 点击复制');
       this._updateMusicUi();
       this._updateAutoplayUi();
       this._updatePlaySpeedUi();
@@ -4438,6 +4440,7 @@
         'qin:-206': { key: 'chuhan', stopIdx: -1, titleZh: '楚汉之争' },
         'tang:755': { key: 'anshi', stopIdx: -1, titleZh: '安史之乱' },
         'beisong:1127': { key: 'jingkang', stopIdx: -1, titleZh: '靖康之变' },
+        'roc:1935': { key: 'changzheng', stopIdx: -1, titleZh: '红军长征' },
       };
       return map[`${dynasty.key}:${m.year}`] || null;
     }
@@ -6677,10 +6680,13 @@
 
         const [bandLo, bandHi] = this._bandYearSpan(d);
         const span = Math.max(1, bandHi - bandLo);
+        const milestoneYears = new Set(
+          (d.milestones || []).map((m) => this._clampYearToDynasty(d, m.year))
+        );
         if (Array.isArray(d.phases) && d.phases.length > 1) {
           for (let i = 0; i < d.phases.length - 1; i++) {
             const u = d.phases[i].until;
-            if (u > bandLo && u < bandHi) {
+            if (u > bandLo && u < bandHi && milestoneYears.has(u)) {
               const pt = document.createElement('i');
               pt.className = 'band-phase-tick';
               pt.style.left = `${(((u - bandLo) / span) * 100).toFixed(2)}%`;
@@ -7015,13 +7021,6 @@
         for (const d of this.dynasties) {
           yrs.add(d.fromYear);
           yrs.add(d.focusYear);
-          if (Array.isArray(d.phases)) {
-            for (const ph of d.phases) {
-              if (ph.until > d.fromYear && ph.until <= d.toYear) {
-                yrs.add(ph.until);
-              }
-            }
-          }
           for (const m of d.milestones || []) {
             yrs.add(this._clampYearToDynasty(d, m.year));
           }
@@ -7160,8 +7159,8 @@
       this.playInterval = setInterval(() => this._autoplayTick(), this._autoplayIntervalMs());
     }
 
-    // Sorted years the autoplay lands on: every milestone year plus every territory-snapshot
-    // boundary. `hold` marks the nodes that redraw the map (border change, dynasty opening,
+    // Sorted years the autoplay lands on: every milestone year plus each dynasty opening.
+    // `hold` marks the nodes that redraw the map (border change, dynasty opening, or same-year
     // snapshot switch) so the border diff gets the longer dwell.
     _autoplayStops() {
       if (!this._autoplayStopList) {
@@ -7169,13 +7168,14 @@
         const mark = (year, hold) => holdByYear.set(year, Boolean(holdByYear.get(year) || hold));
         for (const d of this.dynasties) {
           mark(d.fromYear, true);
-          if (Array.isArray(d.phases)) {
-            for (const ph of d.phases) {
-              if (ph.until > d.fromYear && ph.until < d.toYear) mark(ph.until, true);
-            }
-          }
+          const phaseYears = new Set(
+            (d.phases || [])
+              .map((ph) => ph.until)
+              .filter((u) => u > d.fromYear && u < d.toYear)
+          );
           for (const m of d.milestones || []) {
-            mark(this._clampYearToDynasty(d, m.year), m.isMapChange);
+            const my = this._clampYearToDynasty(d, m.year);
+            mark(my, Boolean(m.isMapChange || phaseYears.has(my)));
           }
         }
         this._autoplayStopList = [...holdByYear]
@@ -9642,6 +9642,44 @@
         morePopover.addEventListener('click', () => {
           this._closeMorePopover();
         });
+        const contactLink = this._id('lnk-more-contact');
+        if (contactLink) {
+          contactLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const email = 'deancsj@gmail.com';
+            const copyFallback = () => {
+              if (typeof document === 'undefined' || !document.body) return;
+              const ta = document.createElement('textarea');
+              ta.value = email;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              try {
+                document.execCommand('copy');
+              } catch (_) {}
+              document.body.removeChild(ta);
+            };
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(email).catch(copyFallback);
+            } else {
+              copyFallback();
+            }
+            const subEl = this._id('sub-more-contact');
+            if (subEl) {
+              subEl.textContent =
+                this.locale === 'en' ? `✓ Copied: ${email}` : this._zh(`✓ 已复制：${email}`);
+              subEl.classList.add('is-copied');
+              clearTimeout(this._contactCopyTimer);
+              this._contactCopyTimer = setTimeout(() => {
+                subEl.classList.remove('is-copied');
+                subEl.textContent =
+                  this.locale === 'en' ? `${email} · Click to copy` : this._zh(`${email} · 点击复制`);
+              }, 2000);
+            }
+          });
+        }
         document.addEventListener('pointerdown', (e) => {
           if (
             !morePopover.classList.contains('is-hidden') &&
