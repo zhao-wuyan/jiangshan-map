@@ -20,8 +20,47 @@ const { CONTROLLER_SCRIPTS } = require('./sync_version');
 const ROOT = path.resolve(__dirname, '..');
 const JS_DIR = path.join(ROOT, 'js');
 const TOPICS_DIR = path.join(ROOT, 'topics');
+const SOURCES_DIR = path.join(ROOT, 'data', 'sources');
 const BASE_URL = 'https://deanchen.me/jiangshan-map';
-const LASTMOD = '2026-10-21';
+const LASTMOD = '2026-11-18';
+
+function loadSourcesBundle() {
+  const worksPath = path.join(SOURCES_DIR, 'works.json');
+  const works = fs.existsSync(worksPath) ? JSON.parse(fs.readFileSync(worksPath, 'utf8')) : {};
+  const refs = new Map();
+  if (fs.existsSync(SOURCES_DIR)) {
+    const files = fs
+      .readdirSync(SOURCES_DIR)
+      .filter((f) => f.endsWith('.json') && f !== 'works.json' && f !== 'baseline.json')
+      .sort();
+    for (const f of files) {
+      const obj = JSON.parse(fs.readFileSync(path.join(SOURCES_DIR, f), 'utf8'));
+      for (const [k, list] of Object.entries(obj)) {
+        if (Array.isArray(list) && list.length > 0) {
+          refs.set(k, list);
+        }
+      }
+    }
+  }
+  return { works, refs };
+}
+
+function formatSourceCitationsHtml(recordKey, sourcesBundle) {
+  if (!sourcesBundle || !sourcesBundle.refs) return '';
+  const list = sourcesBundle.refs.get(recordKey);
+  if (!Array.isArray(list) || list.length === 0) return '';
+  const parts = list
+    .map((r) => {
+      const w = sourcesBundle.works[r.w];
+      const wTitle = w ? w.zh : r.w;
+      const loc = r.loc ? ` ${r.loc}` : '';
+      const note = r.note ? `（${r.note}）` : '';
+      return `${escHtml(wTitle)}${escHtml(loc)}${escHtml(note)}`;
+    })
+    .filter(Boolean);
+  if (!parts.length) return '';
+  return `<div class="source-cite"><strong>史料出处：</strong>${parts.join('；')}</div>`;
+}
 
 function escHtml(str) {
   return String(str || '')
@@ -649,6 +688,122 @@ ${JSON.stringify(jsonLdObj, null, 2)}
       border-radius: 4px;
       margin-right: 0.4rem;
     }
+    .camp-badge {
+      display: inline-block;
+      color: #fff;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 0.1rem 0.48rem;
+      border-radius: 4px;
+      margin-right: 0.38rem;
+    }
+    .source-cite {
+      margin-top: 0.38rem;
+      padding-top: 0.3rem;
+      border-top: 1px dashed rgba(213, 199, 174, 0.75);
+      font-size: 0.83rem;
+      color: var(--ink-muted);
+      line-height: 1.55;
+    }
+    .story-link-pill {
+      display: inline-block;
+      margin-left: 0.4rem;
+      padding: 0.08rem 0.45rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--cinnabar);
+      background: rgba(158, 42, 34, 0.1);
+      border: 1px solid rgba(158, 42, 34, 0.3);
+      border-radius: 4px;
+      text-decoration: none;
+    }
+    .story-link-pill:hover {
+      background: var(--cinnabar);
+      color: #fff;
+      text-decoration: none !important;
+    }
+    .diff-add { color: #1f5c3a; font-weight: 600; }
+    .diff-rem { color: #8c2d24; font-weight: 600; }
+    .diff-same { color: var(--ink-muted); font-size: 0.85rem; }
+    .act-heading {
+      margin: 1.25rem 0 0.65rem;
+      padding: 0.4rem 0.75rem;
+      background: #ece3d0;
+      border-left: 4px solid var(--cinnabar);
+      border-radius: 4px;
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--ink-main);
+    }
+    .embed-card {
+      background: var(--bg-card);
+      border: 1px solid var(--gold-border);
+      border-radius: 8px;
+      padding: 1rem 1.15rem 1.1rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 10px rgba(34, 29, 23, 0.05);
+    }
+    .embed-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+    .embed-header h2 {
+      margin: 0;
+      padding: 0;
+      border: none;
+      font-size: 1.12rem;
+    }
+    .embed-hint {
+      font-size: 0.84rem;
+      color: var(--ink-muted);
+    }
+    .embed-frame-wrap {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      border: 1px solid var(--gold-border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #efe7d6;
+    }
+    @media (max-width: 640px) {
+      .embed-frame-wrap { height: 390px; }
+    }
+    .embed-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+    .carto-note-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-top: 0.6rem;
+    }
+    .carto-note-item {
+      background: #fdfaf3;
+      border: 1px solid var(--gold-border);
+      border-left: 4px solid var(--accent-teal);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+    }
+    .carto-note-item strong {
+      color: var(--ink-main);
+      display: block;
+      margin-bottom: 0.22rem;
+      font-size: 0.96rem;
+    }
+    .carto-note-item p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--ink-muted);
+      line-height: 1.65;
+    }
     footer.page-footer {
       margin-top: 2.2rem;
       padding-top: 1.2rem;
@@ -703,7 +858,273 @@ function renderFooter(allDynasties) {
     </footer>`;
 }
 
-function buildDynastyPage(d, idx, allDynasties, snapshots, enLocale, ctrl, provinces) {
+function renderEmbedMapSection({ iframeSrc, titleZh, hintZh }) {
+  return `    <section class="embed-card" aria-label="交互式历史地图预览">
+      <div class="embed-header">
+        <h2>${escHtml(titleZh)}</h2>
+        <span class="embed-hint">${escHtml(hintZh || '点击地图即可缩放、拖拽或拨动底部时间轴')}</span>
+      </div>
+      <div class="embed-frame-wrap">
+        <iframe class="embed-iframe" src="${escHtml(iframeSrc)}" title="${escHtml(titleZh)}" loading="lazy" allowfullscreen></iframe>
+      </div>
+    </section>`;
+}
+
+const DYNASTY_CARTOGRAPHIC_NOTES = {
+  zhanguo: [
+    {
+      title: '巴蜀疆界循涪江—嘉陵江自然分水岭',
+      detail:
+        '摒弃以东经 105° 经线直线切分巴蜀的简化画法，依据四川盆地山川地理，沿涪江与嘉陵江分水岭、渠江及大巴山脉走势标绘前 316 年秦司马错灭巴蜀前的巴国与蜀国边界。',
+    },
+    {
+      title: '战国郡制按史籍建置年份渐进浮现',
+      detail:
+        '前 403—前 317 年初期快照仅呈现秦关中（内史）、魏上郡与韩（后入赵）上党郡三处早期边郡；秦置汉中郡（前 312）、赵置云中雁门代郡（前 300）、秦置黔中巫郡（前 280—前 277）、陇西南阳郡（前 272）、太原东郡（前 247—前 242）及薛郡（前 223）均严格随历史设郡节点逐阶段出现。',
+    },
+    {
+      title: '先秦古海岸线与河口三角洲复原',
+      detail:
+        '复原战国时期古渤海湾西岸（岸线退至今天津歧口至河北沧州以西）、苏北与长江口漏斗湾（崇明沙洲尚未发育）及珠江三角洲古海湾岸线，避免将现代填海与千年泥沙淤积陆地误标为先秦疆域。',
+    },
+  ],
+  qin: [
+    {
+      title: '三十六郡至四十余郡的疆域演进',
+      detail:
+        '前 221 年秦始皇初并天下分置三十六郡；前 214 年蒙恬北逐匈奴收河南地（新秦中）、略取岭南置南海、桂林、象郡并与闽越故地置闽中郡，完整呈现秦盛期四十余郡格局。',
+    },
+    {
+      title: '秦末（前 209—前 207）动态裂变与赵佗据南海',
+      detail:
+        '拆分前 209 年大泽乡起义陈胜建“张楚”、六国旧贵族复立，以及前 207 年项羽巨鹿破秦主力两幅过渡快照；按《史记·南越列传》校准前 207 年南海尉赵佗初绝秦道时仅据南海郡，桂林、象郡至秦亡后方为赵佗兼并。',
+    },
+  ],
+  xihan: [
+    {
+      title: '元鼎至元封（前 111—前 108）四方开疆逐年切片',
+      detail:
+        '将汉武帝元鼎六年（前 111）平南越置南海交趾九郡并分置张掖敦煌、元封元年（前 110）平闽越并于海南岛置珠崖儋耳二郡、元封二年（前 109）开西南夷置益州郡、元封三年（前 108）灭卫氏朝鲜置乐浪四郡拆分为四幅连续快照。',
+    },
+    {
+      title: '十三刺史部与西域都护府山川边界',
+      detail:
+        '按《汉书·地理志》标绘司隶校尉部与十三刺史部监察区；河西走廊、河套与匈奴边界严格循祁连山、贺兰山与阴山自然分水岭，神爵二年（前 60）后纳入西域都护府统辖之天山南北诸国。',
+    },
+  ],
+  donghan: [
+    {
+      title: '西域“三绝三通”与西域长史府制度区分',
+      detail:
+        '精准还原永初元年（107）因羌乱隔绝陇道罢西域都护（107—123 年西域脱离东汉羁縻），至延光二年（123）班勇以西域长史屯柳中复通西域的变迁；此后东汉终世以“西域长史府”行都护之职。',
+    },
+    {
+      title: '永昌郡西界与王景治河故道',
+      detail:
+        '西南纳入汉明帝永平十二年（69）哀牢内附所置永昌郡（涵盖澜沧江以西叶榆、不韦至高黎贡山）；黄河水系按永平十三年（70）王景治河后由千乘入渤海的东汉至唐宋初故道标绘。',
+    },
+  ],
+  sanguo: [
+    {
+      title: '魏蜀吴三家僵持的自然山川锁钥',
+      detail:
+        '曹魏与蜀汉以秦岭褒斜、子午、散关及陇右祁连山分界；曹魏与孙吴于淮南（合肥、寿春、濡须口）及江汉（襄阳、江陵）形成夹淮、夹江南北拉锯；蜀、吴自222年夷陵之战后以巫峡、武陵山脉划界。',
+    },
+    {
+      title: '交广分置、公孙渊辽东与魏灭蜀终局',
+      detail:
+        '涵盖黄武五年（226）士燮卒后孙权分交州置广州、景初二年（238）司马懿平定辽东燕王公孙渊，以及景元四年（263）邓艾、钟会灭蜀后魏吴南北对峙的晚期格局。',
+    },
+  ],
+  xijin: [
+    {
+      title: '太康一统十九州制与秦汉古海岸线衔接',
+      detail:
+        '太康元年（280）王濬楼船下益州克建业灭吴，结束汉末以来近百年分裂，政区按《晋书·地理志》还原司、兖、豫、冀、幽、平、并、雍、凉、秦、梁、益、宁、青、徐、荆、扬、交、广十九州。',
+    },
+    {
+      title: '八王之乱至永嘉五胡起兵的空间因果链',
+      detail:
+        '在 280—316 年间细分永康（300）、永安（304，刘渊起兵左国城建汉、李雄据成都建国）、永嘉五年（311，洛阳陷落怀帝被掳）与建兴四年（316，长安陷落西晋覆亡）快照，呈现北方裂变过程。',
+    },
+  ],
+  dongjin: [
+    {
+      title: '北伐消长边界与前秦陷蜀期间的南中（宁州）归属',
+      detail:
+        '东晋北界随祖逖、桓温、谢玄（淝水之战后收复淮北河南）、刘裕（灭南燕、后秦收复洛阳长安）动态伸缩；373—384 年前秦攻占梁、益二州期间，南中宁州（今云南、黔西）仍由东晋刺史奉晋正朔固守。',
+    },
+    {
+      title: '十六国与吐谷浑去省界化山川校准',
+      detail:
+        '北方十六国及吐谷浑（317—668）疆界摒弃现代省界套用，沿祁连山、日月山、黄河河曲、太行山与燕山山脉分水岭精密咬合。',
+    },
+  ],
+  nanbei: [
+    {
+      title: '北魏北疆越过“六镇”抵阴山漠南',
+      detail:
+        '439 年北魏太武帝统一北方后，北疆越过沃野、怀朔、武川、抚冥、柔玄、怀荒六镇军事防线涵盖阴山以北漠南草场，准确反映六镇拱卫平城与洛阳的战略纵深。',
+    },
+    {
+      title: '东西魏、北齐北周与梁陈江淮拉锯',
+      detail:
+        '完整还原 534 年北魏分裂后东魏（北齐）与西魏（北周）以黄河、洛阳、潼关争衡，以及侯景之乱后西魏取蜀与江陵（后梁）、北齐尽占淮南至北周灭齐的疆域演变。',
+    },
+  ],
+  sui: [
+    {
+      title: '大业统郡与隋唐大运河水系贯通',
+      detail:
+        '按《隋书·地理志》大业三年（607）改州为郡后的建制标绘中原、河北、河东、关陇、巴蜀、江表、淮海、岭南诸郡区，并标绘以东都洛阳为中心贯通南北的永济渠、通济渠、山阳渎与江南河。',
+    },
+    {
+      title: '大业五年（609）西平吐谷浑与河源且末四郡',
+      detail:
+        '还原隋炀帝大业五年亲征吐谷浑后，于青海湖及柴达木盆地置西海、河源、鄯善、且末四郡的极盛西疆，以及大业末年（617）瓦岗、窦建德、李渊等群雄并起的隋末格局。',
+    },
+  ],
+  tang: [
+    {
+      title: '安西四镇三度得失与六大都护府动态消长',
+      detail:
+        '逐阶段还原贞观十四年（640）置安西都护府、显庆二年（657）灭西突厥置昆陵与濛池都护府，以及咸亨元年（670）与垂拱二年（686）安西四镇两度陷于吐蕃、长寿元年（692）王孝杰复四镇、安史之乱后河西陇右尽陷吐蕃直至大中五年（851）张议潮归义军收复河西的完整过程。',
+    },
+    {
+      title: '武周改制（690—705）、开元十五道与南诏兴起',
+      detail:
+        '690—705 年主政权切换为武则天“周（武周）”并定都神都洛阳；开元二十一年（733）由唐初十道析置为十五道；738 年皮逻阁合一六诏受封云南王，764—907 年间按唐与南诏在大渡河、黔中、雅州、嶲州的实控线划界。',
+    },
+    {
+      title: '开成五年（840）回鹘汗国崩溃后的漠北易主',
+      detail:
+        '840 年黠戛斯破回鹘牙帐后，漠北高原切换为黠戛斯疆域，回鹘仅存阿尔泰山以西及西迁天山（高昌回鹘）、河西（甘州回鹘）残部。',
+    },
+  ],
+  wudai: [
+    {
+      title: '十国精确州郡范围：马楚、荆南与杨吴南唐',
+      detail:
+        '马楚版图不含贵州（黔中土司羁縻区），南包桂管（桂林）至 951 年入南汉；荆南（高氏）独立标绘江陵、归、峡三州锁钥；鄂、黄、蕲三州划归杨吴与南唐。',
+    },
+    {
+      title: '泉漳“清源军”独立割据与后蜀秦凤四州',
+      detail:
+        '947 年后留从效据泉、漳二州置清源军（名义奉南唐、后周正朔而实为闽南独立割据政区）；秦、凤、阶、成四州自 947 年入后蜀，直至显德二年（955）周世宗西征方入后周。',
+    },
+  ],
+  beisong: [
+    {
+      title: '燕云十六州宋辽白沟河界线与西北横山拉锯',
+      detail:
+        '北宋北界循白沟河（今河北保定、雄安至山西雁门关一线）与辽南京道、西京道接壤；西北还原与党项（西夏）在灵州、横山及王韶“熙河开边”（熙河路、陇右河湟）的得失演变。',
+    },
+    {
+      title: '元丰二十三路与大渡河宋理分界',
+      detail:
+        '按《元丰九域志》标绘二十三路与京畿东京开封府、西京河南府、北京大名府、南京应天府四京；西南四川川峡四路与大理国严格循大渡河及滇西山脉分界。',
+    },
+  ],
+  nansong: [
+    {
+      title: '绍兴和议“淮河中流—大散关”宋金边界',
+      detail:
+        '绍兴十二年（1142）《绍兴和议》后，南宋与金朝东起淮河入海口循淮河中流，经唐、邓二州之间西抵秦岭大散关及大渡河，精准呈现两淮、京襄、川陕三大战区防线。',
+    },
+    {
+      title: '金都三迁（上京→中都→汴京）与蒙元灭金包抄南宋',
+      detail:
+        '同步演绎 1153 年完颜亮迁都燕京（金中都）、1214 年金宣宗避蒙古兵锋南迁汴京（金南京）、1234 年蔡州灭金，以及 1253 年忽必烈革囊渡金沙江灭大理对南宋形成南北合围的格局。',
+    },
+  ],
+  yuan: [
+    {
+      title: '中书省（腹里）、宣政院与十大行省（含库页岛）',
+      detail:
+        '还原元代中书省直辖腹里（河北、山东、山西）、宣政院辖吐蕃之地，以及岭北、辽阳（含库页岛苦夷）、河南江北、江浙、江西（含粤东）、湖广（含广西、海南、黔）、陕西、四川、云南、甘肃十大行省。',
+    },
+    {
+      title: '元末（1335 / 1367）周边政权清理与群雄并起',
+      detail:
+        '1335 年快照及时移除已覆亡的日本镰仓幕府、波斯伊利汗国与缅甸蒲甘王朝；1351—1367 年快照完整刻画韩宋、陈友谅大汉、张士诚大周、明玉珍大夏与朱元璋西吴的兼并过程。',
+    },
+  ],
+  ming: [
+    {
+      title: '两京十三布政使司、奴儿干都司与交趾布政使司',
+      detail:
+        '还原京师（北直隶）、南京（南直隶）与十三布政使司，东北纳入永乐七年（1409）所置奴儿干都司（含黑龙江口特林及库页岛囊哈儿卫），西南在 1407—1427 年阶段标绘交趾布政使司。',
+    },
+    {
+      title: '大宁都司的得失（1388—1407 vs 永乐内徙后）',
+      detail:
+        '洪武二十一年（1388）至永乐初，燕山以北至西辽河流域属明大宁都司；永乐初大宁都司内徙保定、将故地畀予兀良哈朵颜三卫后，明北界退守宣府、蓟镇与明长城一线。',
+    },
+    {
+      title: '明代海岸线与台湾“台江内海”复原',
+      detail:
+        '苏北、长江口、珠江三角洲及台湾台南海岸均按明代岸线还原，清晰呈现明末荷据与明郑时期一鲲身（安平）沙洲与赤嵌隔“台江内海”相望的古地理形态。',
+    },
+  ],
+  qing: [
+    {
+      title: '内地十八省、东北三将军与蒙藏新疆藩部体制',
+      detail:
+        '区分内地十八省布政使司与盛京、吉林、黑龙江三将军辖区、伊犁将军（统辖天山南北与巴尔喀什湖以东）、乌里雅苏台将军（外蒙古喀尔喀四部、唐努乌梁海）及驻藏大臣辖区。',
+    },
+    {
+      title: '1689《尼布楚条约》至 1860《北京条约》边界变迁',
+      detail:
+        '1689—1858 年东北疆界循外兴安岭至海并囊括库页岛；1858《瑷珲条约》、1860《北京条约》与 1864《勘分西北界约记》后按阶段展示黑龙江以北、乌苏里江以东（含库页岛）与巴尔喀什湖以东的割让过程。',
+    },
+    {
+      title: '台南台江内海淤积（1823）与光绪台湾建省（1885）',
+      detail:
+        '清初至嘉庆年间台南西侧仍保持台江内海古岸线，道光三年（1823）曾文溪改道注入后台江内海淤积成陆；光绪十一年（1885）台湾由福建台湾道升格建省。',
+    },
+  ],
+  roc: [
+    {
+      title: '1928年前后“直隶/奉天/北京”改制与首都动态迁徙',
+      detail:
+        '1928 年 6 月国民革命军克复北京前，省名保持“直隶、奉天”，都城称“北京”；1928 年 6 月后改称“河北、辽宁”与“北平”，并增置热河、察哈尔、绥远、宁夏、青海、西康诸省。首都标记随年份在南京、北京（北洋时期）、武汉与重庆（抗战陪都）间动态跟随。',
+    },
+    {
+      title: '1926年末北伐初年快照与外蒙古共享精密边界',
+      detail:
+        '单列 1926 年末北伐军克复两湖江西而江浙沪尚在孙传芳控制下的历史断面；外蒙古与民国北部诸省共享同一条无裂缝拓扑边界。',
+    },
+  ],
+  prc: [
+    {
+      title: '现代三十四省级政区沿革与海岸线基准',
+      detail:
+        '完整收录 23 个省、5 个自治区、4 个直辖市与香港、澳门 2 个特别行政区，涵盖 1954—1955 年省制调整、1988 年海南建省、1997 年重庆直辖及港澳回归等关键里程碑与权威文献出处。',
+    },
+  ],
+};
+
+function renderCartographicNotesSection(d) {
+  const notes = DYNASTY_CARTOGRAPHIC_NOTES[d.key];
+  if (!Array.isArray(notes) || notes.length === 0) return '';
+  const itemsHtml = notes
+    .map(
+      (n) => `        <div class="carto-note-item">
+          <strong>${escHtml(n.title)}</strong>
+          <p>${escHtml(n.detail)}</p>
+        </div>`
+    )
+    .join('\n');
+  return `    <section class="section-card">
+      <h2>四、${escHtml(d.title)}舆图边界、山川形胜与政区考据札记</h2>
+      <p>以下记录「江山时序」在绘制${escHtml(d.title)}（${fmtDynSpanZh(d)}）疆域多边形、古海岸线与州郡政区时所依据的历史地理考据准则：</p>
+      <div class="carto-note-grid">
+${itemsHtml}
+      </div>
+    </section>\n\n`;
+}
+
+function buildDynastyPage(d, idx, allDynasties, snapshots, enLocale, ctrl, provinces, sourcesBundle) {
   ctrl.locale = 'en';
   const titleEn = ctrl.dynastyName(d);
   const seatEn = ctrl.dynastySeat(d);
@@ -721,6 +1142,8 @@ function buildDynastyPage(d, idx, allDynasties, snapshots, enLocale, ctrl, provi
   const pageDesc = `${d.title}历史地图（${spanFullZh}，都城：${d.seat}）：${d.summary} 收录${(d.phases || []).length || 1}幅多阶段版图快照、${(d.settlements || []).length}座城池古今地名对照与${(d.milestones || []).length}项编年重大历史事件。`;
 
   const phases = d.phases && d.phases.length > 0 ? d.phases : [{ until: d.toYear, snap: d.snapKey }];
+  let prevPolities = [];
+  let prevPrefs = [];
   const phaseRowsHtml = phases
     .map((ph, pIdx) => {
       const sy = pIdx === 0 ? d.fromYear : phases[pIdx - 1].until;
@@ -731,31 +1154,83 @@ function buildDynastyPage(d, idx, allDynasties, snapshots, enLocale, ctrl, provi
 
       let polities = [];
       let prefs = [];
+      let snapCaption = '';
       if (d.key === 'prc') {
         polities = ['中华人民共和国'];
         prefs = (provinces || []).map((p) => p.title).filter(Boolean);
       } else if (sk && snapshots[sk]) {
         const snap = snapshots[sk];
-        polities = (snap.polities || [])
-          .filter((p) => p.role === 'main' || p.role === 'rival')
-          .map((p) => p.title)
-          .filter(Boolean);
-        prefs = (snap.prefectures || snap.regions || [])
-          .map((r) => r.title)
-          .filter(Boolean);
+        if (snap.caption) {
+          snapCaption = String(snap.caption).replace(/^[^·]+·\s*/, '').trim();
+        }
+        polities = Array.from(
+          new Set(
+            (snap.polities || [])
+              .filter((p) => p.role === 'main' || p.role === 'rival' || p.role === 'protectorate')
+              .map((p) => p.title)
+              .filter(Boolean)
+          )
+        );
+        const rawDivs =
+          Array.isArray(snap.regions) && snap.regions.length > 0
+            ? snap.regions
+            : snap.prefectures || [];
+        prefs = Array.from(new Set(rawDivs.map((r) => r.title).filter(Boolean)));
       }
-      const overviewText = ph.overview
-        ? `<br/><small style="color:#5e5346;">${escHtml(ph.overview)}</small>`
+      const overviewRaw = ph.overview || snapCaption;
+      const overviewText = overviewRaw
+        ? `<br/><small style="color:#5e5346;">${escHtml(overviewRaw)}</small>`
         : '';
       const phaseSpanStr =
         d.key === 'prc' && pIdx === phases.length - 1
           ? `${fmtYearShortZh(sy)} —`
           : `${fmtYearShortZh(sy)} — ${fmtYearShortZh(ey)}`;
+
+      let prefCellHtml = '';
+      if (pIdx === 0) {
+        const baseList = escHtml(prefs.slice(0, 14).join('、') || '全境省区');
+        const moreSuffix = prefs.length > 14 ? ` 等共 ${prefs.length} 个政区` : '';
+        prefCellHtml = `${baseList}${moreSuffix}`;
+      } else {
+        const addedPrefs = prefs.filter((x) => !prevPrefs.includes(x));
+        const removedPrefs = prevPrefs.filter((x) => !prefs.includes(x));
+        const addedPols = polities.filter((x) => !prevPolities.includes(x));
+        const removedPols = prevPolities.filter((x) => !polities.includes(x));
+        const diffLines = [];
+        if (addedPols.length) {
+          diffLines.push(`<span class="diff-add">＋新增/建置：</span>${escHtml(addedPols.join('、'))}`);
+        }
+        if (removedPols.length) {
+          diffLines.push(`<span class="diff-rem">－更替/罢撤：</span>${escHtml(removedPols.join('、'))}`);
+        }
+        if (addedPrefs.length) {
+          diffLines.push(
+            `<span class="diff-add">＋新增政区：</span>${escHtml(addedPrefs.slice(0, 10).join('、'))}${
+              addedPrefs.length > 10 ? ` 等 ${addedPrefs.length} 处` : ''
+            }`
+          );
+        }
+        if (removedPrefs.length) {
+          diffLines.push(
+            `<span class="diff-rem">－失守/省并政区：</span>${escHtml(removedPrefs.slice(0, 10).join('、'))}${
+              removedPrefs.length > 10 ? ` 等 ${removedPrefs.length} 处` : ''
+            }`
+          );
+        }
+        if (diffLines.length > 0) {
+          prefCellHtml = diffLines.join('<br/>');
+        } else {
+          prefCellHtml = `<span class="diff-same">州道/省区建制同上阶段（共 ${prefs.length} 政区），详见左侧阶段提要</span>`;
+        }
+      }
+      prevPolities = polities;
+      prevPrefs = prefs;
+
       return `          <tr>
             <td>第 ${pIdx + 1} 阶段</td>
             <td><strong>${phaseSpanStr}</strong><br/><small>${escHtml(eraStr)}</small>${overviewText}</td>
             <td>${escHtml(polities.join('、') || d.title)}</td>
-            <td>${escHtml(prefs.slice(0, 14).join('、') || '全境省区')}${prefs.length > 14 ? ` 等 ${prefs.length} 个政区` : ''}</td>
+            <td>${prefCellHtml}</td>
             <td><a href="${BASE_URL}/?year=${midYear}">查看 ${fmtYearShortZh(midYear)}年 舆图 →</a></td>
           </tr>`;
     })
@@ -783,10 +1258,18 @@ function buildDynastyPage(d, idx, allDynasties, snapshots, enLocale, ctrl, provi
       const enPair = (enLocale.milestones && enLocale.milestones[mk]) || [];
       const eraLabel = ctrl._eventEraLabel(d, m);
       const mUrl = `${BASE_URL}/?year=${m.year}`;
+      const storyMatch =
+        typeof ctrl._findStoryForMilestone === 'function'
+          ? ctrl._findStoryForMilestone(d.key, m)
+          : null;
+      const storyBadgeHtml = storyMatch
+        ? `<a class="story-link-pill" href="${BASE_URL}/topics/story-${escHtml(storyMatch.key)}.html">始末沙盘图志 &rarr;</a>`
+        : '';
+      const citeHtml = formatSourceCitationsHtml(`milestone:${mk}`, sourcesBundle);
       return `          <tr>
             <td><strong>${fmtYearShortZh(m.year)}年</strong><br/><small>${escHtml(eraLabel)}</small></td>
-            <td><strong>${escHtml(m.headline)}</strong>${enPair[0] ? `<br/><small>${escHtml(enPair[0])}</small>` : ''}</td>
-            <td>${escHtml(m.note || '')}</td>
+            <td><strong>${escHtml(m.headline)}</strong>${storyBadgeHtml}${enPair[0] ? `<br/><small>${escHtml(enPair[0])}</small>` : ''}</td>
+            <td>${escHtml(m.note || '')}${citeHtml}</td>
             <td><a href="${escHtml(mUrl)}">定格此年 →</a></td>
           </tr>`;
     })
@@ -876,6 +1359,12 @@ ${renderTopHeader()}
       </div>
     </article>
 
+${renderEmbedMapSection({
+  iframeSrc: `../?embed=1&year=${focusY}&from=${d.fromYear}&to=${d.key === 'prc' ? 2026 : d.toYear}`,
+  titleZh: `${d.title}交互式历史舆图预览（${spanZh} · 可拨动底部时间轴切换阶段）`,
+  hintZh: '点击地图激活交互 · 右上角可全屏打开主地图',
+})}
+
     <section class="section-card">
       <h2>一、${escHtml(d.title)}版图演变阶段与政权州郡格局（${phases.length} 阶段快照）</h2>
       <p>在「江山时序」交互式舆图中拖动底部时间轴滑块，或点击下方各阶段链接，即可查看${escHtml(d.title)}不同年份的政权疆域消长、州道郡县边界及黄河改道水系：</p>
@@ -886,7 +1375,7 @@ ${renderTopHeader()}
               <th>阶段</th>
               <th>年代范围与代表年号</th>
               <th>并立政权 / 核心版图</th>
-              <th>主要州郡 / 道 / 路 / 行省政区</th>
+              <th>政区格局与阶段疆域变化</th>
               <th>交互式地图直达</th>
             </tr>
           </thead>
@@ -919,14 +1408,14 @@ ${settlementRowsHtml}
     </section>
 
     <section class="section-card">
-      <h2>三、${escHtml(d.title)}重大历史事件编年表（${milestones.length} 项）</h2>
+      <h2>三、${escHtml(d.title)}重大历史事件编年表与正史出处（${milestones.length} 项）</h2>
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
               <th>年份与帝王年号</th>
               <th>历史事件（中英对照）</th>
-              <th>史事背景与地理空间影响</th>
+              <th>史事背景、地理空间影响与史料出处</th>
               <th>地图定格</th>
             </tr>
           </thead>
@@ -937,7 +1426,7 @@ ${milestoneRowsHtml}
       </div>
     </section>
 
-${renderFooter(allDynasties)}
+${renderCartographicNotesSection(d)}${renderFooter(allDynasties)}
   </main>
 </body>
 </html>
@@ -954,7 +1443,201 @@ ${renderFooter(allDynasties)}
   };
 }
 
-function buildJourneyPage(j, idx, allJourneys, allDynasties) {
+function buildStorylinePage(s, idx, allStories, allDynasties, sourcesBundle) {
+  const slug = `story-${s.key}`;
+  const canonicalUrl = `${BASE_URL}/topics/${slug}.html`;
+  const mapUrl = `${BASE_URL}/?event=${encodeURIComponent(s.key)}`;
+  const stops = s.stops || [];
+  const camps = s.camps || [];
+  const spanZh =
+    Array.isArray(s.span) && s.span.length === 2
+      ? `${fmtYearShortZh(s.span[0])}—${fmtYearShortZh(s.span[1])}年`
+      : '';
+  const spanEn =
+    Array.isArray(s.span) && s.span.length === 2
+      ? `${fmtYearEn(s.span[0])} – ${fmtYearEn(s.span[1])}`
+      : '';
+
+  const stopsChainZh = stops.map((st) => `${st.ancientZh}（今${st.modernZh}）`).join(' → ');
+  const stopsChainEn = stops.map((st) => `${st.ancientEn} (${st.modernEn})`).join(' → ');
+
+  const pageTitle = `${s.zh}历史地图（${spanZh} · ${s.en}）· 双阵营对抗沙盘、${stops.length}站全过程与史料出处 | 江山时序`;
+  const pageDesc = `${s.zh}（${s.en}，${s.courtesyZh}）：${s.descZh} 全程共 ${stops.length} 个关键时空节点（${stopsChainZh}），提供双阵营对抗沙盘、古今地名对照与一手史籍出处。`;
+
+  const campMap = new Map(camps.map((c) => [c.key, c]));
+  const campPillsHtml = camps
+    .map(
+      (c) =>
+        `<span class="meta-pill"><span class="camp-badge" style="background:${escHtml(c.color || '#9e2a22')};">${escHtml(
+          c.zh
+        )}</span><small>${escHtml(c.en)}</small></span>`
+    )
+    .join('\n        ');
+
+  const personSourceHtml = formatSourceCitationsHtml(`person:${s.key}`, sourcesBundle);
+
+  let lastActZh = '';
+  const stopCardsHtml = stops
+    .map((st, sIdx) => {
+      let actHeaderHtml = '';
+      if (st.actZh && st.actZh !== lastActZh) {
+        lastActZh = st.actZh;
+        actHeaderHtml = `      <div class="act-heading">${escHtml(st.actZh)}${
+          st.actEn ? ` <small style="font-weight:400; color:#5e5346; margin-left:0.5rem;">${escHtml(st.actEn)}</small>` : ''
+        }</div>\n`;
+      }
+      const campObj = campMap.get(st.camp);
+      const campBadgeHtml = campObj
+        ? `<span class="camp-badge" style="background:${escHtml(campObj.color || '#9e2a22')};">${escHtml(campObj.zh)}</span>`
+        : '';
+      const stopMapUrl = `${BASE_URL}/?event=${encodeURIComponent(s.key)}&stop=${sIdx}`;
+      const actorsList = Array.isArray(st.actors) && st.actors.length
+        ? `<div style="font-size:0.85rem; color:#5e5346; margin:0.2rem 0;"><strong>核心人物：</strong>${st.actors
+            .map((a) => `${escHtml(a.zh)}（${escHtml(a.en)}）`)
+            .join('、')}</div>`
+        : '';
+      const vectorParts = [];
+      if (st.fromLabelZh) vectorParts.push(st.fromLabelZh);
+      if (Array.isArray(st.prongs)) {
+        for (const pr of st.prongs) {
+          if (pr.fromLabelZh) vectorParts.push(pr.fromLabelZh);
+        }
+      }
+      const vectorHtml = vectorParts.length
+        ? `<div style="font-size:0.85rem; color:#5e5346; margin:0.2rem 0;"><strong>进军方向：</strong>自 ${escHtml(
+            vectorParts.join(' / ')
+          )} 推进至 ${escHtml(st.ancientZh)}</div>`
+        : '';
+      const timeLabelZh = `${fmtYearShortZh(st.year)}年${st.subEraZh ? ` · ${st.subEraZh}` : ''}`;
+
+      return `${actHeaderHtml}      <div class="stop-card">
+        <div class="stop-header">
+          <div>
+            <span class="stop-badge">第 ${sIdx + 1} 幕</span>${campBadgeHtml}
+            <strong>${escHtml(st.ancientZh)}（今${escHtml(st.modernZh)}）· ${escHtml(st.titleZh)}</strong>
+            <small style="color:#5e5346; margin-left:0.4rem;">${escHtml(st.ancientEn)} (${escHtml(st.modernEn)}) — ${escHtml(st.titleEn)}</small>
+          </div>
+          <div>
+            <strong>${escHtml(timeLabelZh)}</strong> ·
+            <a href="${escHtml(stopMapUrl)}" style="color:#9e2a22; text-decoration:none; font-weight:600;">沙盘推演此站 &rarr;</a>
+          </div>
+        </div>
+        ${actorsList}${vectorHtml}
+        <p style="margin:0.4rem 0;">${escHtml(st.descZh)}</p>
+        <p class="en-sub" style="margin:0.25rem 0 0.5rem;">${escHtml(st.descEn)}</p>
+        ${
+          st.quoteZh
+            ? `<blockquote class="poem-box">${escHtml(st.quoteZh)}<cite>${escHtml(st.quoteEn || '')}</cite></blockquote>`
+            : ''
+        }
+      </div>`;
+    })
+    .join('\n');
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Article',
+        headline: pageTitle,
+        description: pageDesc,
+        url: canonicalUrl,
+        datePublished: LASTMOD,
+        dateModified: LASTMOD,
+        inLanguage: ['zh-CN', 'en'],
+        author: {
+          '@type': 'Organization',
+          name: '江山时序 (Jiangshan Historical Atlas)',
+          url: `${BASE_URL}/`,
+        },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: '江山时序首页', item: `${BASE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: '专题图志总览', item: `${BASE_URL}/topics/index.html` },
+          { '@type': 'ListItem', position: 3, name: `${s.zh}历史地图`, item: canonicalUrl },
+        ],
+      },
+    ],
+  };
+
+  const keywords = [
+    `${s.zh}历史地图`,
+    `${s.zh}路线图`,
+    `${s.zh}全过程地图`,
+    ...(s.aliases || []),
+    ...stops.map((st) => st.ancientZh),
+    '事件始末沙盘',
+    '江山时序',
+  ];
+
+  const html = `${renderSharedHead({
+    title: pageTitle,
+    description: pageDesc,
+    keywords,
+    canonicalUrl,
+    jsonLdObj: jsonLd,
+  })}
+<body>
+${renderTopHeader()}
+  <main>
+    <nav class="breadcrumb" aria-label="面包屑导航">
+      <a href="${BASE_URL}/">江山时序首页</a> &rsaquo;
+      <a href="${BASE_URL}/topics/index.html">专题图志总目录</a> &rsaquo;
+      <span>${escHtml(s.zh)}（${escHtml(spanZh)}）</span>
+    </nav>
+
+    <article class="hero-card">
+      <span class="kicker">事件始末 · 双阵营对抗历史沙盘图志（第 ${idx + 1} / ${allStories.length} 篇）</span>
+      <h1>${escHtml(s.zh)}历史地图（${escHtml(s.courtesyZh)}）</h1>
+      <p class="en-sub">${escHtml(s.en)} (${escHtml(s.courtesyEn)})</p>
+      <div class="meta-pills">
+        <span class="meta-pill"><strong>起止年代：</strong>${escHtml(spanZh)}</span>
+        <span class="meta-pill"><strong>推演节点：</strong>共 ${stops.length} 站</span>
+        ${campPillsHtml}
+      </div>
+      <p>${escHtml(s.descZh)}</p>
+      <p class="en-sub">${escHtml(s.descEn)}</p>
+      <p><strong>全线关键节点：</strong>${escHtml(stopsChainZh)}。</p>
+      ${personSourceHtml}
+      <div class="cta-row">
+        <a class="cta-btn" href="${escHtml(mapUrl)}">在交互式地图中推演「${escHtml(s.zh)}」双阵营沙盘 &rarr;</a>
+        <a class="cta-btn secondary" href="${escHtml(mapUrl)}&amp;lang=en">Open Two-Camp Sandtable in English &rarr;</a>
+        <a class="cta-btn secondary" href="${BASE_URL}/topics/index.html">返回专题图志总览</a>
+      </div>
+    </article>
+
+${renderEmbedMapSection({
+  iframeSrc: `../?embed=1&event=${encodeURIComponent(s.key)}`,
+  titleZh: `${s.zh}双阵营对抗历史沙盘实时预览（${spanZh}）`,
+  hintZh: '点击地图即可交互推演 · 右上角可全屏打开沙盘',
+})}
+
+    <section class="section-card">
+      <h2>${escHtml(s.zh)} · 全程 ${stops.length} 幕时空推演、古今地名与史料引文详解</h2>
+${stopCardsHtml}
+    </section>
+
+${renderFooter(allDynasties)}
+  </main>
+</body>
+</html>
+`;
+
+  fs.writeFileSync(path.join(TOPICS_DIR, `${slug}.html`), html, 'utf8');
+  return {
+    slug,
+    key: s.key,
+    url: canonicalUrl,
+    titleZh: `${s.zh}历史地图（${spanZh}）`,
+    titleEn: `${s.en} (${spanEn})`,
+    descZh: `${s.courtesyZh} · 双阵营${stops.length}站沙盘：${stops.map((st) => st.ancientZh).join(' → ')}`,
+    descEn: `${s.courtesyEn} · ${stops.length}-stop sandtable: ${stops.map((st) => st.ancientEn).join(' → ')}`,
+  };
+}
+
+function buildJourneyPage(j, idx, allJourneys, allDynasties, sourcesBundle) {
   const slug = `journey-${j.key}`;
   const canonicalUrl = `${BASE_URL}/topics/${slug}.html`;
   const mapUrl = `${BASE_URL}/?person=${encodeURIComponent(j.key)}`;
@@ -968,8 +1651,13 @@ function buildJourneyPage(j, idx, allJourneys, allDynasties) {
   const pageTitle = `${j.titleZh}路线图（${cleanSpanZh}）· ${stops.length}站古今地名对照与诗词纪事 | 江山时序`;
   const pageDesc = `${j.titleZh}（${j.titleEn}，${cleanSpanZh}）历史地图时空轨迹，全线共 ${stops.length} 站：${stopsChainZh}。提供逐站帝王年号、古今政区对照、经典史料诗词与交互式路线回放。`;
 
+  const yearSeen = new Map();
   const stopCardsHtml = stops
     .map((s, sIdx) => {
+      const cnt = (yearSeen.get(s.year) || 0) + 1;
+      yearSeen.set(s.year, cnt);
+      const stopKeySuffix = cnt > 1 ? `${s.year}-${cnt}` : `${s.year}`;
+      const stopCiteHtml = formatSourceCitationsHtml(`journey:${j.key}:${stopKeySuffix}`, sourcesBundle);
       const stopMapUrl = `${BASE_URL}/?year=${s.year}&place=${encodeURIComponent(s.ancientZh)}`;
       return `      <div class="stop-card">
         <div class="stop-header">
@@ -989,10 +1677,12 @@ function buildJourneyPage(j, idx, allJourneys, allDynasties) {
           s.quoteZh
             ? `<blockquote class="poem-box">${escHtml(s.quoteZh)}<cite>${escHtml(s.quoteEn || '')}</cite></blockquote>`
             : ''
-        }
+        }${stopCiteHtml}
       </div>`;
     })
     .join('\n');
+
+  const personSourceHtml = formatSourceCitationsHtml(`person:${j.key}`, sourcesBundle);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -1059,11 +1749,18 @@ ${renderTopHeader()}
       </div>
       <p><strong>全线途经古今地名：</strong>${escHtml(stopsChainZh)}。</p>
       <p class="en-sub"><strong>Route Stops:</strong> ${escHtml(stopsChainEn)}.</p>
+      ${personSourceHtml}
       <div class="cta-row">
         <a class="cta-btn" href="${escHtml(mapUrl)}">在交互式历史地图中播放「${escHtml(j.titleZh)}」全线动画 &rarr;</a>
         <a class="cta-btn secondary" href="${escHtml(mapUrl)}&amp;lang=en">Play Interactive Journey in English &rarr;</a>
       </div>
     </article>
+
+${renderEmbedMapSection({
+  iframeSrc: `../?embed=1&person=${encodeURIComponent(j.key)}`,
+  titleZh: `${j.titleZh}交互式历史舆图路线预览（${cleanSpanZh}）`,
+  hintZh: '点击地图即可缩放查看各站 · 右上角可全屏播放动画',
+})}
 
     <section class="section-card">
       <h2>${escHtml(j.titleZh)} · 逐站时空坐标、古今地名与史料诗词详解（${stops.length} 站）</h2>
@@ -1112,7 +1809,9 @@ function buildFeaturedTopicPage(topic, allDynasties, ctrl) {
           modernLoc = '广东珠江口伶仃洋海面';
           modProv = '广东省';
         }
-        let adminStr = Array.from(new Set([...(st.regions || []), ...(st.prefectures || [])])).join(' · ');
+        let adminStr = Array.from(new Set([...(st.regions || []), ...(st.prefectures || [])]))
+          .map((p) => p.replace(/\(([^)]+)\)/g, '（$1）'))
+          .join(' · ');
         let polityStr = st.polity || '';
         if (topic.slug === 'wentianxiang-lingdingyang' && st.place === '零丁洋') {
           polityStr = '南宋抗元水军海域';
@@ -1163,10 +1862,20 @@ ${routeRows}
       .map((d) => {
         const sampleY = d.focusYear !== undefined ? d.focusYear : d.fromYear;
         const dInfo = ctrl.inspect({ year: sampleY, place: targetPlace });
-        const adminParts = Array.from(new Set([...(dInfo.regions || []), ...(dInfo.prefectures || [])])).filter(
-          (p) => !p.includes('(') || p.includes('道') || p.includes('路') || p.includes('省') || p.includes('郡')
-        );
-        const adminStr = adminParts.join(' · ') || '王畿/直辖';
+        // In early Warring States (-403 BCE), only border commanderies (上党郡, 上郡, 关中内史) existed;
+        // avoid nearest-vertex region fallback assigning 关中（内史）or 上党郡 to Chu/Yue heartland cities.
+        const rawAdminList =
+          d.key === 'zhanguo'
+            ? dInfo.polity === '秦'
+              ? [...(dInfo.regions || []), ...(dInfo.prefectures || [])]
+              : dInfo.prefectures || []
+            : [...(dInfo.regions || []), ...(dInfo.prefectures || [])];
+        const adminParts = Array.from(
+          new Set(rawAdminList.map((p) => String(p).replace(/\(([^)]+)\)/g, '（$1）')))
+        ).filter(Boolean);
+        const adminStr =
+          adminParts.join(' · ') ||
+          (d.key === 'zhanguo' ? `${dInfo.polity || d.title}直辖（未设郡）` : `${dInfo.polity || d.title}直辖`);
         let nearStr = '';
         if (topic.slug === 'shuihu-jiangzhou') {
           nearStr = dInfo.nearestCity
@@ -1191,7 +1900,9 @@ ${routeRows}
       })
       .join('\n');
 
-    let adminNow = Array.from(new Set([...(info.regions || []), ...(info.prefectures || [])])).join(' · ');
+    let adminNow = Array.from(new Set([...(info.regions || []), ...(info.prefectures || [])]))
+      .map((p) => String(p).replace(/\(([^)]+)\)/g, '（$1）'))
+      .join(' · ');
     let polityNow = info.polity || '';
     if (topic.slug === 'battle-chibi') {
       polityNow = '东汉荆州南郡';
@@ -1309,6 +2020,12 @@ ${renderTopHeader()}
       </div>
     </article>
 
+${renderEmbedMapSection({
+  iframeSrc: `../?embed=1&${topic.mapHref.split('?')[1] || ''}`,
+  titleZh: `${topic.shortZh}交互式历史舆图预览`,
+  hintZh: '点击地图激活交互 · 右上角可全屏打开主地图',
+})}
+
 ${detailSectionHtml}
 
 ${renderFooter(allDynasties)}
@@ -1328,11 +2045,21 @@ ${renderFooter(allDynasties)}
   };
 }
 
-function buildTopicsIndexPage(dynMeta, journeyMeta, featuredMeta, allDynasties) {
+function buildTopicsIndexPage(dynMeta, storyMeta, journeyMeta, featuredMeta, allDynasties) {
   const canonicalUrl = `${BASE_URL}/topics/index.html`;
-  const pageTitle = '江山时序 · 中国历史地图专题图志总览（18朝代疆域 · 人物生平行迹 · 古诗词路线 · 历史战役）';
+  const pageTitle = '江山时序 · 中国历史地图专题图志总览（18朝代疆域 · 重大事件始末沙盘 · 人物行迹 · 古诗词路线）';
   const pageDesc =
-    '江山时序（Jiangshan Historical Atlas）静态历史地理专题图志索引：涵盖战国、秦、汉、三国、晋、南北朝、隋、唐、五代、宋、元、明、清、民国与现代18个时期版图政区，秦始皇、张骞、诸葛亮、玄奘、李白、苏轼、王阳明百余位历史人物行迹，以及杜甫、苏轼、文天祥、韩愈、辛弃疾古诗词路线与长平、赤壁、淝水大战地图。';
+    '江山时序（Jiangshan Historical Atlas）静态历史地理专题图志索引：涵盖战国、秦、汉、三国、晋、南北朝、隋、唐、五代、宋、元、明、清、民国与现代18个时期版图政区，秦灭六国、楚汉之争、安史之乱、靖康之变、红军长征5大双阵营始末沙盘，张骞、诸葛亮、玄奘、李白、苏轼、王阳明人物行迹，以及古诗词路线与长平、赤壁、淝水大战地图。';
+
+  const storyListHtml = storyMeta
+    .map(
+      (s) => `          <tr>
+            <td><a href="${BASE_URL}/topics/${s.slug}.html"><strong>${escHtml(s.titleZh)}</strong></a><br/><small>${escHtml(s.titleEn)}</small></td>
+            <td>${escHtml(s.descZh)}</td>
+            <td><a href="${BASE_URL}/topics/${s.slug}.html">查阅沙盘图志 &rarr;</a></td>
+          </tr>`
+    )
+    .join('\n');
 
   const featListHtml = featuredMeta
     .map(
@@ -1364,6 +2091,8 @@ function buildTopicsIndexPage(dynMeta, journeyMeta, featuredMeta, allDynasties) 
     )
     .join('\n');
 
+  const totalCount = dynMeta.length + storyMeta.length + journeyMeta.length + featuredMeta.length;
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -1384,6 +2113,7 @@ function buildTopicsIndexPage(dynMeta, journeyMeta, featuredMeta, allDynasties) 
     keywords: [
       '中国历史地图专题',
       '历代疆域图志',
+      '历史事件始末沙盘',
       '古诗词地理路线图',
       '古今地名对照表',
       '点人溯事生平行迹',
@@ -1401,17 +2131,35 @@ ${renderTopHeader()}
     </nav>
 
     <article class="hero-card">
-      <span class="kicker">江山时序 · 历史地理百科与专题索引（共 ${dynMeta.length + journeyMeta.length + featuredMeta.length} 篇静态图志）</span>
-      <h1>中国历代疆域、点人溯事、古诗词路线与历史大战专题图志总览</h1>
-      <p class="en-sub">Complete Directory of Chinese Historical Territory Maps, Person Chronicles, Classical Poetry Routes &amp; Famous Battles (403 BCE – Present)</p>
-      <p>本目录汇总「江山时序」全部静态专题图志，每篇均提供完整古今地名对照表、帝王年号编年、两千四百年政区沿革及一键进入交互式古舆图的直达链接。</p>
+      <span class="kicker">江山时序 · 历史地理百科与专题索引（共 ${totalCount} 篇静态图志）</span>
+      <h1>中国历代疆域、事件始末沙盘、点人溯事与诗词战役专题图志总览</h1>
+      <p class="en-sub">Complete Directory of Chinese Historical Territory Maps, Two-Camp Event Sandtables, Person Chronicles &amp; Classical Poetry Routes (403 BCE – Present)</p>
+      <p>本目录汇总「江山时序」全部静态专题图志，每篇均提供完整古今地名对照表、帝王年号编年、一手正史出处、两千四百年政区沿革及一键进入交互式古舆图的直达链接。</p>
       <div class="cta-row">
         <a class="cta-btn" href="${BASE_URL}/">进入「江山时序」交互式主地图（前403年—现代）&rarr;</a>
       </div>
     </article>
 
     <section class="section-card">
-      <h2>一、古诗词地理名篇路线与著名历史战役专题（${featuredMeta.length} 篇）</h2>
+      <h2>一、重大历史事件始末 · 双阵营对抗沙盘图志（${storyMeta.length} 篇）</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>事件始末沙盘（中英对照）</th>
+              <th>时代跨度与全线推演节点</th>
+              <th>专题链接</th>
+            </tr>
+          </thead>
+          <tbody>
+${storyListHtml}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <h2>二、古诗词地理名篇路线与著名历史战役专题（${featuredMeta.length} 篇）</h2>
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -1429,7 +2177,7 @@ ${featListHtml}
     </section>
 
     <section class="section-card">
-      <h2>二、中国十八历史时期疆域、政区与古今地名图志（${dynMeta.length} 篇）</h2>
+      <h2>三、中国十八历史时期疆域、政区与古今地名图志（${dynMeta.length} 篇）</h2>
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -1447,7 +2195,7 @@ ${dynListHtml}
     </section>
 
     <section class="section-card">
-      <h2>三、点人溯事：历史人物生平行迹图志（${journeyMeta.length} 篇）</h2>
+      <h2>四、点人溯事：历史人物生平行迹图志（${journeyMeta.length} 篇）</h2>
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -1464,6 +2212,28 @@ ${jListHtml}
       </div>
     </section>
 
+    <section class="section-card">
+      <h2>五、历史舆图制图原则与山川地理考据说明</h2>
+      <div class="carto-note-grid">
+        <div class="carto-note-item">
+          <strong>1. 自然山川与分水岭原则（去现代省界化）</strong>
+          <p>历代政权边界严格遵循山脉分水岭、大川水道与关隘锁钥（如战国巴蜀循涪江—嘉陵江分水岭、宋元川滇循大渡河、北魏北界越六镇抵阴山漠南、河西与吐谷浑循祁连山及日月山分界），摒弃将现代省界机械套用于古代政区的做法。</p>
+        </div>
+        <div class="carto-note-item">
+          <strong>2. 古海岸线与河口三角洲演进复原</strong>
+          <p>分阶段还原先秦至唐宋古渤海湾西岸、苏北范公堤以东成陆前岸线、长江口崇明沙洲发育过程、珠江三角洲古海湾，以及明郑至清道光三年（1823）曾文溪改道淤积前的台湾台南“台江内海”古地理形态。</p>
+        </div>
+        <div class="carto-note-item">
+          <strong>3. 一手正史与《资治通鉴》卷次出处核验</strong>
+          <p>编年大事、城邑地标与人物行迹逐条核对《二十四史》（《史记》《汉书》《三国志》《晋书》《隋书》《旧唐书》《新唐书》《宋史》等）及《资治通鉴》具体卷次，并在各朝代与事件专题页内展示史料出处。</p>
+        </div>
+        <div class="carto-note-item">
+          <strong>4. 古今同名异地消歧与细粒度时间切片</strong>
+          <p>严格区分历代“同名异地”（如秦汉巴郡江州今重庆 vs 东晋隋唐宋江州今江西九江；三国蒲圻赤壁 vs 黄州东坡赤壁），并在政权交替关键节点（如秦末前209/前207、西汉前111—前108四连拍、盛唐安西四镇三度得失、元末1335/1367、民国1926北伐与1928省名改制）提供高密度时间切片。</p>
+        </div>
+      </div>
+    </section>
+
 ${renderFooter(allDynasties)}
   </main>
 </body>
@@ -1473,7 +2243,7 @@ ${renderFooter(allDynasties)}
   fs.writeFileSync(path.join(TOPICS_DIR, 'index.html'), html, 'utf8');
 }
 
-function updateSitemapXml(dynMeta, journeyMeta, featuredMeta) {
+function updateSitemapXml(dynMeta, storyMeta, journeyMeta, featuredMeta) {
   const sitemapPath = path.join(ROOT, 'sitemap.xml');
   const existingXml = fs.readFileSync(sitemapPath, 'utf8');
 
@@ -1485,6 +2255,7 @@ function updateSitemapXml(dynMeta, journeyMeta, featuredMeta) {
 
   const topicUrls = [
     { loc: `${BASE_URL}/topics/index.html`, priority: '0.95' },
+    ...storyMeta.map((s) => ({ loc: s.url, priority: '0.92' })),
     ...featuredMeta.map((f) => ({ loc: f.url, priority: '0.9' })),
     ...dynMeta.map((d) => ({ loc: d.url, priority: '0.9' })),
     ...journeyMeta.map((j) => ({ loc: j.url, priority: '0.9' })),
@@ -1515,7 +2286,7 @@ function computeCalligraphySubsetText(dynasties, enLocale) {
   return Array.from(new Set(sources.join(''))).sort().join('');
 }
 
-function updateIndexHtmlSeoDirectory(dynMeta, journeyMeta, featuredMeta, dynasties, snapshots, loreData, enLocale) {
+function updateIndexHtmlSeoDirectory(dynMeta, storyMeta, journeyMeta, featuredMeta, dynasties, snapshots, loreData, enLocale) {
   const indexPath = path.join(ROOT, 'index.html');
   let html = fs.readFileSync(indexPath, 'utf8');
 
@@ -1606,8 +2377,12 @@ function updateIndexHtmlSeoDirectory(dynMeta, journeyMeta, featuredMeta, dynasti
     ''
   );
 
+  const totalCount = dynMeta.length + storyMeta.length + journeyMeta.length + featuredMeta.length;
   const allItems = [
-    `          <li><a href="${BASE_URL}/topics/index.html"><strong>江山时序专题图志总览（34篇静态历史地理百科目录）</strong></a></li>`,
+    `          <li><a href="${BASE_URL}/topics/index.html"><strong>江山时序专题图志总览（${totalCount}篇静态历史地理百科目录）</strong></a></li>`,
+    ...storyMeta.map(
+      (s) => `          <li><a href="${s.url}"><strong>${escHtml(s.titleZh)}双阵营始末沙盘图志（静态专题页）</strong></a></li>`
+    ),
     ...featuredMeta.map(
       (f) => `          <li><a href="${f.url}"><strong>${escHtml(f.titleZh)}（静态图文考据专题）</strong></a></li>`
     ),
@@ -1638,21 +2413,27 @@ ${allItems}
 function main() {
   fs.mkdirSync(TOPICS_DIR, { recursive: true });
   const { ctrl, dynasties, snapshots, loreData, enLocale, provinces } = loadAtlasRuntime();
+  const sourcesBundle = loadSourcesBundle();
+  const stories = (loreData.PERSON_PROFILES || []).filter((p) => p && p.isStory);
 
   const dynMeta = dynasties.map((d, idx) =>
-    buildDynastyPage(d, idx, dynasties, snapshots, enLocale, ctrl, provinces)
+    buildDynastyPage(d, idx, dynasties, snapshots, enLocale, ctrl, provinces, sourcesBundle)
+  );
+  const storyMeta = stories.map((s, idx) =>
+    buildStorylinePage(s, idx, stories, dynasties, sourcesBundle)
   );
   const journeyMeta = loreData.HISTORICAL_JOURNEYS.map((j, idx) =>
-    buildJourneyPage(j, idx, loreData.HISTORICAL_JOURNEYS, dynasties)
+    buildJourneyPage(j, idx, loreData.HISTORICAL_JOURNEYS, dynasties, sourcesBundle)
   );
   const featuredMeta = FEATURED_TOPICS.map((t) =>
     buildFeaturedTopicPage(t, dynasties, ctrl)
   );
 
-  buildTopicsIndexPage(dynMeta, journeyMeta, featuredMeta, dynasties);
-  const addedSitemapCount = updateSitemapXml(dynMeta, journeyMeta, featuredMeta);
+  buildTopicsIndexPage(dynMeta, storyMeta, journeyMeta, featuredMeta, dynasties);
+  const addedSitemapCount = updateSitemapXml(dynMeta, storyMeta, journeyMeta, featuredMeta);
   updateIndexHtmlSeoDirectory(
     dynMeta,
+    storyMeta,
     journeyMeta,
     featuredMeta,
     dynasties,
@@ -1662,7 +2443,7 @@ function main() {
   );
 
   console.log(
-    `✓ Generated ${dynMeta.length} dynasty pages, ${journeyMeta.length} journey pages, ${featuredMeta.length} featured poetry/battle pages, and topics/index.html (${addedSitemapCount} static URLs added to sitemap.xml)`
+    `✓ Generated ${dynMeta.length} dynasty pages, ${storyMeta.length} storyline pages, ${journeyMeta.length} journey pages, ${featuredMeta.length} featured poetry/battle pages, and topics/index.html (${addedSitemapCount} static URLs added to sitemap.xml)`
   );
 }
 
