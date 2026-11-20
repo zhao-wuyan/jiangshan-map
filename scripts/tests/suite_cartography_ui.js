@@ -1359,9 +1359,9 @@ async function runCartographyUiSuite(ctx) {
     for (const y of [-221, 755, 1127]) {
       assert(stops.some((s) => s.year === y && s.hold), `Autoplay must hold on the border change in ${y}`);
     }
-    // Snapshot boundaries without a same-year milestone (-340, 614, 880, 1335, 1927) must not create
+    // Snapshot boundaries without a same-year milestone (614, 880, 1335, 1927) must not create
     // orphan autoplay stops without an event headline.
-    for (const y of [-340, 614, 880, 1335, 1927]) {
+    for (const y of [614, 880, 1335, 1927]) {
       assert(!stops.some((s) => s.year === y), `Autoplay must not stop on milestone-less snapshot boundary ${y}`);
     }
     const holdCount = stops.filter((s) => s.hold).length;
@@ -1397,6 +1397,74 @@ async function runCartographyUiSuite(ctx) {
     proto._syncAutoMilestoneBalloon.call(ctrl, tang);
     assert.notStrictEqual(ctrl.milestoneBalloon.innerHTML, 'unchanged', 'A locale switch must rebuild the auto callout');
     Object.assign(ctrl, { locale: 'zh', playing: false, activeMilestone: null });
+
+    // CUJ 28b: Hiding #chk-milestones switches stepping & autoplay to pure-territory snapshots, locks camera pan, and toggles timeline ticks cleanly
+    assert(
+      styleCss.includes('#scrubber-dock.is-milestones-hidden .band-ev-dot') &&
+        styleCss.includes('.band-phase-tick.is-silent-phase') &&
+        indexHtml.includes('id="chk-milestones"'),
+      'Expected #chk-milestones pure-territory CSS rules and checkbox markup'
+    );
+    const savedGrpM = ctrl.grpMilestones;
+    const savedEnsureView = ctrl._ensureMilestoneInView;
+    const savedOpenBalloon = ctrl.openMilestoneBalloon;
+    let hiddenFlag = true;
+    ctrl.grpMilestones = {
+      querySelectorAll: () => [],
+      classList: { contains: (cls) => cls === 'is-hidden' && hiddenFlag },
+    };
+    const tStops = proto._autoplayStops.call(ctrl).filter((s) => s.year > ctrl.minYear);
+    assert(
+      tStops.length >= 195 && tStops.length < stops.length && tStops.every((s) => s.hold),
+      `Pure-territory autoplay must visit only territory transitions (~207 vs ${stops.length}), got ${tStops.length}`
+    );
+    const tStopYears = new Set(tStops.map((s) => s.year));
+    for (const silentY of [614, 880, 1335, 1927]) {
+      assert(tStopYears.has(silentY), `Pure-territory mode must include snapshot boundary ${silentY}`);
+    }
+    for (const narrativeY of [624, 725, 736, 737]) {
+      assert(!tStopYears.has(narrativeY), `Pure-territory mode must skip non-snapshot milestone ${narrativeY}`);
+    }
+    let cameraPanCalls = 0;
+    let balloonOpenCalls = 0;
+    ctrl._ensureMilestoneInView = () => {
+      cameraPanCalls++;
+    };
+    ctrl.openMilestoneBalloon = () => {
+      balloonOpenCalls++;
+    };
+    ctrl.year = 621;
+    ctrl.dynastyIdx = dynasties.indexOf(tang);
+    proto.stepTimelineNode.call(ctrl, 1);
+    assert.strictEqual(ctrl.year, 630, `Expected forward territory step from 621 to skip 624/626/627 and land on 630, got ${ctrl.year}`);
+    proto.stepTimelineNode.call(ctrl, -1);
+    assert.strictEqual(ctrl.year, 621, `Expected backward territory step from 630 to land on 621, got ${ctrl.year}`);
+    assert.strictEqual(cameraPanCalls, 0, 'Pure-territory stepping must not auto-pan camera');
+    assert.strictEqual(balloonOpenCalls, 0, 'Pure-territory stepping must not open milestone balloon');
+
+    visited.length = 0;
+    ctrl.year = ctrl.minYear;
+    ctrl.startAutoplay();
+    totalTicks = 0;
+    while (ctrl.playing && totalTicks < 20000) {
+      tick();
+      totalTicks++;
+    }
+    assert(!ctrl.playing && ctrl.year === ctrl.maxYear, `Pure-territory autoplay must reach ${ctrl.maxYear}, got ${ctrl.year}`);
+    const tMissed = tStops.filter((s) => !visited.includes(s.year)).map((s) => s.year);
+    assert.strictEqual(tMissed.length, 0, `Pure-territory autoplay skipped stops ${tMissed.slice(0, 8).join(', ')}`);
+    const tStrays = visited.filter((y) => !tStopYears.has(y) && y !== ctrl.maxYear);
+    assert.strictEqual(tStrays.length, 0, `Pure-territory autoplay landed on non-territory years ${tStrays.slice(0, 8).join(', ')}`);
+
+    hiddenFlag = false;
+    assert.strictEqual(proto._autoplayStops.call(ctrl).filter((s) => s.year > ctrl.minYear).length, stops.length);
+    ctrl.year = 621;
+    ctrl.dynastyIdx = dynasties.indexOf(tang);
+    proto.stepTimelineNode.call(ctrl, 1);
+    assert.strictEqual(ctrl.year, 624, `Restoring events layer must resume stopping at 624, got ${ctrl.year}`);
+    ctrl.grpMilestones = savedGrpM;
+    ctrl._ensureMilestoneInView = savedEnsureView;
+    ctrl.openMilestoneBalloon = savedOpenBalloon;
   }
 
   // CUJ 29: Scrubber drag — pointermove bursts coalesce via requestAnimationFrame, unchanged
@@ -2782,12 +2850,17 @@ async function runCartographyUiSuite(ctx) {
         hasPolPt('s_nansong_c', '大蒙古国', 86.0, 40.0) &&
         hasPolPt('s_nansong_d', '大蒙古国', 90.5, 40.2) &&
         hasPolPt('s_nansong_d', '大蒙古国', 86.0, 40.0) &&
+        hasPolPt('s_nansong_e0', '大蒙古国', 90.5, 40.2) &&
+        hasPolPt('s_nansong_e0', '大蒙古国', 86.0, 40.0) &&
+        hasPolPt('s_nansong_e0', '吐蕃诸部', 100.0, 38.0) &&
         hasPolPt('s_nansong_e', '大蒙古国', 90.5, 40.2) &&
         hasPolPt('s_nansong_e', '大蒙古国', 86.0, 40.0) &&
         hasPolPt('s_nansong_e', '大蒙古国', 100.0, 38.0) &&
         hasPolPt('s_nansong_b', '大蒙古国', 90.5, 40.2) &&
         hasPolPt('s_nansong_b', '大蒙古国', 100.16, 25.69) &&
         snapshots.s_nansong_b.polities.find((p) => p.title === '大蒙古国').shape.coordinates.length === 2 &&
+        hasPolPt('s_nansong_f', '元', 90.5, 40.2) &&
+        hasPolPt('s_nansong_f', '元', 100.16, 25.69) &&
         hasPolPt('s_nansong_g', '元', 100.0, 28.0) &&
         hasPolPt('s_yuan_b', '元', 90.5, 40.2) &&
         hasPolPt('s_yuan_c', '元', 90.5, 40.2),
@@ -2906,13 +2979,13 @@ async function runCartographyUiSuite(ctx) {
         !snapshots.s_beisong_d.regions.some((r) => r.title.endsWith('道')),
       's_beisong_d (1125–1127) must include Western Liao and rename former Liao circuits from 道 to Jin 路'
     );
-    for (const sk of ['s_beisong_a3', 's_beisong_a4', 's_beisong_a5', 's_beisong_b0', 's_beisong_b', 's_beisong_b1', 's_beisong_b2', 's_beisong_c', 's_beisong_d', 's_nansong_a0', 's_nansong_a', 's_nansong_b0', 's_nansong_c', 's_nansong_d', 's_nansong_e', 's_nansong_b', 's_nansong_g']) {
+    for (const sk of ['s_beisong_a3', 's_beisong_a4', 's_beisong_a5', 's_beisong_b0', 's_beisong_b', 's_beisong_b1', 's_beisong_b2', 's_beisong_c', 's_beisong_d', 's_nansong_a0', 's_nansong_a', 's_nansong_b0', 's_nansong_c', 's_nansong_d', 's_nansong_e0', 's_nansong_e', 's_nansong_b', 's_nansong_f', 's_nansong_g']) {
       assert(
         hasRegPt(sk, '广南西路', 109.577, 19.521),
         `${sk} must include Hainan Island ([109.577, 19.521]) inside 广南西路`
       );
     }
-    for (const sk of ['s_beisong_a0', 's_beisong_a', 's_beisong_a2', 's_beisong_a3', 's_beisong_a4', 's_beisong_a5', 's_beisong_b0', 's_beisong_b', 's_beisong_b1', 's_beisong_b2', 's_beisong_c', 's_beisong_d', 's_nansong_a0', 's_nansong_a', 's_nansong_b0', 's_nansong_c', 's_nansong_d', 's_nansong_e', 's_nansong_b', 's_nansong_g']) {
+    for (const sk of ['s_beisong_a0', 's_beisong_a', 's_beisong_a2', 's_beisong_a3', 's_beisong_a4', 's_beisong_a5', 's_beisong_b0', 's_beisong_b', 's_beisong_b1', 's_beisong_b2', 's_beisong_c', 's_beisong_d', 's_nansong_a0', 's_nansong_a', 's_nansong_b0', 's_nansong_c', 's_nansong_d', 's_nansong_e0', 's_nansong_e', 's_nansong_b', 's_nansong_f', 's_nansong_g']) {
       const prefs = snapshots[sk].prefectures || [];
       assert(
         prefs.length >= 130 &&
@@ -2932,7 +3005,7 @@ async function runCartographyUiSuite(ctx) {
         hasPolPt('s_nansong_c', '金（迁都汴京）', 103.83, 36.06),
       's_nansong_c (1215–1227) must keep Lintao Circuit (Lintaofu & Lanzhou) inside Jin rather than a disconnected Mongol exclave'
     );
-    for (const sk of ['s_nansong_a0', 's_nansong_a', 's_nansong_b0', 's_nansong_c', 's_nansong_d']) {
+    for (const sk of ['s_nansong_a0', 's_nansong_a', 's_nansong_b0', 's_nansong_c', 's_nansong_d', 's_nansong_e0']) {
       assert(
         !hasPolPt(sk, '吐蕃诸部', 103.861, 35.381) && !hasPolPt(sk, '吐蕃诸部', 103.83, 36.06),
         `${sk} must not overlap 吐蕃诸部 onto Lintaofu or Lanzhou`
@@ -2951,8 +3024,10 @@ async function runCartographyUiSuite(ctx) {
       ['s_nansong_b0', '金'],
       ['s_nansong_c', '金（迁都汴京）'],
       ['s_nansong_d', '大蒙古国'],
+      ['s_nansong_e0', '大蒙古国'],
       ['s_nansong_e', '大蒙古国'],
       ['s_nansong_b', '大蒙古国'],
+      ['s_nansong_f', '元'],
     ]) {
       assert(
         hasPolPt(sk, northPol, 105.721, 34.581) &&
@@ -2970,13 +3045,52 @@ async function runCartographyUiSuite(ctx) {
         `${sk} (post-1142 Treaty of Shaoxing) must place Qinzhou & Dasanguan in ${northPol} / Fengxiang Circuit and Fengzhou, Chengzhou, Jiezhou, Minzhou, & Junzhou in Southern Song / Lizhou Circuit`
       );
     }
-    for (const sk of ['s_nansong_e', 's_nansong_b']) {
+    for (const sk of ['s_nansong_e0', 's_nansong_e', 's_nansong_b', 's_nansong_f']) {
       assert(
         snapshots[sk].regions.some((r) => r.title === '辽东路') &&
           snapshots[sk].regions.some((r) => r.title === '燕京路') &&
           snapshots[sk].regions.some((r) => r.title === '河南路') &&
           !snapshots[sk].regions.some((r) => r.title === '上京路' || r.title === '中都路' || r.title === '南京（河南）路'),
         `${sk} (post-1234 fall of Jin) must replace Jin imperial circuits with Mongol circuits (辽东路, 燕京路, 河南路)`
+      );
+    }
+    {
+      // 1234–1247 Tibet stays independent (吐蕃诸部) until the 1247 Liangzhou Accord; 1271–1276 renames 大蒙古国 to 元.
+      const tuboE0 = snapshots.s_nansong_e0.polities.find((p) => p.title === '吐蕃诸部');
+      assert(
+        tuboE0 &&
+          tuboE0.role === 'neighbor' &&
+          !tuboE0.tint &&
+          pointInShape(91.111, 29.651, tuboE0.shape) &&
+          !hasPolPt('s_nansong_e0', '大蒙古国', 91.111, 29.651) &&
+          !snapshots.s_nansong_e0.regions.some((r) => /吐蕃|总制院|宣政院/.test(r.title)),
+        's_nansong_e0 (1234–1247) must keep Tibet uncolored under 吐蕃诸部 before the 1247 Liangzhou Accord'
+      );
+      for (const sk of ['s_nansong_e', 's_nansong_b']) {
+        assert(
+          hasPolPt(sk, '大蒙古国', 91.111, 29.651) &&
+            !snapshots[sk].polities.some((p) => p.title === '吐蕃诸部') &&
+            snapshots[sk].regions.some((r) => r.title === '吐蕃辖地') &&
+            !snapshots[sk].regions.some((r) => r.title.includes('宣政院')),
+          `${sk} (1247–1271) must place Lhasa inside 大蒙古国 with neutral region 吐蕃辖地`
+        );
+      }
+      const fYuan = snapshots.s_nansong_f.polities.find((p) => p.title === '元');
+      assert(
+        fYuan &&
+          fYuan.role === 'rival' &&
+          fYuan.tint === '#4b6587' &&
+          pointInShape(116.401, 39.901, fYuan.shape) &&
+          pointInShape(91.111, 29.651, fYuan.shape) &&
+          !snapshots.s_nansong_f.polities.some((p) => p.title === '大蒙古国') &&
+          snapshots.s_nansong_f.regions.some((r) => r.title === '总制院辖地') &&
+          !snapshots.s_nansong_f.regions.some((r) => r.title.includes('宣政院')),
+        's_nansong_f (1271–1276) must label the northern empire 元 (#4b6587) with 总制院辖地'
+      );
+      assert(
+        snapshots.s_nansong_g.regions.some((r) => r.title === '总制院辖地') &&
+          !snapshots.s_nansong_g.regions.some((r) => r.title.includes('宣政院')),
+        's_nansong_g (1276–1279) must label Tibet 总制院辖地 prior to 1288'
       );
     }
 
@@ -3070,7 +3184,7 @@ async function runCartographyUiSuite(ctx) {
         hasPolPt('s_zhanguo_a', '韩', 110.92, 34.63) &&
         hasPolPt('s_zhanguo_a2', '秦', 110.44, 35.48) &&
         hasPolPt('s_zhanguo_a2', '秦', 110.92, 34.63),
-      'Shaoliang (Hexi Commandery) must belong to 魏 in s_zhanguo_a (-403..-341 BCE) and transfer with Hangu Pass to 秦 in s_zhanguo_a2 (-340 BCE)'
+      'Shaoliang (Hexi Commandery) must belong to 魏 in s_zhanguo_a (-403..-331 BCE) and transfer with Hangu Pass to 秦 in s_zhanguo_a2 (-330 BCE)'
     );
     for (const sk of ['s_zhanguo_a', 's_zhanguo_a2', 's_zhanguo_b0', 's_zhanguo_b1', 's_zhanguo_b']) {
       assert(

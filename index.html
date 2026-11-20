@@ -25,7 +25,7 @@
       link.rel = 'preload';
       link.as = 'script';
       link.fetchPriority = 'low'; // after the first-paint scripts, not competing with them
-      link.href = 'js/atlas_snapshots.js?v=b3d08fdf';
+      link.href = 'js/atlas_snapshots.js?v=673e0ae9';
       document.head.appendChild(link);
     })();
   </script>
@@ -299,7 +299,7 @@
           "name": "江山时序是什么网站？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、206幅多阶段疆域与州郡政区快照、528条编年大事、733处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
+            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、208幅多阶段疆域与州郡政区快照、530条编年大事、755处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
           }
         },
         {
@@ -336,7 +336,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=%20%26%27CDEFHJKMNPQRSTWYabcdefghilmnoprstuvxy%E4%B8%89%E4%B8%9C%E4%B8%AD%E4%BA%94%E4%BA%BA%E4%BB%A3%E5%85%83%E5%85%AD%E5%85%B1%E5%8C%97%E5%8D%81%E5%8D%8E%E5%8D%97%E5%92%8C%E5%94%90%E5%9B%BD%E5%AE%8B%E5%B1%B1%E5%BA%8F%E6%88%98%E6%97%B6%E6%98%8E%E6%99%8B%E6%9C%9D%E6%B0%91%E6%B1%89%E6%B1%9F%E6%B8%85%E7%A7%A6%E8%A5%BF%E9%9A%8B&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="css/style.css?v=6f16915e" />
+  <link rel="stylesheet" href="css/style.css?v=00081433" />
   <!-- Analytics: Vercount, anonymous click counter (workers/stats) & Cloudflare Web Analytics -->
   <script defer src="https://events.vercount.one/js"></script>
   <script defer src="js/atlas_track.js?v=4b2c3de3"></script>
@@ -403,7 +403,7 @@
             <label class="layer-chip"><input type="checkbox" id="chk-prefectures" checked /><span id="lbl-prefectures">州道政区</span></label>
             <label class="layer-chip"><input type="checkbox" id="chk-settlements" checked /><span id="lbl-settlements">古地名</span></label>
             <label class="layer-chip" title="名关雄隘 · 长城 · 大运河 · 丝绸之路"><input type="checkbox" id="chk-corridors" checked /><span id="lbl-corridors">关河丝路</span></label>
-            <label class="layer-chip"><input type="checkbox" id="chk-milestones" checked /><span id="lbl-milestones">重大事件</span></label>
+            <label class="layer-chip" title="关闭后，时间轴步进与播放仅停靠疆域变化节点"><input type="checkbox" id="chk-milestones" checked /><span id="lbl-milestones">重大事件</span></label>
           </div>
         </div>
         <div class="layers-pop-section">
@@ -598,6 +598,7 @@
           <div class="seat-row">
             <span class="seat-tag" id="txt-seat-label">都城</span>
             <span id="dynasty-seat">咸阳（秦）· 洛阳（周）· 七雄都城</span>
+            <a id="lnk-dynasty-topic" class="topic-inline-link" href="topics/zhanguo.html" target="_blank" rel="noopener" title="查阅《战国历史地图》专题图志与古今地名总表">图志</a>
           </div>
           <button id="act-mobile-chronicle" class="mobile-chronicle-btn" type="button" aria-expanded="false">史志 · 事件 ▲</button>
         </div>
@@ -615,7 +616,8 @@
             <li><span class="ev-yr">前375 年</span><span>韩哀侯攻灭郑国并迁都新郑；前376年三家废晋静公尽分晋地</span></li>
             <li><span class="ev-yr">前356 年</span><span>秦孝公任商鞅变法强秦；前350年迁都咸阳</span></li>
             <li><span class="ev-yr">前353 年</span><span>桂陵之战：齐孙膑、田忌“围魏救赵”，大破庞涓</span></li>
-            <li><span class="ev-yr">前341 年</span><span>马陵之战孙膑射杀庞涓；商鞅收河西，魏迁大梁</span></li>
+            <li><span class="ev-yr">前341 年</span><span>马陵之战孙膑破庞涓；前340年商鞅俘公子卬，收河西部分失地</span></li>
+            <li><span class="ev-yr">前330 年</span><span>雕阴之战公孙衍破魏，魏尽献河西；前328年再纳上郡十五县</span></li>
             <li><span class="ev-yr">前323 年</span><span>公孙衍发起“五国相王”，并促成五国合纵攻秦函谷关（前318年）</span></li>
             <li><span class="ev-yr">前316 年</span><span>秦司马错灭巴、蜀；前312年丹阳之战破楚取汉中</span></li>
             <li><span class="ev-yr">前307 年</span><span>赵武灵王推行“胡服骑射”强兵，连年略中山，北破林胡楼烦辟云中九原</span></li>
@@ -627,10 +629,10 @@
             <li><span class="ev-yr">前279 年</span><span>即墨之战：齐将田单摆“火牛阵”大破燕军，收复七十余城</span></li>
             <li><span class="ev-yr">前278 年</span><span>秦白起拔楚都郢置南郡，楚迁都于陈，屈原自沉汨罗江</span></li>
             <li><span class="ev-yr">前272 年</span><span>秦宣太后诱杀义渠戎王于甘泉宫，起兵灭义渠，置陇西、北地、上郡</span></li>
-            <li><span class="ev-yr">前260 年</span><span>长平之战：白起坑杀赵卒四十万，六国难独抗秦</span></li>
+            <li><span class="ev-yr">前260 年</span><span>长平之战：赵纳韩上党、易将赵括“纸上谈兵”，白起坑杀赵卒四十万</span></li>
             <li><span class="ev-yr">前257 年</span><span>邯郸之战：魏信陵君“窃符救赵”合楚春申君大破秦军</span></li>
             <li><span class="ev-yr">前256 年</span><span>秦灭西周国迁九鼎；蜀守李冰修筑都江堰</span></li>
-            <li><span class="ev-yr">前249 年</span><span>楚考烈王伐灭鲁国迁鲁顷公于莒；秦吕不韦灭东周置三川郡</span></li>
+            <li><span class="ev-yr">前249 年</span><span>楚考烈王废鲁顷公为家人，鲁国绝祀；秦吕不韦灭东周置三川郡</span></li>
             <li><span class="ev-yr">前247 年</span><span>蒙骜攻赵取晋阳等三十七城，秦置太原郡</span></li>
             <li><span class="ev-yr">前246 年</span><span>韩水工郑国入秦开凿三百里“郑国渠”，关中自此成沃野</span></li>
             <li><span class="ev-yr">前242 年</span><span>蒙骜攻魏取二十城初置东郡，秦地东接齐境</span></li>
@@ -641,7 +643,7 @@
             <li><span class="ev-yr">前228 年</span><span>秦灭赵：王翦克邯郸俘赵王迁，公子嘉奔代自立</span></li>
             <li><span class="ev-yr">前226 年</span><span>荆轲刺秦不中；王翦破燕拔蓟城，燕王喜走辽东</span></li>
             <li><span class="ev-yr">前225 年</span><span>秦灭魏：王贲引河沟水灌大梁，魏王假降，魏亡</span></li>
-            <li><span class="ev-yr">前223 年</span><span>秦灭楚：王翦统军六十万斩项燕、克寿春俘楚王</span></li>
+            <li><span class="ev-yr">前223 年</span><span>秦灭楚：前224王翦俘负刍、项燕立昌平君；是年并败死楚亡</span></li>
             <li><span class="ev-yr">前222 年</span><span>王贲灭燕与代，王翦定江南置会稽郡，唯余齐国</span></li>
           </ul>
         </div>
@@ -702,7 +704,7 @@
           <li><a href="https://deanchen.me/jiangshan-map/?year=-214"><strong>秦历史地图（前221—前202 · Qin）</strong></a> — 都城：咸阳。代表事件：前221年王贲受齐王建降，秦王嬴政统一六国称始皇帝，行郡县、书同文车同轨；前215年蒙恬北击匈奴收复河套，其后数年连筑长城；前214年秦军开凿灵渠通湘漓，平定岭南置桂林、象、南海三郡；前213年秦始皇采李斯议下“焚书令”，次年于咸阳坑杀方士儒生。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=-100"><strong>西汉历史地图（前202—25 · Western Han）</strong></a> — 都城：长安。代表事件：前202年韩信等垓下十面埋伏灭项羽，汉高祖刘邦称帝定都长安；前200年汉高祖亲征匈奴困于白登，汉初遂行和亲之策；前180年周勃、陈平诛灭诸吕迎立汉文帝，开启休养生息之政；前167年汉文帝废除肉刑、免收全国田租，与景帝轻徭薄赋共创“文景之治”。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=100"><strong>东汉历史地图（25—220 · Eastern Han）</strong></a> — 都城：洛阳。代表事件：25年赤眉军入长安覆灭更始政权；萧王刘秀于鄗城称帝兴复汉室，定都洛阳；36年吴汉攻克成都灭公孙述，光武帝刘秀统一全国；39年光武帝下诏核查全国垦田与户口（度田），打击豪强隐匿田赋；43年伏波将军马援南征交趾平二征起义，立铜柱定汉界。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=250"><strong>三国历史地图（220—280 · Three Kingdoms）</strong></a> — 都城：洛阳 / 成都 / 建业。代表事件：220年魏王曹操病逝；曹丕采陈群议行九品官人法，旋迫汉献帝禅让建曹魏；221年闻汉献帝遭废传言，刘备在成都称帝延续汉室正统，国号汉（蜀汉）；222年夷陵之战，陆逊火烧连营大破刘备；223年刘备病逝永安白帝城，临终托孤于丞相诸葛亮。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=250"><strong>三国历史地图（220—280 · Three Kingdoms）</strong></a> — 都城：洛阳 / 成都 / 建业。代表事件：220年魏王曹操病逝；曹丕采陈群议行九品官人法，旋迫汉献帝禅让建曹魏；221年闻汉献帝遇害传言，刘备在成都称帝延续汉室正统，国号汉（蜀汉）；222年夷陵之战，陆逊火烧连营大破刘备；223年刘备病逝永安白帝城，临终托孤于丞相诸葛亮。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=300"><strong>西晋历史地图（280—316 · Western Jin）</strong></a> — 都城：洛阳。代表事件：280年西晋灭吴，三国归晋；颁占田制与罢州郡兵，开启“太康之治”；289年太康年间门阀骄奢斗富；武帝大封诸王出镇重兵，命刘渊领并州匈奴部；291年晋武帝崩后惠帝即位，次年贾南风诛杨骏与辅政宗王，八王之乱爆发；299年关陇氐羌齐万年之乱历两年余始平；江统著《徙戎论》警诫五胡内迁隐患。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=383"><strong>东晋十六国历史地图（317—420 · Eastern Jin &amp; Sixteen Kingdoms）</strong></a> — 都城：建康（东晋）。代表事件：317年司马睿在建康即晋王位建东晋；河西前凉、代北代国、辽东前燕并立；319年刘曜于长安改汉为前赵，石勒在襄国称赵王建后赵，汉赵分裂；322年王敦之乱：王敦自武昌举兵攻入建康，控制东晋朝政；327年前凉张骏擒戊己校尉赵贞，以其地置高昌郡。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=500"><strong>南北朝历史地图（420—581 · Northern &amp; Southern Dynasties）</strong></a> — 都城：平城→洛阳（北朝）/ 建康（南朝）。代表事件：420年刘裕代晋建宋，南朝开始；427年北魏取河南关中，太武帝又袭克胡夏都城统万城；431年赫连定灭西秦后被俘，北魏灭胡夏；宋文帝元嘉之治；436年北魏攻入龙城，北燕亡。</li>
@@ -771,7 +773,9 @@
       <section id="seo-static-topics-section">
         <h3>五、静态历史地理专题图志索引（Static Historical Geography Topic Pages）</h3>
         <ul>
-          <li><a href="https://deanchen.me/jiangshan-map/topics/index.html"><strong>江山时序专题图志总览（38篇静态历史地理百科目录）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/index.html"><strong>江山时序专题图志总览（125篇静态历史地理百科目录）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/persons.html"><strong>江山时序历代人物志与国器流转总录（65篇独立人物图志）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/places.html"><strong>江山时序历代地区志与雄关总录（22篇核心名城沿革图志）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-anshi.html"><strong>安史之乱历史地图（755—763年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-jingkang.html"><strong>靖康之变历史地图（1125—1142年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-qintongyi.html"><strong>秦灭六国历史地图（前238—前221年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
@@ -810,17 +814,104 @@
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-libai.html"><strong>李白仗剑壮游行迹（701年 — 762年 · 武周长安元年至唐宝应元年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-sushi.html"><strong>苏轼宦海贬谪行迹（1056年 — 1101年 · 北宋嘉祐元年至建中靖国元年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-wangyangming.html"><strong>王阳明知行悟道行迹（1472年 — 1529年 · 明成化八年至嘉靖七年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-xian.html"><strong>长安（今西安）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-luoyang.html"><strong>洛阳（河洛帝都）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-beijing.html"><strong>北京（幽州 · 燕京 · 大都）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-nanjing.html"><strong>南京（建康 · 金陵 · 应天）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-kaifeng.html"><strong>开封（大梁 · 汴京）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-chengdu.html"><strong>成都（益州 · 锦官城）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-hangzhou.html"><strong>杭州（钱塘 · 临安）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-jingzhou.html"><strong>荆州（郢都 · 江陵）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-yangzhou.html"><strong>扬州（广陵 · 江都）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-xiangyang.html"><strong>襄阳（襄州）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-guangzhou.html"><strong>广州（番禺）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-taiyuan.html"><strong>太原（晋阳）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-datong.html"><strong>大同（平城 · 西京）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-wuwei.html"><strong>武威（姑臧 · 凉州）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-dunhuang.html"><strong>敦煌（沙州）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-changsha.html"><strong>长沙（临湘 · 潭州）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-fuzhou.html"><strong>福州（东冶 · 晋安）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-hanzhong.html"><strong>汉中（南郑 · 兴元）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-suzhou.html"><strong>苏州（吴郡 · 平江）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-guilin.html"><strong>桂林（始安 · 静江）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-dali.html"><strong>大理（太和城 · 叶榆）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/place-lhasa.html"><strong>拉萨（逻些）十八朝政区沿革与历代史事地区志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-shangyang.html"><strong>商鞅（前390—前338）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-baiqi.html"><strong>白起（前332—前257）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-wangjian.html"><strong>王翦（前300—前213）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-yuxi.html"><strong>传国玉玺（前283—936）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-qinshihuang.html"><strong>秦始皇（前259—前210）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-liubang.html"><strong>刘邦（前256—前195）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhangliang.html"><strong>张良（前250—前186）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-xiangyu.html"><strong>项羽（前232—前202）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-hanxin.html"><strong>韩信（前231—前196）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-hanwudi.html"><strong>汉武帝（前156—前87）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-simaqian.html"><strong>司马迁（前145—前86）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-huoqubing.html"><strong>霍去病（前140—前117）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-wangmang.html"><strong>王莽（前45—23）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-liuxiu.html"><strong>刘秀（前5—57）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-banchao.html"><strong>班超（32—102）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-caocao.html"><strong>曹操（155—220）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-guanyu.html"><strong>关羽（160—220）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-liubei.html"><strong>刘备（161—223）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhangfei.html"><strong>张飞（165—221）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhouyu.html"><strong>周瑜（175—210）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-simayi.html"><strong>司马懿（179—251）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-sunquan.html"><strong>孙权（182—252）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-yanghu.html"><strong>羊祜（221—278）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-duyu.html"><strong>杜预（222—285）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zuti.html"><strong>祖逖（266—321）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-liukun.html"><strong>刘琨（271—318）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-huanwen.html"><strong>桓温（312—373）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-liuyu.html"><strong>刘裕（363—422）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-gaohuan.html"><strong>高欢（496—547）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-yuwentai.html"><strong>宇文泰（507—556）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-yangguang.html"><strong>隋炀帝（569—618）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-lishimin.html"><strong>唐太宗（598—649）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-wuzetian.html"><strong>武则天（624—705）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-tangxuanzong.html"><strong>唐玄宗（685—762）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-gaoshi.html"><strong>高适（704—765）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-dufu.html"><strong>杜甫（712—770）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-baijuyi.html"><strong>白居易（772—846）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-licunxu.html"><strong>李存勖（885—926）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-chairong.html"><strong>柴荣（921—959）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhaokuangyin.html"><strong>赵匡胤（927—976）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-fanzhongyan.html"><strong>范仲淹（989—1052）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-simaguang.html"><strong>司马光（1019—1086）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-shenkuo.html"><strong>沈括（1031—1095）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-yuefei.html"><strong>岳飞（1103—1142）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhaogou.html"><strong>宋高宗（1107—1187）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-xinqiji.html"><strong>辛弃疾（1140—1207）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-genghiskhan.html"><strong>成吉思汗（1162—1227）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-kublaikhan.html"><strong>忽必烈（1215—1294）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-wentianxiang.html"><strong>文天祥（1236—1283）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-marcopolo.html"><strong>马可·波罗（1254—1324）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhuyuanzhang.html"><strong>朱元璋（1328—1398）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhudi.html"><strong>朱棣（1360—1424）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-yudayou.html"><strong>俞大猷（1503—1579）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-huzongxian.html"><strong>胡宗宪（1512—1565）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-hairui.html"><strong>海瑞（1514—1587）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zhangjuzheng.html"><strong>张居正（1525—1582）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-qijiguang.html"><strong>戚继光（1528—1588）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-huangtaiji.html"><strong>皇太极（1592—1643）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-lizicheng.html"><strong>李自成（1606—1645）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-kangxi.html"><strong>康熙帝（1654—1722）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-qianlong.html"><strong>乾隆帝（1711—1799）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-zuozongtang.html"><strong>左宗棠（1812—1885）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-lihongzhang.html"><strong>李鸿章（1823—1901）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-sunzhongshan.html"><strong>孙中山（1866—1925）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-maozedong.html"><strong>毛泽东（1893—1976）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
         </ul>
       </section>
     </nav>
 
   <script src="js/china_geo_data.js?v=a2d3dc62"></script>
-  <script src="js/atlas_boot.js?v=cfa92817"></script>
-  <script src="js/map_data.js?v=0059c7b9"></script>
-  <script src="js/lore_core.js?v=effa6336"></script>
-  <script id="atlas-app-script" src="js/app.js?v=b02fbeed" data-v-snapshots="b3d08fdf" data-v-i18n="4c445b86" data-v-lore="c8e01289" data-v-pinyin="9969e319" data-v-hant="3afdab47" data-v-quiz="706065c1" data-v-narrator="12cdf69d" data-v-sources="a78febae"></script>
-  <script src="js/atlas_trace.js?v=36794f4d"></script>
-  <script src="js/atlas_search.js?v=e16087a7"></script>
+  <script src="js/atlas_boot.js?v=03d52899"></script>
+  <script src="js/map_data.js?v=59e332db"></script>
+  <script src="js/lore_core.js?v=a88e8f05"></script>
+  <script id="atlas-app-script" src="js/app.js?v=74e93a3b" data-v-snapshots="673e0ae9" data-v-i18n="49339f71" data-v-lore="43d9e4cc" data-v-pinyin="e273f190" data-v-hant="3afdab47" data-v-quiz="706065c1" data-v-narrator="12cdf69d" data-v-sources="2120cf6e"></script>
+  <script src="js/atlas_trace.js?v=d7c73a63"></script>
+  <script src="js/atlas_search.js?v=cfc38510"></script>
   <script src="js/atlas_api.js?v=68e59f35"></script>
 </body>
 </html>
