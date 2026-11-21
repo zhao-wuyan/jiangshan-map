@@ -92,7 +92,7 @@ async function runCartographyUiSuite(ctx) {
     }
 
     const maShanLinkMatch = indexHtml.match(
-      /<link href="(https:\/\/fonts\.googleapis\.com\/css2\?family=Ma\+Shan\+Zheng&text=([^"&]+)&display=swap)" rel="stylesheet" media="print" onload="this\.media='all'" \/>/
+      /<link (?:data-font-)?href="(https:\/\/fonts\.googleapis\.com\/css2\?family=Ma\+Shan\+Zheng&text=([^"&]+)&display=swap)" rel="stylesheet" media="print" onload="this\.media='all'" \/>/
     );
     assert(maShanLinkMatch, 'Expected non-blocking subsetted Ma Shan Zheng stylesheet <link> in index.html');
     assert(
@@ -861,13 +861,13 @@ async function runCartographyUiSuite(ctx) {
       assert(findSt(tangDyn, w), `tang: must include warlord settlement ${w}`);
     }
 
-    // Tang 29 map change milestones
-    const expectedTangMapChanges = [618, 621, 630, 635, 640, 648, 657, 663, 668, 670, 676, 679, 686, 690, 692, 698, 702, 705, 713, 738, 755, 757, 763, 764, 790, 840, 848, 881, 885, 907];
+    // Tang 30 map change milestones
+    const expectedTangMapChanges = [618, 621, 624, 630, 635, 640, 648, 657, 663, 668, 670, 676, 679, 686, 690, 692, 698, 702, 705, 713, 738, 755, 757, 763, 764, 790, 840, 848, 881, 885, 907];
     const actualTangMapChanges = (tangDyn.milestones || []).filter((m) => m.isMapChange).map((m) => m.year);
     assert.strictEqual(
       JSON.stringify(actualTangMapChanges),
       JSON.stringify(expectedTangMapChanges),
-      'tang: 29 map change milestone years must match'
+      'tang: 30 map change milestone years must match'
     );
 
     // Spatial checks: s_sui_d and s_tang_0 warlords
@@ -1422,7 +1422,7 @@ async function runCartographyUiSuite(ctx) {
     for (const silentY of [614, 880, 1335, 1927]) {
       assert(tStopYears.has(silentY), `Pure-territory mode must include snapshot boundary ${silentY}`);
     }
-    for (const narrativeY of [624, 725, 736, 737]) {
+    for (const narrativeY of [626, 725, 736, 737]) {
       assert(!tStopYears.has(narrativeY), `Pure-territory mode must skip non-snapshot milestone ${narrativeY}`);
     }
     let cameraPanCalls = 0;
@@ -1433,12 +1433,12 @@ async function runCartographyUiSuite(ctx) {
     ctrl.openMilestoneBalloon = () => {
       balloonOpenCalls++;
     };
-    ctrl.year = 621;
+    ctrl.year = 624;
     ctrl.dynastyIdx = dynasties.indexOf(tang);
     proto.stepTimelineNode.call(ctrl, 1);
-    assert.strictEqual(ctrl.year, 630, `Expected forward territory step from 621 to skip 624/626/627 and land on 630, got ${ctrl.year}`);
+    assert.strictEqual(ctrl.year, 630, `Expected forward territory step from 624 to skip 626/627 and land on 630, got ${ctrl.year}`);
     proto.stepTimelineNode.call(ctrl, -1);
-    assert.strictEqual(ctrl.year, 621, `Expected backward territory step from 630 to land on 621, got ${ctrl.year}`);
+    assert.strictEqual(ctrl.year, 624, `Expected backward territory step from 630 to land on 624, got ${ctrl.year}`);
     assert.strictEqual(cameraPanCalls, 0, 'Pure-territory stepping must not auto-pan camera');
     assert.strictEqual(balloonOpenCalls, 0, 'Pure-territory stepping must not open milestone balloon');
 
@@ -1458,10 +1458,10 @@ async function runCartographyUiSuite(ctx) {
 
     hiddenFlag = false;
     assert.strictEqual(proto._autoplayStops.call(ctrl).filter((s) => s.year > ctrl.minYear).length, stops.length);
-    ctrl.year = 621;
+    ctrl.year = 624;
     ctrl.dynastyIdx = dynasties.indexOf(tang);
     proto.stepTimelineNode.call(ctrl, 1);
-    assert.strictEqual(ctrl.year, 624, `Restoring events layer must resume stopping at 624, got ${ctrl.year}`);
+    assert.strictEqual(ctrl.year, 626, `Restoring events layer must resume stopping at 626, got ${ctrl.year}`);
     ctrl.grpMilestones = savedGrpM;
     ctrl._ensureMilestoneInView = savedEnsureView;
     ctrl.openMilestoneBalloon = savedOpenBalloon;
@@ -3166,10 +3166,16 @@ async function runCartographyUiSuite(ctx) {
           hasPolPt(sk, '蜀', 105.84, 32.44) &&
           hasPolPt(sk, '巴', 106.551, 29.561) &&
           hasPolPt(sk, '巴', 105.97, 31.58) &&
-          hasPolPt(sk, '楚', 107.021, 33.071) &&
+          hasPolPt(sk, '蜀', 107.021, 33.071) &&
+          hasPolPt(sk, '楚', 109.03, 32.69) &&
+          hasPolPt(sk, '楚', 110.23, 32.22) &&
+          hasPolPt(sk, '巴', 106.83, 32.35) &&
           !hasPolPt(sk, '楚', 105.84, 32.44),
-        `${sk} must split 蜀 (Chengdu, Jiameng) and 巴 (Jiangzhou, Langzhong) and keep Hanzhong in 楚 without overlapping Jiameng`
+        `${sk} must split 蜀 (Chengdu, Jiameng, Nanzheng) and 巴 (Jiangzhou, Langzhong, south of the Micang range) and keep 楚's Hanzhong commandery (西城, 上庸) on the lower Han`
       );
+      // 南郑: 秦 walled it in 451 BCE, it revolted in 441, 秦 and 蜀 fought over it in 387 (史记·秦本纪 /
+      // 六国年表), and 华阳国志 has 蜀 holding 褒汉 under 周显王 (368-321). 楚's 汉中 is the lower Han
+      // valley, lost at 丹阳 in 312 BCE.
       // The 巴|蜀 border follows the Fu–Jialing divide: 蜀's Jinniu road (梓潼) and 僰道 stay in 蜀; 遂宁 and 泸州 are 巴.
       assert(
         hasPolPt(sk, '蜀', 105.17, 31.64) &&

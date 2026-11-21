@@ -335,6 +335,25 @@ async function runTraceGenealogySuite(ctx) {
       mockLoreEl.innerHTML.includes('雄关形胜'),
     `Expected #genealogy-lore at Hangu Pass to render Strategic Pass banner, got ${mockLoreEl.innerHTML}`
   );
+  // A site with one entry per name (江宁 → 天京 → 江宁, 承天府 → 台湾府) shows the entry on the map that year.
+  const prevYearGen = ctrl.year;
+  const prevDynastyIdxGen = ctrl.dynastyIdx;
+  for (const [yr, lng, lat, shown, hidden] of [
+    [1860, 118.801, 32.061, '邻近古城：天京（即此地）', '邻近古城：江宁'],
+    [1870, 118.801, 32.061, '1864 年湘军攻克天京复置', '1853 年太平军攻占改称天京'],
+    [1670, 120.211, 23.001, '邻近古城：承天府（即此地）', '台湾府（即此地）'],
+  ]) {
+    ctrl.year = yr;
+    ctrl.dynastyIdx = ctrl._findDynastyIndex(yr);
+    ctrl.openGenealogyAt(lng, lat, null, { fromYearSync: true });
+    const yearRowHtml = mockTimelineItems[ctrl.dynastyIdx].innerHTML;
+    assert(
+      yearRowHtml.includes(shown) && !yearRowHtml.includes(hidden),
+      `Expected the ${yr} row at ${lng},${lat} to show ${shown} and not ${hidden}, got ${yearRowHtml}`
+    );
+  }
+  ctrl.year = prevYearGen;
+  ctrl.dynastyIdx = prevDynastyIdxGen;
   const prevLocaleGen = ctrl.locale;
   ctrl.locale = 'en';
   const genSampleSettlements = FAST_MODE
@@ -619,7 +638,7 @@ async function runTraceGenealogySuite(ctx) {
     );
   }
   const tangSnapKeys = Object.keys(snapshots).filter((k) => k.startsWith('s_tang'));
-  assert(tangSnapKeys.length === 29, `Expected 29 s_tang* snapshots, found ${tangSnapKeys.length}`);
+  assert(tangSnapKeys.length === 30, `Expected 30 s_tang* snapshots, found ${tangSnapKeys.length}`);
   // Issue #267. Tang northeast: 平壤 is 安东's seat until 676, never 新罗's before 702;
   // 震国 (698–713) is renamed 渤海 only from 713; 安西 / 北庭 hold oases, not the desert, in 764–790;
   // the Four Garrisons fall to 吐蕃 in 670–679 and 686–692, when 安西 falls back to 西州.
@@ -748,7 +767,7 @@ async function runTraceGenealogySuite(ctx) {
     );
   }
   // 南诏 exists from 738 (before that: 六诏 plus 唐 羁縻 in 滇东; 618–621 爨 · 六诏).
-  const preNanzhao = new Set(['s_tang_0', 's_tang_a0', 's_tang_a1', 's_tang_a1b', 's_tang_a2', 's_tang_a2b', 's_tang_a3', 's_tang_a3b', 's_tang_a4', 's_tang_a4b',
+  const preNanzhao = new Set(['s_tang_0', 's_tang_0b', 's_tang_a0', 's_tang_a1', 's_tang_a1b', 's_tang_a2', 's_tang_a2b', 's_tang_a3', 's_tang_a3b', 's_tang_a4', 's_tang_a4b',
     's_tang_a6', 's_tang_a', 's_tang_a7', 's_tang_wz0', 's_tang_wz1', 's_tang_wz1b', 's_tang_wz2', 's_tang_a5z', 's_tang_a5y']);
   const nzSnapKeys = tangSnapKeys.filter((k) => !preNanzhao.has(k));
   assert.strictEqual(nzSnapKeys.length, tangSnapKeys.length - preNanzhao.size, 'every pre-738 Tang snapshot key must exist');

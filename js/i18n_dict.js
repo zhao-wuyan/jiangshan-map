@@ -220,7 +220,7 @@ window.EN_LOCALE = {
       "Mt. Lülin (Jingshan)"
     ],
     "xihan:23": [
-      "Lülin rebels crown Gengshi Emperor Liu Xuan; Liu Xiu routs Xin at Kunyang, ending Wang Mang",
+      "Liu Xiu routs Xin at Kunyang for the Gengshi Emperor; Gengshi troops kill Wang Mang in Chang’an",
       "Kunyang & Chang'an"
     ],
     "donghan:25": [
@@ -272,7 +272,7 @@ window.EN_LOCALE = {
       "Guandu · Jingkou"
     ],
     "donghan:204": [
-      "Cao Cao captures Ye City and consolidates control over Hebei's four northern provinces",
+      "Cao Cao floods and takes Ye City, becomes Governor of Jizhou and moves his headquarters there",
       "Ye (Anyang)"
     ],
     "donghan:208": [
@@ -524,7 +524,7 @@ window.EN_LOCALE = {
       "Luoyang · Ye · Chang'an"
     ],
     "nanbei:548": [
-      "Hou Jing's Rebellion storms Jiankang Palace; aged Emperor Wu starves as Jiangnan is ravaged",
+      "Hou Jing rebels and besieges the Jiankang palace; it falls in 549 and Emperor Wu starves",
       "Jiankang (Nanjing)"
     ],
     "nanbei:553": [
@@ -796,7 +796,7 @@ window.EN_LOCALE = {
       "Beijing"
     ],
     "ming:1433": [
-      "Zheng He's seventh and final voyage; maritime restrictions follow",
+      "Zheng He's seventh and final voyage; state-sponsored voyages end afterwards",
       "Changle (Fuzhou)"
     ],
     "ming:1449": [
@@ -856,7 +856,7 @@ window.EN_LOCALE = {
       "Kunming"
     ],
     "qing:1683": [
-      "Kangxi Emperor sends Admiral Shi Lang to take Penghu; Zheng Keshuang yields and Taiwanfu is set",
+      "Shi Lang takes Penghu for Kangxi; Zheng Keshuang yields; Taiwan Prefecture is set up in 1684",
       "Taiwanfu (Tainan)"
     ],
     "qing:1689": [
@@ -876,7 +876,7 @@ window.EN_LOCALE = {
       "Lhasa"
     ],
     "qing:1759": [
-      "Qianlong Emperor pacifies the Dzungars and Altishahr Khojas, establishing the General of Ili",
+      "Qing forces defeat the Altishahr Khojas, completing the conquest; General of Ili follows in 1762",
       "Ili"
     ],
     "qing:1840": [
@@ -920,7 +920,7 @@ window.EN_LOCALE = {
       "Yangquan · Taiyuan"
     ],
     "roc:1942": [
-      "Third Battle of Changsha won; Chinese Expeditionary Force enters Burma to guard the lifeline",
+      "Third Battle of Changsha won; Expeditionary Force loses in Burma and retreats to the Salween",
       "Changsha · Baoshan"
     ],
     "roc:1945": [
@@ -987,7 +987,7 @@ window.EN_LOCALE = {
       "Emperor Wu mints five-zhu coins, monopolizes salt and iron, and adds price stabilization",
       "Chang'an"
     ],
-    "xihan:-100": [
+    "xihan:-101": [
       "Li Guangli's Dayuan campaign secures the Southern Tarim Silk Road",
       "Dunhuang · Khotan"
     ],
@@ -1252,7 +1252,7 @@ window.EN_LOCALE = {
       "Suzhou · Fuli"
     ],
     "nansong:1215": [
-      "Mongols capture Jin capital Zhongdu; Jin moves south to Bianjing, losing half its territory",
+      "Mongols take Zhongdu a year after Jin moved its capital to Bianjing; Hebei and Liaodong are lost",
       "Zhongdu · Bianjing"
     ],
     "nansong:1259": [
@@ -1501,7 +1501,7 @@ window.EN_LOCALE = {
     ],
     "zhanguo:-356": [
       "Duke Xiao of Qin appoints Shang Yang for Legalist reforms; capital moves to Xianyang (350 BCE)",
-      "Xianyang"
+      "Yueyang"
     ],
     "zhanguo:-353": [
       "Battle of Guiling: Sun Bin and Tian Ji besiege Wei to rescue Zhao, defeating Pang Juan",
@@ -2024,7 +2024,7 @@ window.EN_LOCALE = {
       "Ningyuan"
     ],
     "qing:1669": [
-      "Young Kangxi Emperor seizes regent Oboi at Wuying Hall to assume personal rule",
+      "The Kangxi Emperor arrests the regent Oboi, ends the regency and takes real control",
       "Beijing"
     ],
     "qing:1662": [
@@ -2124,7 +2124,7 @@ window.EN_LOCALE = {
       "Dongjing Kaifeng Fu"
     ],
     "nanbei:551": [
-      "Wang Sengbian and Chen Baxian crush Hou Jing; Emperor Yuan ascends at Jiangling",
+      "Hou Jing usurps the throne; Wang Sengbian and Chen Baxian crush him in 552; Emperor Yuan ascends",
       "Jiankang · Jiangling"
     ],
     "nanbei:578": [
@@ -2215,9 +2215,13 @@ window.EN_LOCALE = {
       "Emperor Wu of Northern Zhou proscribes Buddhism and Daoism, returning monks to farms and armies",
       "Chang'an"
     ],
+    "tang:622": [
+      "Liu Heita retakes Hebei as Prince of Handong, falls in 623; Lingnan and Jiaozhou submit to Tang",
+      "Mingzhou · Jiaozhou"
+    ],
     "tang:624": [
-      "Emperor Gaozu promulgates the Wude Statutes establishing equal-field and tripartite tax systems",
-      "Chang'an"
+      "Li Xiaogong and Li Jing crush Fu Gongshi; Gaozu issues the Wude Statutes and equal-field system",
+      "Danyang · Chang'an"
     ],
     "tang:653": [
       "Zhangsun Wuji completes the Tang Code with Commentary, the pinnacle of classical Chinese law",
@@ -4756,6 +4760,8 @@ window.EN_LOCALE = {
     "赤壁 · 江陵": "Red Cliffs · Jiangling",
     "汉中 · 麦城": "Hanzhong · Maicheng",
     "虎牢 · 江陵": "Hulao · Jiangling",
+    "洺州 · 交州": "Mingzhou · Jiaozhou",
+    "丹杨 · 长安": "Danyang · Chang'an",
     "应天 · 平江": "Yingtian (Nanjing) · Suzhou",
     "应天 · 大都": "Yingtian (Nanjing) · Dadu (Beijing)",
     "重庆 · 成都": "Chongqing · Chengdu",
@@ -4773,15 +4779,18 @@ window.EN_LOCALE = {
     "炀帝三征高句丽引发天下大乱：瓦岗李密围逼东都洛阳，窦建德据河北，杜伏威控江淮，萧铣起兵荆襄，薛举据陇西，617 年李渊自太原起兵入据长安。": "Emperor Yang’s three Goguryeo campaigns sparked nationwide rebellions: Li Mi’s Wagang Army besieged Luoyang, Dou Jiande held Hebei, Du Fuwei controlled Jianghuai, Xiao Xian rose in Jingxiang, Xue Ju held Longxi, and in 617 Li Yuan marched from Taiyuan to capture Chang’an.",
     "郑（王世充）": "Zheng (Wang Shichong)",
     "夏（窦建德）": "Xia (Dou Jiande)",
+    "汉东（刘黑闼）": "Handong (Liu Heita)",
     "大燕（安禄山）": "Yan (An Lushan)",
     "大燕（史思明）": "Yan (Shi Siming)",
     "755 — 757 · 安史之乱爆发：安禄山据河北、河南称帝大燕，两京相继陷落，玄宗幸蜀、肃宗灵武即位": "755–757 · An Lushan Rebellion: An Lushan proclaims the Yan state over Hebei and Henan; both capitals fall, Xuanzong flees to Shu and Suzong is enthroned at Lingwu",
     "757 — 763 · 两京光复与史思明再起：郭子仪借回纥兵收复长安、洛阳，史思明据河北再叛并一度复陷洛阳": "757–763 · Capitals Recovered, Shi Siming Rises: Guo Ziyi retakes Chang'an and Luoyang with Uyghur help; Shi Siming rebels again from Hebei and briefly retakes Luoyang",
     "梁（萧铣）": "Liang (Xiao Xian)",
     "618—621 年 · 武德建唐与统一战争初期": "618–621 CE · Founding of Tang & Early Reunification Wars",
-    "618 年李渊于长安称帝建唐，先平陇西薛仁杲、河西李轨、河东刘武周，巩固关中、河东与巴蜀根据地，与洛阳王世充、河北窦建德、江陵萧铣对峙。": "In 618 Li Yuan proclaimed the Tang Dynasty in Chang’an, pacifying Xue Rengao in Longxi, Li Gui in Hexi, and Liu Wuzhou in Hedong to secure Guanzhong, Hedong, and Bashu while facing Wang Shichong in Luoyang, Dou Jiande in Hebei, and Xiao Xian in Jiangling.",
-    "621—630 年 · 虎牢决战与武德一统": "621–630 CE · Battle of Hulao & Wude Unification",
-    "621 年李世民于虎牢之战一举擒窦建德、降王世充，李孝恭、李靖平定江南萧铣，唐朝基本统一全国，北与东突厥对峙于阴山一线。": "In 621 Li Shimin captured Dou Jiande and forced Wang Shichong’s surrender at the Battle of Hulao while Li Xiaogong and Li Jing pacified Xiao Xian in the south, reuniting China and facing the Eastern Turks along the Yin Mountains.",
+    "618 年李渊于长安称帝建唐，当年破陇西薛仁杲，次年收河西李轨，620 年逐走南下并州的刘武周，据有关中、河东、陇右与巴蜀，与洛阳王世充、河北窦建德、江陵萧铣、江淮杜伏威并立（图示 620 年前后形势）。": "In 618 Li Yuan proclaimed the Tang Dynasty in Chang’an. Tang defeated Xue Rengao in Longxi that year, took Li Gui’s Hexi in 619, and drove Liu Wuzhou out of Bingzhou in 620, holding Guanzhong, Hedong, Longyou, and Bashu while facing Wang Shichong in Luoyang, Dou Jiande in Hebei, Xiao Xian in Jiangling, and Du Fuwei in Jianghuai (the map shows the situation around 620).",
+    "621—624 年 · 虎牢决战与河北、江淮再乱": "621–624 CE · Battle of Hulao; Renewed Revolts in Hebei & Jianghuai",
+    "621 年李世民于虎牢擒窦建德、降王世充，李孝恭、李靖平萧铣，唐得河南、荆湘，次年岭南冯盎、交趾丘和归附。窦建德旧将刘黑闼旋即尽复河北故地，称汉东王，623 年败亡；杜伏威入朝后辅公祏据丹杨称宋帝，624 年平。幽州罗艺早已归唐；朔方梁师都依附突厥至 628 年，图中未单列。": "In 621 Li Shimin captured Dou Jiande and forced Wang Shichong’s surrender at Hulao while Li Xiaogong and Li Jing took Xiao Xian’s Jiangling; Tang gained Henan and Jingxiang, and Feng Ang of Lingnan and Qiu He of Jiaozhi submitted the next year. Dou Jiande’s former general Liu Heita soon retook Hebei as Prince of Handong and was destroyed in 623; after Du Fuwei went to court, Fu Gongshi proclaimed himself Emperor of Song at Danyang and was crushed in 624. Luo Yi of Youzhou had already joined Tang; Liang Shidu of Shuofang, a Turkic client until 628, is not drawn separately.",
+    "624—630 年 · 平定江淮与武德一统": "624–630 CE · Jianghuai Pacified & Wude Unification",
+    "624 年李孝恭、李靖平辅公祏，隋末群雄略尽，唐朝基本统一全国，北与东突厥对峙于阴山一线；朔方梁师都依附突厥，至 628 年始平，图中未单列。": "In 624 Li Xiaogong and Li Jing crushed Fu Gongshi, ending nearly all the late-Sui warlord regimes; Tang had largely reunited China and faced the Eastern Turks along the Yin Mountains. Liang Shidu of Shuofang, a Turkic client, held out until 628 and is not drawn separately.",
     "归义军（张议潮）": "Guiyi Circuit (Zhang Yichao)",
     "归义军 · 甘州回鹘": "Guiyi Circuit · Ganzhou Uyghurs",
     "高昌回鹘": "Qocho Uyghur Kingdom",
@@ -4926,7 +4935,7 @@ window.EN_LOCALE = {
     "中山国都城（前296赵灭中山）": "Capital of Zhongshan (conquered by Zhao in 296 BCE)",
     "西门豹治邺 · 魏赵漳水重镇": "Governed by Ximen Bao · Key Wei/Zhao stronghold on the Zhang River",
     "韩赵秦争夺要冲 · 长平之战": "Strategic highland contested by Han, Zhao & Qin · Battle of Changping",
-    "秦楚必争汉中重镇": "Strategic Hanzhong stronghold contested by Qin and Chu",
+    "秦、蜀、楚必争的汉中重镇": "Strategic Hanzhong stronghold contested by Qin, Shu and Chu",
     "楚宛邑 · 秦南阳郡治": "Chu city of Wan · Seat of Qin Nanyang Commandery",
     "赵武灵王辟边置云中郡": "Seat of Yunzhong Commandery established by King Wuling of Zhao",
     "代郡治所 · 前228赵公子嘉奔代": "Seat of Dai Commandery · Refuge of Prince Jia of Zhao in 228 BCE",
@@ -5579,6 +5588,12 @@ window.EN_LOCALE = {
     "达州": "Da Zhou",
     "梧州": "Wu Zhou",
     "果州": "Guo Zhou",
+    "阆州": "Lang Zhou",
+    "芷江": "Zhijiang",
+    "黔城": "Qiancheng",
+    "黔阳": "Qianyang",
+    "巫州": "Wu Zhou",
+    "芙蓉楼": "Furong Tower",
     "戎州": "Rong Zhou",
     "嘉州": "Jia Zhou",
     "嶲州": "Xi Zhou (Xichang)",
@@ -5695,6 +5710,7 @@ window.EN_LOCALE = {
     "莆田": "Putian",
     "湖北荆门当阳": "Dangyang, Jingmen, Hubei",
     "荆门·当阳": "Dangyang, Jingmen",
+    "宜昌·当阳": "Dangyang, Yichang",
     "荆门": "Jingmen",
     "湖北十堰丹江口": "Danjiangkou, Shiyan, Hubei",
     "十堰·丹江口": "Shiyan (Danjiangkou)",
@@ -5703,6 +5719,10 @@ window.EN_LOCALE = {
     "邵阳": "Shaoyang",
     "湖南怀化芷江": "Zhijiang, Huaihua, Hunan",
     "怀化·芷江": "Zhijiang, Huaihua",
+    "怀化·洪江": "Hongjiang, Huaihua",
+    "湖南怀化洪江": "Hongjiang, Huaihua, Hunan",
+    "四川南充": "Nanchong, Sichuan",
+    "湖北宜昌当阳": "Dangyang, Yichang, Hubei",
     "怀化": "Huaihua",
     "广东韶关": "Shaoguan, Guangdong",
     "韶关": "Shaoguan",
@@ -5829,7 +5849,7 @@ window.EN_LOCALE = {
     "高句丽自卒本迁都国内城，筑丸都山城": "Second capital of Goguryeo paired with the mountain fortress of Wandu",
     "曹操、华佗故里，曹魏奉谯为先人陪都": "Birthplace of Cao Cao and Hua Tuo, honored as one of the Five Capitals of Cao Wei",
     "张飞领巴西太守镇守阆中七年，保蜀汉北疆": "Garrisoned for seven years by Zhang Fei as Grand Administrator of Baxi to guard Shu Han's northern frontier",
-    "蜀汉置江阳郡，诸葛亮南征水师会师之地": "Seat of Shu Han's Jiangyang Commandery where Zhuge Liang assembled his river fleet for the southern campaign",
+    "江阳郡治，长江与沱江交汇处": "Seat of Jiangyang Commandery, where the Tuo River joins the Yangtze",
     "建兴七年诸葛亮北伐遣陈式攻克武都、阴平二郡": "Captured along with Yinping by Zhuge Liang's general Chen Shi during the third northern expedition in 229 CE",
     "正始五年曹魏毌丘俭东征高句丽克丸都刻石": "Stormed in 244 CE by Cao Wei general Guanqiu Jian during his eastern campaign against Goguryeo",
     "晋明帝太宁元年置永嘉郡，筑温州古城": "Seat of Yongjia Commandery established in 323 CE when Wenzhou's historic city was laid out",

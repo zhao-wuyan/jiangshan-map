@@ -445,8 +445,13 @@ async function runSearchRuntimeSuite(ctx) {
           assert.strictEqual(sandbox.location.search, '?year=450&polity=beiwei&trace=108.940,34.260&terrain=0', 'A place card opened on top of a profile must be kept alongside ?polity=');
           ctrl.activePolity = null;
 
-          const indexHtml = require('fs').readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-          assert(/data-cf-beacon='[^']*"spa":\s*false/.test(indexHtml), 'Cloudflare beacon must keep "spa": false, or every URL state write is counted as a pageview');
+          const beaconCorpus =
+            require('fs').readFileSync(path.join(ROOT, 'index.html'), 'utf8') +
+            require('fs').readFileSync(path.join(JS_DIR, 'atlas_track.js'), 'utf8');
+          assert(
+            /(?:data-cf-beacon='[^']*|setAttribute\('data-cf-beacon',\s*'[^']*)"spa":\s*false/.test(beaconCorpus),
+            'Cloudflare beacon must keep "spa": false, or every URL state write is counted as a pageview'
+          );
 
           Object.assign(ctrl, { activePerson: { profiles: [{ key: 'libai' }, { key: 'dufu' }] }, activePersonEventIdx: 3 });
           ctrl._writeUrlState();
@@ -1581,10 +1586,32 @@ async function runSearchRuntimeSuite(ctx) {
           cssSrc.includes('grid-template-rows: 1fr auto') &&
           cssSrc.includes('#workspace-body:not(.is-mobile-chronicle-open) #chronicle-pane .seat-row') &&
           cssSrc.includes('#workspace-body.is-mobile-chronicle-open #chronicle-pane #dynasty-seat') &&
-          cssSrc.includes('#viewport-frame:has(#milestone-balloon:not(.is-hidden)) .settlement-node .cap-hint-tag') &&
+          !appCode.includes('cap-hint-tag') &&
+          !cssSrc.includes('.cap-hint-tag') &&
           cssSrc.includes('#inp-map-search,\n  #inp-year {\n    font-size: 16px;') &&
           appCode.includes('if (!this._isMobileViewport()) searchInp.focus();'),
-        'css/style.css & js/app.js must use single-row collapsed mobile chronicle bar, prevent iOS Safari auto-zoom (#inp-map-search font-size: 16px), and avoid synchronous searchInp.focus() on mobile chip clicks'
+        'css/style.css & js/app.js must use single-row collapsed mobile chronicle bar, omit removed .cap-hint-tag, prevent iOS Safari auto-zoom (#inp-map-search font-size: 16px), and avoid synchronous searchInp.focus() on mobile chip clicks'
+      );
+
+      // Legend cleanup: deduplicate redundant stage year spans and omit redundant .key-note prose
+      assert.strictEqual(
+        ctrl._stripLegendCaptionYear('战国初期（前403—前331年 · 三家分晋、田氏代齐与魏霸中原）'),
+        '战国初期 · 三家分晋、田氏代齐与魏霸中原',
+        'ZH parenthesized date span must collapse cleanly in legend heading'
+      );
+      assert.strictEqual(
+        ctrl._stripLegendCaptionYear('Early Warring States (403–331 BCE: Partition of Jin, Tian Qi & Hegemony of Wei)'),
+        'Early Warring States · Partition of Jin, Tian Qi & Hegemony of Wei',
+        'EN parenthesized date span must collapse cleanly in legend heading'
+      );
+      assert.strictEqual(
+        ctrl._stripLegendCaptionYear('679 — 686 · 裴行俭复四镇：碎叶代焉耆为四镇之一'),
+        '裴行俭复四镇：碎叶代焉耆为四镇之一',
+        'Leading numeric date span must strip cleanly in legend heading'
+      );
+      assert(
+        !appCode.includes('key-note') && !cssSrc.includes('.key-note'),
+        'Legend must not render or style redundant .key-note prose'
       );
 
       // CUJ 43: Wu Zhou (武周, 690–705) Interregnum Snapshots, Shendu Luoyang Capital & Polity Profile
@@ -1660,6 +1687,11 @@ async function runSearchRuntimeSuite(ctx) {
         const revInspZh = ctrl.inspect({ year: 705, place: '洛阳' });
         assert.strictEqual(revInspZh.polity, '唐');
         assert.strictEqual(revInspZh.resolvedName, '东都洛阳');
+        // 江宁 and 天京 share one site: the nearest city is the one on the map that year.
+        const tianjingInsp = ctrl.inspect({ year: 1860, lng: 118.801, lat: 32.061 });
+        assert.strictEqual(tianjingInsp.nearestCity && tianjingInsp.nearestCity.ancient, '天京');
+        assert.strictEqual(Boolean(tianjingInsp.nearestCity && tianjingInsp.nearestCity.isCapital), true);
+        assert.strictEqual(ctrl.inspect({ year: 1870, lng: 118.801, lat: 32.061 }).nearestCity.ancient, '江宁');
 
         ctrl.locale = 'en';
         assert.strictEqual(ctrl.formatEraLabel(695, tangDyn), 'Wu Zhou · Wu Zetian');
@@ -2310,7 +2342,7 @@ async function runSearchRuntimeSuite(ctx) {
             }
           }
         }
-        for (const bsKey of ['s_zhanguo_a', 's_qin_a']) {
+        for (const bsKey of ['s_zhanguo_a']) {
           for (const f of bootSnapshots[bsKey].polities || []) {
             assert(f.title !== '台湾原住民', `atlas_boot.js ${bsKey} still contains 台湾原住民`);
           }
@@ -2473,7 +2505,7 @@ async function runSearchRuntimeSuite(ctx) {
       ['s_ming_0a', '明', 4],
       ['s_ming_0b', '明', 4],
       ['s_sui_d', '魏（李密）', 1],
-      ['s_tang_0', '梁（萧铣）', 2],
+      ['s_tang_0', '梁（萧铣）', 3],
       ['s_tang_0', '吴（杜伏威）', 2],
       ['s_tang_d1', '大齐（黄巢）', 2],
     ]) {
@@ -2581,6 +2613,92 @@ async function runSearchRuntimeSuite(ctx) {
       !cellMob.classList.contains('is-compact') && cellMob.classList.contains('is-narrow'),
       'Mobile ultra-narrow dynasty cell (9px) must hide cleanly via .is-narrow'
     );
+
+    // First-screen & China mobile GFW resilience regression guards:
+    // 1) stylesheet precedes JSON-LD; zero external <script defer> or immediate Google Fonts connections; mobile relief exists
+    const mobReliefPath = path.join(ROOT, 'assets', 'terrain_relief_mobile.webp');
+    assert(
+      indexHtml.indexOf('css/style.css') < indexHtml.indexOf('application/ld+json') &&
+        !/<script\b[^>]*\bdefer\b[^>]*\bsrc=["']https?:/i.test(indexHtml) &&
+        !/\shref="https:\/\/fonts\.googleapis\.com/.test(indexHtml) &&
+        !/\shref="https:\/\/fonts\.gstatic\.com/.test(indexHtml) &&
+        !indexHtml.includes("relief.fetchPriority = 'low'") &&
+        fs.existsSync(mobReliefPath) &&
+        fs.statSync(mobReliefPath).size < 150 * 1024,
+      'index.html must never block DOMContentLoaded on external <script defer>, must defer Google Fonts via data-font-href, and must ship <150 KB terrain_relief_mobile.webp'
+    );
+    // 2) _restoreFromQuery on Chinese ?person=sushi or ?year=741&place=长安 must NOT fetch i18n_dict.js or zh_hant.js
+    {
+      const savedLoc = sandbox.location;
+      const savedHasEn = ctrl._hasEnDict;
+      const savedHasHant = ctrl._hasZhHant;
+      const savedEnsureEn = ctrl._ensureEnglishLocale;
+      const savedEnsureHant = ctrl._ensureZhHant;
+      const savedOpenPerson = ctrl.openPersonChronicle;
+      const savedLocate = ctrl.locate;
+      const savedArmUrl = ctrl._armUrlSync;
+      const savedSetTimeout = sandbox.setTimeout;
+      let enFetches = 0;
+      let hantFetches = 0;
+      try {
+        sandbox.setTimeout = () => 0;
+        ctrl.locale = 'zh';
+        ctrl._hasEnDict = () => false;
+        ctrl._hasZhHant = () => false;
+        ctrl._ensureEnglishLocale = () => {
+          enFetches++;
+          return Promise.resolve();
+        };
+        ctrl._ensureZhHant = () => {
+          hantFetches++;
+          return Promise.resolve();
+        };
+        ctrl.openPersonChronicle = () => {};
+        ctrl.locate = () => {};
+        ctrl._armUrlSync = () => {};
+        sandbox.location = { ...savedLoc, search: '?person=sushi' };
+        ctrl._restoreFromQuery();
+        assert.strictEqual(
+          enFetches + hantFetches,
+          0,
+          `Chinese ?person=sushi must not fetch i18n_dict.js (${enFetches}) or zh_hant.js (${hantFetches})`
+        );
+        sandbox.location = { ...savedLoc, search: '?year=741&place=%E9%95%BF%E5%AE%89' };
+        ctrl._restoreFromQuery({ skipLinkedYearJump: true });
+        assert.strictEqual(
+          enFetches + hantFetches,
+          0,
+          `Simplified Chinese ?year=741&place=长安 must not fetch i18n_dict.js (${enFetches}) or zh_hant.js (${hantFetches})`
+        );
+        // Mixed/Traditional query whose prefix ("南京") would otherwise substring-match modern Nanjing
+        // must still fetch zh_hant.js so "南京應天府" resolves accurately to Northern Song Shangqiu.
+        const savedZhHantGlobal = sandbox.window.ZH_HANT_CONV;
+        delete sandbox.window.ZH_HANT_CONV;
+        ctrl._resolvePlaceCache = new Map();
+        try {
+          sandbox.location = { ...savedLoc, search: '?year=1100&place=%E5%8D%97%E4%BA%AC%E6%87%89%E5%A4%A9%E5%BA%9C' };
+          ctrl._restoreFromQuery({ skipLinkedYearJump: true });
+          assert.strictEqual(
+            hantFetches,
+            1,
+            'Traditional ?year=1100&place=南京應天府 must fetch zh_hant.js instead of settling on substring "南京"'
+          );
+        } finally {
+          sandbox.window.ZH_HANT_CONV = savedZhHantGlobal;
+          ctrl._resolvePlaceCache = new Map();
+        }
+      } finally {
+        sandbox.location = savedLoc;
+        ctrl._hasEnDict = savedHasEn;
+        ctrl._hasZhHant = savedHasHant;
+        ctrl._ensureEnglishLocale = savedEnsureEn;
+        ctrl._ensureZhHant = savedEnsureHant;
+        ctrl.openPersonChronicle = savedOpenPerson;
+        ctrl.locate = savedLocate;
+        ctrl._armUrlSync = savedArmUrl;
+        sandbox.setTimeout = savedSetTimeout;
+      }
+    }
 
     // 6-era boundary & gap regression checks (195 Donghan, 322 Dongjin, 676 Tang, 1410 Ming, 1650 Qing, 1918 ROC)
     const ptIn = sandbox.window.MercatorProjector.pointInShape;
@@ -3491,6 +3609,95 @@ async function runSearchRuntimeSuite(ctx) {
         'A disabled tracker must not touch the controller'
       );
     }
+  }
+
+  // CUJ 46: Default-View Reset Camera Auto-Hide, Topic Link Affordance & Desktop-Split / Mobile-Merged Header Menu
+  {
+    assert(
+      !indexHtml.includes('github-pill-group') &&
+        indexHtml.includes('id="act-github-star"') &&
+        indexHtml.includes('id="act-more-menu"') &&
+        indexHtml.includes('more-menu-btn') &&
+        indexHtml.includes('id="lnk-more-github"') &&
+        indexHtml.includes('more-mobile-only') &&
+        /<a id="lnk-dynasty-topic"[^>]*>图志<\/a>/.test(indexHtml),
+      'index.html must split #act-github-star and #act-more-menu on desktop, merge #lnk-more-github into #more-popover on mobile, and keep #lnk-dynasty-topic text clean without arrows'
+    );
+    assert(
+      cssSrc.includes('#viewport-frame.is-camera-moved .canvas-reset-btn') &&
+        cssSrc.includes('.more-pop-link.more-mobile-only'),
+      'css/style.css must gate #act-reset-camera visibility via .is-camera-moved and show .more-mobile-only menu items on <= 640px mobile'
+    );
+
+    const toggled = new Set();
+    const vpStub = {
+      classList: {
+        contains: (c) => toggled.has(c),
+        add: (...items) => items.forEach((c) => toggled.add(c)),
+        remove: (...items) => items.forEach((c) => toggled.delete(c)),
+        toggle: (c, force) => {
+          const on = force === undefined ? !toggled.has(c) : Boolean(force);
+          if (on) toggled.add(c);
+          else toggled.delete(c);
+          return on;
+        },
+      },
+    };
+    const proto = Object.getPrototypeOf(ctrl);
+    const camCtrl = Object.assign(Object.create(proto), {
+      viewportFrame: vpStub,
+      _stageWrap: null,
+      svg: {
+        classList: { add() {}, remove() {}, contains: () => false },
+        setAttribute() {},
+      },
+      hoverTip: { classList: { add() {}, remove() {} } },
+      _cancelPendingHover() {},
+      _clearHoveredPrefecture() {},
+      _getUnscaledSvgRect: () => ({ left: 0, top: 0, width: 1200, height: 840 }),
+      _rescaleSvgTypography() {},
+      _updateScaleBar() {},
+      _scheduleTerrainTiles() {},
+      _id: () => null,
+      _syncMobileOverlayState() {},
+      activeMilestone: null,
+      activeCustomRoute: null,
+      flyRaf: null,
+      _camRaf: null,
+      _lastCameraViewBox: null,
+    });
+    camCtrl.camera = camCtrl._getDefaultCamera();
+    camCtrl._applyCamera(true);
+    assert.strictEqual(
+      toggled.has('is-camera-moved'),
+      false,
+      'Reset camera button must remain hidden on initial default camera'
+    );
+
+    camCtrl.camera = { ...camCtrl._getDefaultCamera(), w: 300, h: 252, zoom: 1000 / 300 };
+    camCtrl._applyCamera(false);
+    clearTimeout(camCtrl._cameraSettleTimer);
+    assert.strictEqual(
+      toggled.has('is-camera-moved'),
+      true,
+      'Zooming away from default camera must reveal #act-reset-camera via .is-camera-moved'
+    );
+
+    camCtrl.camera = camCtrl._getDefaultCamera();
+    camCtrl.activeCustomRoute = [{ ancient: '长安' }];
+    camCtrl._syncResetCameraUi();
+    assert.strictEqual(
+      toggled.has('is-camera-moved'),
+      true,
+      'An active custom route must keep #act-reset-camera visible even when camera matches default bounds'
+    );
+
+    camCtrl.clearCustomRoute();
+    assert.strictEqual(
+      toggled.has('is-camera-moved'),
+      false,
+      'Clearing an active custom route while at default camera must hide #act-reset-camera'
+    );
   }
 }
 

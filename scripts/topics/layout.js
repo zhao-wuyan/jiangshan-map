@@ -3,6 +3,17 @@
 const { BASE_URL } = require('./config');
 const { escHtml, fmtDynSpanZh, buildMapHref } = require('./runtime');
 
+const META_DESCRIPTION_MAX = 200;
+
+// Search and social cards cut long descriptions wherever they like; cut at a clause instead.
+function clampDescription(text) {
+  const str = String(text || '');
+  if (str.length <= META_DESCRIPTION_MAX) return str;
+  const head = str.slice(0, META_DESCRIPTION_MAX - 1);
+  const cut = Math.max(...['。', '；', '，', '、', '：'].map((p) => head.lastIndexOf(p)));
+  return `${head.slice(0, cut > META_DESCRIPTION_MAX - 60 ? cut : head.length)}…`;
+}
+
 function renderSharedHead({
   title,
   description,
@@ -13,6 +24,7 @@ function renderSharedHead({
   lang = 'zh',
 }) {
   const htmlLang = lang === 'en' ? 'en' : 'zh-CN';
+  description = clampDescription(description);
   return `<!DOCTYPE html>
 <html lang="${htmlLang}">
 <head>
@@ -49,8 +61,8 @@ function renderSharedHead({
 ${JSON.stringify(jsonLdObj, null, 2)}
   </script>
   <script defer src="assets/topics.js?v=${escHtml(assetHashes.jsHash)}" data-v-hant="${escHtml(assetHashes.hantHash)}"></script>
-  <script defer src="https://events.vercount.one/js"></script>
-  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "dc645937f75341b2a7416bd1fb81b635"}'></script>
+  <script async src="https://events.vercount.one/js"></script>
+  <script async src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "dc645937f75341b2a7416bd1fb81b635"}'></script>
 </head>`;
 }
 
