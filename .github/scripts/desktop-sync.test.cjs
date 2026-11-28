@@ -73,11 +73,8 @@ function fixture(t) {
   write(upstream, '.gitattributes', 'index.html merge=sync-version\n');
   const assets = new Set([...syncVersion.STATIC_TAG_ASSETS, ...syncVersion.LAZY_ATTR_ASSETS.map(({ relPath }) => relPath)]);
   for (const asset of assets) write(upstream, asset, `/* fixture ${asset} */\n`);
-  const tags = syncVersion.STATIC_TAG_ASSETS.map((asset) => asset.endsWith('.css')
-    ? `<link rel="stylesheet" href="${asset}?v=00000000">`
-    : `<script src="${asset}?v=00000000"></script>`);
-  write(upstream, 'index.html', `<!doctype html>\n<html>\n<head>\n${tags.join('\n')}\n</head>\n<body>Atlas</body>\n</html>\n`);
-  write(upstream, 'shared.txt', 'base business content\n');
+  // The real document carries every tagged asset and preload the hash script expects.
+  write(upstream, 'index.html', fs.readFileSync(path.resolve(__dirname, '../../index.html')));
   write(upstream, '.github/workflows/maintained.yml', 'name: original\n');
   write(upstream, '.github/workflows/keep.yml', 'name: keep\n');
   hash(upstream);
