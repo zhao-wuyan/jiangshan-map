@@ -1,13 +1,11 @@
-# Content hashes must identify the same bytes on Linux and Windows checkouts.
-*.js text eol=lf
-*.css text eol=lf
-*.html text eol=lf
+# Keep text files normalized to LF across macOS, Linux, and Windows
+* text=auto eol=lf
 
-# Collapse generated bundles and static SEO snapshots in GitHub PR diffs
+# Collapse generated bundles in GitHub PR diffs
 js/atlas_snapshots.js linguist-generated=true
 js/atlas_boot.js linguist-generated=true
+js/snapshots/*.js linguist-generated=true
 js/event_pinyin.js linguist-generated=true
-topics/*.html linguist-generated=true
 
 # Auto-resolve ?v= / data-v-* cache-busting hash conflicts in index.html
 index.html merge=sync-version

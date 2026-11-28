@@ -4,11 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script>
-    // Deep links (?year=, ?place=, …) need the full snapshot bundle: fetch it now, in parallel with
-    // the first-paint scripts, and hide the Warring States placeholder text until js/app.js jumps.
-    // The relief image waits too (see the script after #atlas-svg), so the borders arrive first.
-    // scripts/sync_version.js keeps the ?v= below in step with data-v-snapshots.
+    // Deep links (?year=, ?place=, …) hide the Warring States placeholder text until js/app.js
+    // jumps and loads the target dynasty's snapshot chunk. The relief image waits too (see the
+    // script after #atlas-svg), so the borders arrive first.
     (function () {
+      if (/[?&]lang=en(?:&|$)/i.test(location.search)) {
+        var i18n = document.createElement('link');
+        i18n.rel = 'preload';
+        i18n.as = 'script';
+        i18n.href = 'js/i18n_dict.js?v=95ee092d';
+        document.head.appendChild(i18n);
+      }
+      if (/[?&](?:person|event|journey)=/.test(location.search)) {
+        var ps = document.createElement('link');
+        ps.rel = 'preload';
+        ps.as = 'script';
+        ps.href = 'js/atlas_person.js?v=54c1dd0f';
+        document.head.appendChild(ps);
+      }
+      if (/[?&](?:place|lng|trace|quiz)=/.test(location.search)) {
+        var gs = document.createElement('link');
+        gs.rel = 'preload';
+        gs.as = 'script';
+        gs.href = 'js/atlas_genealogy.js?v=071dbf71';
+        document.head.appendChild(gs);
+      }
       if (!/[?&](year|place|lng|person|event|journey|trace|q)=/.test(location.search)) {
         // Not a deep link: start the relief image now, as early as a plain <image href> would.
         var relief = document.createElement('link');
@@ -24,17 +44,18 @@
       var root = document.documentElement;
       root.classList.add('deeplink-boot');
       setTimeout(function () { root.classList.remove('deeplink-boot'); }, 8000);
-      var link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'script';
-      link.fetchPriority = 'low'; // after the first-paint scripts, not competing with them
-      link.href = 'js/atlas_snapshots.js?v=26377765';
-      document.head.appendChild(link);
     })();
   </script>
   <title>江山时序 · 中国历史地图时间轴（战国至现代历代疆域、州郡政区与古今地名沿革）</title>
-  <link rel="stylesheet" href="css/style.css?v=cb902f16" />
-  <meta name="description" id="meta-description" content="交互式中国历史地图时间轴（公元前403年战国三家分晋至现代）：浏览18个朝代多阶段历史疆域、州郡道省政区、黄河改道水系、历代古城古今地名对照（点地溯源）、天下名关与青史人物行迹，支持现代省界对照、古地名挑战与中英双语。" />
+  <link rel="stylesheet" href="css/style.css?v=b32b9c61" />
+  <script defer src="js/china_geo_data.js?v=9a794924"></script>
+  <script defer src="js/atlas_boot.js?v=478c009f"></script>
+  <script defer src="js/map_data.js?v=7603d326"></script>
+  <script defer src="js/lore_core.js?v=1980e8d9"></script>
+  <script defer id="atlas-app-script" src="js/app.js?v=0d9525ba" data-v-snapshots="7e212064" data-v-i18n="95ee092d" data-v-lore="de69fd3c" data-v-pinyin="9c86cc5f" data-v-hant="3afdab47" data-v-quiz="58cf1453" data-v-quiz-poster="ed70d460" data-v-narrator="ce955ca9" data-v-sources="967b840e" data-v-person="54c1dd0f" data-v-genealogy="071dbf71" data-v-feedback="17f36ed6"></script>
+  <script defer src="js/atlas_search.js?v=a24a974b"></script>
+  <script defer src="js/atlas_api.js?v=bb6adb1f"></script>
+  <meta name="description" id="meta-description" content="交互式中国历史地图时间轴（公元前403年战国三家分晋至现代）：浏览18个朝代200+多阶段历史疆域、州郡道省政区、黄河改道水系、历代古城古今地名对照（点地溯源）、天下名关与青史人物行迹，支持现代省界对照、古地名挑战与简繁中英三语。" />
   <meta name="keywords" content="江山时序,江山时序历史地图,中国历史地图,历史地图时间轴,历代疆域变迁,中国历代地图,古今地名对照,政区沿革查询,点地溯源,古诗词路线地图,战国七雄地图,秦朝郡县地图,西汉地图,西域都护府,三国地图,东晋十六国地图,南北朝地图,唐朝地图,五代十国地图,燕云十六州,北宋地图,南宋地图,大理国地图,元朝行省地图,明朝地图,清朝地图,名关雄隘,函谷关,潼关,剑门关,雁门关,玉门关,山海关,张骞出使西域路线,诸葛亮北伐路线,玄奘西行路线,李白壮游路线,杜甫闻官军收河南河北路线,苏轼贬谪路线,文天祥过零丁洋路线,王阳明行迹,长平之战地图,赤壁之战地图,淝水之战地图,Historical Atlas of China,Chinese History Map Timeline,Jiangshan Atlas" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <meta name="applicable-device" content="pc,mobile" />
@@ -49,16 +70,18 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="江山时序 · 中国历史地图时间轴" />
   <meta property="og:title" id="og-title" content="江山时序 · 中国历史地图时间轴（战国 → 现代）" />
-  <meta property="og:description" id="og-description" content="从战国三家分晋到现代：18个朝代、多阶段历史疆域与州道政区快照、点地溯源古今地名沿革、天下名关与历史人物时空行迹。" />
+  <meta property="og:description" id="og-description" content="从战国三家分晋到现代：18个朝代、200+多阶段历史疆域与州道政区快照、点地溯源古今地名沿革、天下名关与历史人物时空行迹。" />
   <meta property="og:url" id="og-url" content="https://deanchen.me/jiangshan-map/" />
-  <meta property="og:image" content="https://deanchen.me/jiangshan-map/assets/terrain_relief.webp" />
+  <meta property="og:image" content="https://deanchen.me/jiangshan-map/assets/og_preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="江山时序 · 中国历史地图时间轴预览" />
   <meta property="og:locale" content="zh_CN" />
   <meta property="og:locale:alternate" content="en_US" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" id="tw-title" content="江山时序 · 中国历史地图时间轴（战国 → 现代）" />
   <meta name="twitter:description" id="tw-description" content="交互式中国历史地图时间轴：历代疆域、州郡政区、古今地名沿革、20座名关雄隘与百余位青史人物行迹。" />
-  <meta name="twitter:image" content="https://deanchen.me/jiangshan-map/assets/terrain_relief.webp" />
+  <meta name="twitter:image" content="https://deanchen.me/jiangshan-map/assets/og_preview.png" />
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -75,6 +98,7 @@
       ],
       "inLanguage": [
         "zh-CN",
+        "zh-TW",
         "en"
       ],
       "potentialAction": {
@@ -95,6 +119,7 @@
       "operatingSystem": "All",
       "inLanguage": [
         "zh-CN",
+        "zh-TW",
         "en"
       ],
       "isAccessibleForFree": true,
@@ -105,11 +130,12 @@
         "name": "中国及东亚历史疆域 (China & Historical East Asia)"
       },
       "featureList": [
-        "战国至现代18个朝代、多阶段历史疆域与州道政区地图",
+        "战国至现代18个朝代、200+多阶段历史疆域与州道政区地图",
         "点地溯源：点击任意坐标或古城查阅两千四百年政区沿革与历代战史",
-        "点人溯事：秦始皇一统六国、张骞凿空西域、诸葛亮北伐、玄奘西行、李白壮游、苏轼贬谪、王阳明悟道生平行迹与诗词名篇",
+        "点人溯事：秦始皇、张骞凿空西域、诸葛亮北伐、刘裕北伐建宋、玄奘西行、李白壮游、苏轼贬谪、王阳明悟道生平行迹与多人同看",
+        "点事溯局：秦灭六国、楚汉之争、安史之乱、靖康之变、红军长征双阵营事件始末沙盘",
         "名关雄隘：函谷关、潼关、剑门关、雁门关、玉门关、山海关等20座历史关隘形胜与锁钥志",
-        "现代省界对照图层与古地名寻址挑战模式，支持中英双语切换"
+        "现代省界对照图层与古地名寻址挑战模式（舆图小试），支持简繁中英三语切换与语音讲解"
       ]
     },
     {
@@ -142,7 +168,7 @@
           "@type": "ListItem",
           "position": 4,
           "name": "东汉（25—220）· Eastern Han",
-          "description": "都城：洛阳。光武中兴后定都洛阳。班超经营西域，窦宪勒石燕然，北匈奴西迁；蔡伦改进造纸术。中后期外戚宦官交替专权，党锢之祸后黄巾起义，董卓入京，群雄割据。",
+          "description": "都城：洛阳。光武中兴后定都洛阳，经明章之治至永元之隆达极盛。班超经营西域，窦宪勒石燕然，北匈奴西迁；蔡伦改进造纸术。中后期外戚宦官交替专权，党锢之祸后黄巾起义，董卓入京，群雄割据。",
           "url": "https://deanchen.me/jiangshan-map/?year=100"
         },
         {
@@ -198,7 +224,7 @@
           "@type": "ListItem",
           "position": 12,
           "name": "北宋（960—1127）· Northern Song",
-          "description": "都城：东京开封府。陈桥兵变后用近二十年平定荆湖、后蜀、南汉、南唐、吴越、北汉，结束五代十国；两次北伐失利，燕云十六州终为辽有，与辽、西夏、大理长期并立。经济文化高度繁荣。",
+          "description": "都城：东京开封府。陈桥兵变后用近二十年平定荆湖、后蜀、南汉、南唐、吴越、北汉，结束五代十国；两次北伐失利，燕云十六州终为辽有，与辽、西夏、大理长期并立。历经仁宗盛治与熙宁变法，经济文化高度繁荣。",
           "url": "https://deanchen.me/jiangshan-map/?year=1100"
         },
         {
@@ -212,14 +238,14 @@
           "@type": "ListItem",
           "position": 14,
           "name": "元（1279—1368）· Yuan",
-          "description": "都城：大都。1271 年忽必烈定国号为大元，1279 年崖山灭南宋一统全国。首次将西藏（宣政院辖地）、云南、漠北、东北纳入同一中央政权，设中书省与十行省，置澎湖巡检司，大都成为欧亚陆海贸易与文化交流枢纽。",
+          "description": "都城：大都。1271 年忽必烈定国号为大元，1279 年崖山灭南宋一统全国，至元、大德间守成致治。首次将西藏（宣政院辖地）、云南、漠北、东北纳入同一中央政权，设中书省与十行省，置澎湖巡检司，大都成为欧亚陆海贸易与文化交流枢纽。",
           "url": "https://deanchen.me/jiangshan-map/?year=1300"
         },
         {
           "@type": "ListItem",
           "position": 15,
           "name": "明（1368—1644）· Ming",
-          "description": "都城：顺天府（北京）。洪武、永乐时设奴儿干都司、哈密卫、交趾布政司，郑和七下西洋；土木堡之变后收缩至长城、辽东，北御蒙古、东南抗倭；1616 年后金崛起，萨尔浒之战后辽东尽失。",
+          "description": "都城：顺天府（北京）。历经洪武、永乐、仁宣之治与弘治中兴，前期设奴儿干都司、哈密卫、交趾布政司，郑和七下西洋；土木堡之变后收缩至长城、辽东，北御蒙古、东南抗倭；1616 年后金崛起，萨尔浒之战后辽东尽失。",
           "url": "https://deanchen.me/jiangshan-map/?year=1450"
         },
         {
@@ -233,7 +259,7 @@
           "@type": "ListItem",
           "position": 17,
           "name": "中华民国（1912—1949）· Republic of China",
-          "description": "都城：南京。1912 年辛亥革命终结二千年帝制，共和肇始。历经北洋军阀割据、护法运动、国民革命军北伐、十年建设、十四年抗日战争与台湾光复，至 1946—1949 年解放战争。",
+          "description": "都城：北京→南京。1912 年辛亥革命终结二千年帝制，共和肇始。历经北洋军阀割据、护法运动、国民革命军北伐、十年建设、十四年抗日战争与台湾光复，至 1946—1949 年解放战争。",
           "url": "https://deanchen.me/jiangshan-map/?year=1936"
         },
         {
@@ -246,48 +272,90 @@
         {
           "@type": "ListItem",
           "position": 19,
-          "name": "秦灭六国 (Qin's Conquest of the Six States) · 前238年 — 前221年（秦王政九年至二十六年）",
-          "description": "事件全脉络：咸阳（今陕西咸阳） → 邺城（今河北临漳西南） → 新郑（今河南新郑） → 邯郸（今河北邯郸） → 蓟城（今北京西南） → 大梁（今河南开封） → 寿春（今安徽寿县） → 襄平（今辽宁辽阳） → 临淄（今山东淄博临淄） → 咸阳（称始皇帝）",
-          "url": "https://deanchen.me/jiangshan-map/?event=qintongyi"
+          "name": "安史之乱 (An Lushan Rebellion) · 天宝十四载（755）— 广德元年（763） · 唐由盛转衰之枢",
+          "description": "事件全脉络：范阳（今北京） → 洛阳（今河南洛阳） → 潼关（今陕西渭南潼关） → 马嵬坡（今陕西兴平西） → 常山（今河北正定） → 灵武（今宁夏灵武） → 睢阳（今河南商丘） → 长安（今陕西西安） → 邺城（今河南安阳） → 莫州（今河北任丘北）",
+          "url": "https://deanchen.me/jiangshan-map/?event=anshi"
         },
         {
           "@type": "ListItem",
           "position": 20,
-          "name": "张骞凿空西域行迹 (Zhang Qian's Mission to the Western Regions) · 前138年 — 前126年（西汉建元三年至元朔三年）",
-          "description": "途经节点：长安（今陕西西安） → 陇西（今甘肃临洮） → 姑臧（河西）（今甘肃武威） → 焉耆（今新疆焉耆） → 大宛贰师城（今费尔干纳盆地） → 康居（今锡尔河中游） → 大月氏蓝氏城（今阿富汗巴尔赫） → 于阗（今新疆和田） → 长安（归汉）（今陕西西安）",
-          "url": "https://deanchen.me/jiangshan-map/?person=zhangqian"
+          "name": "靖康之变 (Jingkang Catastrophe & Southern Crossing) · 宣和七年（1125）— 绍兴十二年（1142） · 汴京陆沉、建炎南渡与岳飞北伐",
+          "description": "事件全脉络：燕山府（今北京） → 太原（今山西太原） → 东京开封（今河南开封） → 应天府（今河南商丘） → 明州（今浙江宁波） → 黄天荡（今江苏镇江东北） → 和尚原（今陕西宝鸡西南） → 襄阳府（今湖北襄阳） → 郾城（今河南漯河郾城） → 临安风波亭（今浙江杭州）",
+          "url": "https://deanchen.me/jiangshan-map/?event=jingkang"
         },
         {
           "@type": "ListItem",
           "position": 21,
-          "name": "诸葛亮出山北伐行迹 (Zhuge Liang's Southern & Northern Campaigns) · 207年 — 234年（东汉建安十二年至蜀汉建兴十二年）",
-          "description": "途经节点：隆中（襄阳）（今湖北襄阳） → 柴桑（今江西九江） → 赤壁（今湖北赤壁） → 成都（今四川成都） → 成都（武担山）（今四川成都） → 永安（白帝城）（今重庆奉节） → 滇池（南中）（今云南昆明） → 汉中（沔阳）（今陕西汉中） → 祁山（今甘肃礼县） → 木门道（卤城）（今甘肃天水西南） → 五丈原（岐山）（今陕西宝鸡岐山）",
-          "url": "https://deanchen.me/jiangshan-map/?person=zhugeliang"
+          "name": "秦灭六国 (Qin's Conquest of the Six States) · 秦王政九年（前238）— 二十六年（前221） · 六王毕，四海一",
+          "description": "事件全脉络：咸阳（今陕西咸阳） → 邺城（今河北临漳西南） → 新郑（今河南新郑） → 邯郸（今河北邯郸） → 蓟城（今北京西南） → 大梁（今河南开封） → 寿春（今安徽寿县） → 襄平（今辽宁辽阳） → 临淄（今山东淄博临淄） → 咸阳（今陕西咸阳）",
+          "url": "https://deanchen.me/jiangshan-map/?event=qintongyi"
         },
         {
           "@type": "ListItem",
           "position": 22,
-          "name": "玄奘西行求法行迹 (Xuanzang's Pilgrimage to the Western Regions) · 627年 — 645年（唐贞观元年至贞观十九年）",
-          "description": "途经节点：长安（今陕西西安） → 凉州（今甘肃武威） → 瓜州（玉门关）（今甘肃瓜州） → 高昌王城（今新疆吐鲁番） → 屈支（龟兹）（今新疆库车） → 碎叶城（今吉尔吉斯斯坦托克马克） → 缚喝（大夏）（今阿富汗巴尔赫） → 健驮逻（今巴基斯坦白沙瓦） → 那烂陀寺（今印度比哈尔邦那烂陀） → 曲女城（今印度北方邦卡瑙季） → 于阗（瞿萨旦那）（今新疆和田） → 长安（归唐）（今陕西西安）",
-          "url": "https://deanchen.me/jiangshan-map/?person=xuanzang"
+          "name": "楚汉之争 (Chu-Han Contention) · 秦二世三年（前207）— 汉五年（前202） · 破秦分封、暗度陈仓与垓下决战",
+          "description": "事件全脉络：巨鹿（今河北邢台平乡） → 鸿门（今陕西西安临潼） → 南郑（今陕西汉中） → 陈仓（今陕西宝鸡） → 彭城（今江苏徐州） → 井陉（今河北石家庄井陉） → 荥阳（今河南郑州荥阳） → 潍水（今山东潍坊） → 垓下（今安徽蚌埠固镇） → 长安（今陕西西安）",
+          "url": "https://deanchen.me/jiangshan-map/?event=chuhan"
         },
         {
           "@type": "ListItem",
           "position": 23,
-          "name": "李白仗剑壮游行迹 (Li Bai's Grand Travels Across Tang China) · 701年 — 762年（武周长安元年至唐宝应元年）",
-          "description": "途经节点：碎叶城（今吉尔吉斯斯坦托克马克） → 绵州昌隆（青莲）（今四川江油青莲镇） → 渝州（今重庆） → 荆门（宜都）（今湖北宜都） → 扬州（广陵）（今江苏扬州） → 安陆（今湖北安陆） → 长安（今陕西西安） → 洛阳（今河南洛阳） → 梁宋（睢阳）（今河南商丘） → 齐鲁（兖州任城）（今山东济宁） → 白帝城（夔州）（今重庆奉节） → 当涂（宣城郡）（今安徽马鞍山·当涂）",
-          "url": "https://deanchen.me/jiangshan-map/?person=libai"
+          "name": "红军长征 (The Long March) · 1934年10月 — 1936年10月 · 自赣南至陕甘的万里战略转移",
+          "description": "事件全脉络：瑞金（今江西瑞金·于都） → 全州（今广西全州·兴安） → 遵义（今贵州遵义） → 习水（今贵州习水·仁怀茅台） → 禄劝（今云南禄劝皎平渡） → 泸定（今四川甘孜泸定） → 懋功（今四川阿坝小金） → 迭部（今甘肃迭部腊子口） → 吴起（今陕西延安吴起） → 会宁（今甘肃会宁·宁夏将台堡）",
+          "url": "https://deanchen.me/jiangshan-map/?event=changzheng"
         },
         {
           "@type": "ListItem",
           "position": 24,
-          "name": "苏轼宦海贬谪行迹 (Su Shi's Literary Exile Across Song China) · 1056年 — 1101年（北宋嘉祐元年至建中靖国元年）",
-          "description": "途经节点：眉州（今四川眉山） → 东京开封府（今河南开封） → 凤翔府（今陕西凤翔） → 杭州（今浙江杭州） → 密州（今山东诸城） → 徐州（今江苏徐州） → 湖州（今浙江湖州） → 黄州（今湖北黄冈） → 惠州（今广东惠州） → 儋州（今海南儋州） → 常州（今江苏常州）",
-          "url": "https://deanchen.me/jiangshan-map/?person=sushi"
+          "name": "太平天国 (Taiping Heavenly Kingdom) · 1851—1864 · 金田起义、建都天京与湘淮合围",
+          "description": "事件全脉络：金田（今广西桂平金田） → 武昌（今湖北武汉） → 天京（今江苏南京） → 静海（今天津静海） → 湖口（今江西九江湖口） → 三河（今安徽肥西三河） → 苏州（今江苏苏州） → 安庆（今安徽安庆） → 上海（今上海） → 天京（今江苏南京）",
+          "url": "https://deanchen.me/jiangshan-map/?event=taiping"
         },
         {
           "@type": "ListItem",
           "position": 25,
+          "name": "张骞凿空西域行迹 (Zhang Qian's Mission to the Western Regions) · 前138年 — 前126年（西汉建元三年至元朔三年）",
+          "description": "途经节点：长安（今陕西西安） → 陇西（今甘肃临洮） → 姑臧（今甘肃武威） → 焉耆（今新疆焉耆） → 大宛贰师城（今费尔干纳盆地） → 康居（今锡尔河中游） → 大月氏蓝氏城（今阿富汗巴尔赫） → 于阗（今新疆和田） → 长安（今陕西西安）",
+          "url": "https://deanchen.me/jiangshan-map/?person=zhangqian"
+        },
+        {
+          "@type": "ListItem",
+          "position": 26,
+          "name": "诸葛亮出山北伐行迹 (Zhuge Liang's Southern & Northern Campaigns) · 207年 — 234年（东汉建安十二年至蜀汉建兴十二年）",
+          "description": "途经节点：隆中（今湖北襄阳） → 柴桑（今江西九江） → 赤壁（今湖北赤壁） → 成都（今四川成都） → 成都（今四川成都） → 白帝城（今重庆奉节） → 滇池（今云南昆明） → 汉中（今陕西汉中） → 祁山（今甘肃礼县） → 木门道（今甘肃天水西南） → 五丈原（今陕西宝鸡岐山）",
+          "url": "https://deanchen.me/jiangshan-map/?person=zhugeliang"
+        },
+        {
+          "@type": "ListItem",
+          "position": 27,
+          "name": "刘裕北伐建宋行迹 (Liu Yu's Northern Expeditions & Founding of Liu Song) · 404年 — 422年（东晋元兴三年至南朝宋永初三年）",
+          "description": "途经节点：京口（今江苏镇江） → 广固（今山东潍坊青州） → 建康（今江苏南京） → 江陵（今湖北荆州） → 彭城（今江苏徐州） → 洛阳（今河南洛阳） → 长安（今陕西西安） → 建康（今江苏南京）",
+          "url": "https://deanchen.me/jiangshan-map/?person=liuyu"
+        },
+        {
+          "@type": "ListItem",
+          "position": 28,
+          "name": "玄奘西行求法行迹 (Xuanzang's Pilgrimage to the Western Regions) · 627年 — 645年（唐贞观元年至贞观十九年）",
+          "description": "途经节点：长安（今陕西西安） → 凉州（今甘肃武威） → 瓜州（今甘肃瓜州） → 高昌王城（今新疆吐鲁番） → 龟兹（今新疆库车） → 碎叶城（今吉尔吉斯斯坦托克马克） → 缚喝（今阿富汗巴尔赫） → 健驮逻（今巴基斯坦白沙瓦） → 那烂陀寺（今印度比哈尔邦那烂陀） → 曲女城（今印度北方邦卡瑙季） → 于阗（今新疆和田） → 长安（今陕西西安）",
+          "url": "https://deanchen.me/jiangshan-map/?person=xuanzang"
+        },
+        {
+          "@type": "ListItem",
+          "position": 29,
+          "name": "李白仗剑壮游行迹 (Li Bai's Grand Travels Across Tang China) · 701年 — 762年（武周长安元年至唐宝应元年）",
+          "description": "途经节点：碎叶城（今吉尔吉斯斯坦托克马克） → 绵州青莲（今四川江油青莲镇） → 渝州（今重庆） → 荆门（今湖北宜都） → 扬州（今江苏扬州） → 安陆（今湖北安陆） → 长安（今陕西西安） → 洛阳（今河南洛阳） → 睢阳（今河南商丘） → 任城（今山东济宁） → 白帝城（今重庆奉节） → 当涂（今安徽马鞍山·当涂）",
+          "url": "https://deanchen.me/jiangshan-map/?person=libai"
+        },
+        {
+          "@type": "ListItem",
+          "position": 30,
+          "name": "苏轼宦海贬谪行迹 (Su Shi's Literary Exile Across Song China) · 1056年 — 1101年（北宋嘉祐元年至建中靖国元年）",
+          "description": "途经节点：眉州（今四川眉山） → 东京开封府（今河南开封） → 凤翔府（今陕西凤翔） → 杭州（今浙江杭州） → 密州（今山东诸城） → 徐州（今江苏徐州） → 湖州（今浙江湖州） → 黄州（今湖北黄冈） → 登州（今山东烟台蓬莱） → 杭州（今浙江杭州） → 惠州（今广东惠州） → 儋州（今海南儋州） → 常州（今江苏常州）",
+          "url": "https://deanchen.me/jiangshan-map/?person=sushi"
+        },
+        {
+          "@type": "ListItem",
+          "position": 31,
           "name": "王阳明知行悟道行迹 (Wang Yangming's Unity of Knowledge & Action) · 1472年 — 1529年（明成化八年至嘉靖七年）",
           "description": "途经节点：余姚（今浙江宁波余姚） → 广信（今江西上饶） → 京师（今北京） → 钱塘江（今浙江杭州钱塘江口） → 龙场（今贵州贵阳修文） → 庐陵（今江西吉安） → 赣州（今江西赣州） → 南昌（今江西南昌·鄱阳湖） → 绍兴（今浙江绍兴） → 南安（今江西赣州大余）",
           "url": "https://deanchen.me/jiangshan-map/?person=wangyangming"
@@ -303,7 +371,7 @@
           "name": "江山时序是什么网站？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、209幅多阶段疆域与州郡政区快照、531条编年大事、755处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
+            "text": "江山时序（Jiangshan Historical Atlas，官方网址 https://deanchen.me/jiangshan-map/）是一幅开源免费的中国历史交互地图时间轴，覆盖公元前403年（战国三家分晋）至现代共18个历史时期、224幅多阶段疆域与州郡政区快照、549条编年大事、771处城池地标，支持黄河改道水系、古今地名政区沿革（点地溯源）、20座天下名关雄隘与历史人物/古诗词时空行迹可视化。"
           }
         },
         {
@@ -319,7 +387,7 @@
           "name": "如何在历史地图上查看苏轼贬谪路线、杜甫李白古诗词路线或历史战役地点？",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "可在全局搜索框直接检索历史人物（如秦始皇、张骞、诸葛亮、玄奘、李白、苏轼、王阳明等）进入「点人溯事」查看完整生平行迹与诗词名篇，或直接通过 URL 参数 ?person=人物 或 ?year=年份&place=地名列表 自动生成古诗词路线与战役落针，例如苏轼贬谪行迹（?person=sushi）与杜甫《闻官军收河南河北》路线（?year=763&place=剑外,巴峡,巫峡,襄阳,洛阳）。"
+            "text": "可在全局搜索框直接检索历史人物（如秦始皇、张骞、诸葛亮、刘裕、玄奘、李白、苏轼、王阳明等）进入「点人溯事」查看完整生平行迹与多人同看，或通过 ?event= 参数打开双阵营事件沙盘（如 ?event=qintongyi 秦灭六国、?event=anshi 安史之乱），亦可通过 ?year=年份&place=地名列表 自动生成古诗词路线与战役落针，例如苏轼贬谪行迹（?person=sushi）与杜甫《闻官军收河南河北》路线（?year=763&place=剑外,巴峡,巫峡,襄阳,洛阳）。"
           }
         }
       ]
@@ -339,7 +407,7 @@
   <link data-font-href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <link data-font-href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&text=%20%26%27CDEFHJKMNPQRSTWYabcdefghilmnoprstuvxy%E4%B8%89%E4%B8%9C%E4%B8%AD%E4%BA%94%E4%BA%BA%E4%BB%A3%E5%85%83%E5%85%AD%E5%85%B1%E5%8C%97%E5%8D%81%E5%8D%8E%E5%8D%97%E5%92%8C%E5%94%90%E5%9B%BD%E5%AE%8B%E5%B1%B1%E5%BA%8F%E6%88%98%E6%97%B6%E6%98%8E%E6%99%8B%E6%9C%9D%E6%B0%91%E6%B1%89%E6%B1%9F%E6%B8%85%E7%A7%A6%E8%A5%BF%E9%9A%8B&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <!-- Analytics: anonymous click counter (workers/stats); external beacons load post-paint so unreachable hosts never stall DOMContentLoaded -->
-  <script defer src="js/atlas_track.js?v=c3d799e3"></script>
+  <script defer src="js/atlas_track.js?v=fe5b9648"></script>
 </head>
 <body>
   <div id="atlas-shell">
@@ -351,6 +419,17 @@
         </h1>
       </div>
       <div class="control-strip" role="toolbar" aria-label="地图图层与交互模式">
+        <button id="act-challenge" class="action-btn subtle challenge-trigger-btn" type="button" aria-pressed="false" title="舆图小试 · 古地名定位挑战">
+          <svg class="btn-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+            <circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.35"/>
+            <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+            <line x1="8" y1="1.3" x2="8" y2="3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+            <line x1="8" y1="12.5" x2="8" y2="14.7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+            <line x1="1.3" y1="8" x2="3.5" y2="8" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+            <line x1="12.5" y1="8" x2="14.7" y2="8" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>
+          </svg>
+          <span id="lbl-challenge"><span id="lbl-challenge-full" class="chal-full">舆图小试</span><span id="lbl-challenge-short" class="chal-short">小试</span></span>
+        </button>
         <button id="act-layers-menu" class="action-btn subtle layers-trigger-btn" type="button" aria-expanded="false" aria-controls="layers-popover" title="展开或收起地图图层开关">
           <svg class="btn-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path d="M8 1.8L1.5 5.2 8 8.6l6.5-3.4L8 1.8zM1.5 8.2L8 11.6l6.5-3.4M1.5 11.2L8 14.6l6.5-3.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span id="lbl-layers-btn">图层</span>
@@ -373,15 +452,9 @@
             </svg>
           </button>
         </div>
-        <div class="locale-pill-group" role="group" aria-label="切换语言 / Switch language">
-          <button id="act-locale-hant" class="action-btn subtle locale-switch locale-pill-left" title="切換繁體中文 / 切换简体中文">
-            <svg class="btn-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.3"/><ellipse cx="8" cy="8" rx="2.8" ry="6.2" fill="none" stroke="currentColor" stroke-width="1.2"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.2"/></svg>
-            <span id="lbl-locale-hant">繁</span>
-          </button>
-          <button id="act-locale" class="action-btn subtle locale-switch locale-pill-right" title="Switch language / 切换语言">
-            <span id="lbl-locale">EN</span>
-          </button>
-        </div>
+        <button id="act-locale-menu" class="action-btn subtle locale-menu-btn" type="button" aria-expanded="false" aria-controls="locale-popover" aria-haspopup="menu" title="切换语言 / Switch language" aria-label="切换语言 / Switch language">
+          <svg class="btn-svg" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="currentColor"><path d="M18.5 10l4.4 11h-2.155l-1.201-3h-4.09l-1.199 3h-2.154L16.5 10h2zM10 2v2h6v2h-1.968a18.222 18.222 0 0 1-3.62 6.301 14.864 14.864 0 0 0 2.336 1.707l-.751 1.878A17.015 17.015 0 0 1 9 13.725a16.676 16.676 0 0 1-6.201 3.548l-.536-1.929a14.7 14.7 0 0 0 5.327-3.042A18.078 18.078 0 0 1 4.767 8h2.24A16.032 16.032 0 0 0 9 10.877a16.165 16.165 0 0 0 2.91-4.876L2 6V4h6V2h2zm7.5 10.885L16.253 16h2.492L17.5 12.885z"/></svg>
+        </button>
         <a id="act-github-star" class="action-btn subtle github-star-btn" href="https://github.com/DeanChensj/jiangshan-map" target="_blank" rel="noopener noreferrer" title="在 GitHub 上为「江山时序」点亮 Star" aria-label="Star on GitHub">
           <svg class="btn-svg" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
           <span class="star-mark" aria-hidden="true">★</span>
@@ -413,6 +486,21 @@
         </div>
       </div>
 
+      <div id="locale-popover" class="locale-popover is-hidden" role="menu" aria-label="切换语言 / Switch language">
+        <button class="locale-pop-item is-selected" type="button" role="menuitemradio" data-locale="zh" aria-checked="true">
+          <span class="locale-pop-name">简体中文</span>
+          <span class="locale-pop-check" aria-hidden="true">✓</span>
+        </button>
+        <button class="locale-pop-item" type="button" role="menuitemradio" data-locale="zh-tw" aria-checked="false">
+          <span class="locale-pop-name">繁體中文</span>
+          <span class="locale-pop-check" aria-hidden="true">✓</span>
+        </button>
+        <button class="locale-pop-item" type="button" role="menuitemradio" data-locale="en" aria-checked="false">
+          <span class="locale-pop-name">English</span>
+          <span class="locale-pop-check" aria-hidden="true">✓</span>
+        </button>
+      </div>
+
       <div id="more-popover" class="more-popover is-hidden" role="menu" aria-label="创作手记与更多链接">
         <a id="lnk-more-story" class="more-pop-link" role="menuitem" href="https://deanchen.me/history/atlas/2026/10/25/jiangshan-map-story.html" target="_blank" rel="noopener noreferrer">
           <svg class="btn-svg" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3.2 2.2h8.2a1.4 1.4 0 0 1 1.4 1.4v10.2l-2.6-1.6-2.5 1.6-2.5-1.6-2 1.2V3.6a1.4 1.4 0 0 1 1.4-1.4z" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><line x1="5.3" y1="5.6" x2="10.5" y2="5.6" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><line x1="5.3" y1="8.2" x2="9.4" y2="8.2" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
@@ -420,7 +508,6 @@
             <span id="lbl-more-story" class="more-link-title">创作手记 · 幕后故事</span>
             <span id="sub-more-story" class="more-link-sub">从课本插图到开源历史地图</span>
           </span>
-          <span class="more-ext-mark" aria-hidden="true">↗</span>
         </a>
         <a id="lnk-more-about" class="more-pop-link" role="menuitem" href="https://deanchen.me/about/" target="_blank" rel="noopener noreferrer">
           <svg class="btn-svg" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.35"/><polygon points="6.6,6.6 10.9,5.1 9.4,9.4 5.1,10.9" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
@@ -428,15 +515,13 @@
             <span id="lbl-more-about" class="more-link-title">作者博客 · 更多作品</span>
             <span id="sub-more-about" class="more-link-sub">deanchen.me</span>
           </span>
-          <span class="more-ext-mark" aria-hidden="true">↗</span>
         </a>
         <a id="lnk-more-contact" class="more-pop-link" role="menuitem" href="mailto:deancsj@gmail.com?subject=%E6%B1%9F%E5%B1%B1%E6%97%B6%E5%BA%8F%E5%8F%8D%E9%A6%88">
           <svg class="btn-svg" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="1.8" y="3.2" width="12.4" height="9.6" rx="1.4" fill="none" stroke="currentColor" stroke-width="1.35"/><polyline points="2.3,4.1 8,8.6 13.7,4.1" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></svg>
           <span class="more-link-text">
-            <span id="lbl-more-contact" class="more-link-title">联系作者 · 勘误反馈</span>
-            <span id="sub-more-contact" class="more-link-sub">deancsj@gmail.com · 点击复制</span>
+            <span id="lbl-more-contact" class="more-link-title">留言与勘误</span>
+            <span id="sub-more-contact" class="more-link-sub">访客留言 · 史料勘误反馈</span>
           </span>
-          <span class="more-ext-mark" aria-hidden="true">⎘</span>
         </a>
         <div class="more-pop-divider more-mobile-only" role="separator"></div>
         <a id="lnk-more-github" class="more-pop-link more-mobile-only" role="menuitem" href="https://github.com/DeanChensj/jiangshan-map" target="_blank" rel="noopener noreferrer">
@@ -445,7 +530,6 @@
             <span id="lbl-more-github" class="more-link-title">GitHub 开源仓库</span>
             <span id="sub-more-github" class="more-link-sub">DeanChensj/jiangshan-map · ★ Star</span>
           </span>
-          <span class="more-ext-mark" aria-hidden="true">↗</span>
         </a>
       </div>
     </header>
@@ -528,7 +612,8 @@
               <circle cx="7" cy="7" r="4.8" fill="none" stroke="currentColor" stroke-width="1.5"/>
               <path d="M10.6 10.6L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
             </svg>
-            <input id="inp-map-search" type="search" autocomplete="off" placeholder="搜人物 / 双人 / 古今地名 / 年号" aria-label="搜历史人物（支持双人同框如：李白 杜甫）、古今地名、州府或帝王年号" />
+            <input id="inp-map-search" type="search" autocomplete="off" placeholder="搜人物 / 地名 / 史事 / 年号" aria-label="搜历史人物（支持双人同框如：李白 杜甫）、古今地名、历史事件始末、州府或帝王年号" />
+            <button id="act-clear-search" class="search-clear-btn is-hidden" type="button" title="清空或关闭搜索" aria-label="清空或关闭搜索">×</button>
           </div>
           <ul id="map-search-results" class="search-results-list is-hidden" role="listbox"></ul>
         </div>
@@ -551,7 +636,7 @@
         <div id="challenge-card" class="is-hidden" role="region" aria-label="古地名挑战">
           <div class="challenge-top">
             <span id="txt-challenge-kicker" class="mode-pill is-active">舆图寻址</span>
-            <span id="challenge-step" class="pill-badge">第 1 / 10 题</span>
+            <span id="challenge-step" class="pill-badge">第 1 / 5 题</span>
             <span id="challenge-points" class="score-readout">得分 0</span>
             <button id="act-close-challenge" class="icon-close" title="退出挑战" aria-label="退出挑战">
               <svg class="ico-svg" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -560,7 +645,19 @@
           <div id="challenge-question" class="challenge-prompt"></div>
           <div id="challenge-result" class="challenge-feedback is-hidden">
             <span id="challenge-verdict"></span>
-            <button id="act-next-round" class="action-btn accent sm"></button>
+            <div class="challenge-actions">
+              <button id="act-share-quiz" class="action-btn accent sm is-hidden" type="button"></button>
+              <button id="act-next-round" class="action-btn accent sm" type="button"></button>
+            </div>
+          </div>
+        </div>
+
+        <div id="challenge-mobile-dock" class="is-hidden" role="region" aria-label="舆图小试操作栏">
+          <span id="challenge-mobile-hint" class="challenge-mobile-hint"></span>
+          <button id="act-quiz-mobile-cta" class="action-btn accent challenge-mobile-cta is-hidden" type="button"></button>
+          <div id="challenge-mobile-finish-actions" class="challenge-mobile-finish-actions is-hidden">
+            <button id="act-quiz-mobile-again" class="action-btn challenge-mobile-again" data-track="act-next-round" type="button"></button>
+            <button id="act-quiz-mobile-share" class="action-btn accent challenge-mobile-share" data-track="act-share-quiz" type="button"></button>
           </div>
         </div>
 
@@ -593,8 +690,6 @@
 
         <div id="hover-tip" class="is-hidden" role="tooltip"></div>
 
-        <div id="start-guide" class="is-hidden" role="dialog" aria-label="初次到访指引"></div>
-
         <div id="gesture-guide">滚轮缩放 · 拖拽平移 · 点击城名或双击任意处查沿革 · ← → 逐事件跳转（Shift+← → ±10年） · 空格播放</div>
       </div>
 
@@ -610,8 +705,10 @@
             <span id="dynasty-seat">咸阳（秦）· 洛阳（周）· 七雄都城</span>
             <a id="lnk-dynasty-topic" class="topic-inline-link" href="topics/zhanguo.html" target="_blank" rel="noopener" title="查阅《战国历史地图》专题图志与古今地名总表">图志</a>
           </div>
+          <span id="mobile-peek-pills" class="mobile-peek-pills" aria-label="当前事件地点与入口"></span>
           <button id="act-mobile-chronicle" class="mobile-chronicle-btn" type="button" aria-expanded="false">史志 · 事件 ▲</button>
         </div>
+        <div id="mobile-peek-text" class="mobile-peek-text" role="button" tabindex="0"></div>
 
         <p id="dynasty-summary" class="dynasty-desc">公元前403年周威烈王册命韩、赵、魏为诸侯（《资治通鉴》开篇），前386年田氏代齐，战国七雄（秦、楚、齐、燕、赵、魏、韩）并立争雄。各国推行变法、修筑长城、兴修水利，百家争鸣；秦经商鞅变法与并巴蜀后崛起，秦王嬴政自前230年至前221年十年间次第攻灭韩、赵、魏、楚、燕、齐，终结列国纷争。</p>
 
@@ -621,6 +718,7 @@
           <h3 id="txt-milestones-heading">重大事件</h3>
           <ul id="milestone-list">
             <li><span class="ev-yr">前403 年</span><span>周威烈王命韩、赵、魏为诸侯（三家分晋）</span></li>
+            <li><span class="ev-yr">前400 年</span><span>魏文侯任李悝变法、吴起守西河，魏国率先称霸中原</span></li>
             <li><span class="ev-yr">前386 年</span><span>周安王册命田和为齐侯，田氏代齐，七雄形成</span></li>
             <li><span class="ev-yr">前381 年</span><span>楚悼王任吴起变法强兵，南平百越、北并陈蔡却三晋、西伐秦</span></li>
             <li><span class="ev-yr">前375 年</span><span>韩哀侯攻灭郑国并迁都新郑；前376年三家废晋静公尽分晋地</span></li>
@@ -647,7 +745,7 @@
             <li><span class="ev-yr">前246 年</span><span>韩水工郑国入秦开凿三百里“郑国渠”，关中自此成沃野</span></li>
             <li><span class="ev-yr">前242 年</span><span>蒙骜攻魏取二十城初置东郡，秦地东接齐境</span></li>
             <li><span class="ev-yr">前241 年</span><span>五国最后合纵攻秦败于蕞；楚畏秦自陈东迁寿春</span></li>
-            <li><span class="ev-yr">前238 年</span><span>秦王政亲政，平嫪毐、罢吕不韦，部署灭六国方略</span></li>
+            <li><span class="ev-yr">前238 年</span><span>秦王政亲政平嫪毐之乱，次年罢吕不韦，部署灭六国方略</span></li>
             <li><span class="ev-yr">前236 年</span><span>王翦、桓齮攻赵邺城取九城，拉开秦灭六国序幕</span></li>
             <li><span class="ev-yr">前230 年</span><span>秦灭韩：内史腾急袭新郑俘韩王安，置颍川郡</span></li>
             <li><span class="ev-yr">前228 年</span><span>秦灭赵：王翦克邯郸俘赵王迁，公子嘉奔代自立</span></li>
@@ -710,23 +808,23 @@
       <section>
         <h3>一、历代疆域与州郡政区时间轴目录（Dynasties &amp; Historical Territories）</h3>
         <ul>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=-403"><strong>战国历史地图（前403—前221 · Warring States）</strong></a> — 都城：咸阳（秦）· 洛阳（周）· 七雄都城。代表事件：前403年周威烈王命韩、赵、魏为诸侯（三家分晋）；前386年周安王册命田和为齐侯，田氏代齐，七雄形成；前381年楚悼王任吴起变法强兵，南平百越、北并陈蔡却三晋、西伐秦；前375年韩哀侯攻灭郑国并迁都新郑；前376年三家废晋静公尽分晋地。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=-214"><strong>秦历史地图（前221—前202 · Qin）</strong></a> — 都城：咸阳。代表事件：前221年王贲受齐王建降，秦王嬴政统一六国称始皇帝，行郡县、书同文车同轨；前215年蒙恬北击匈奴收复河套，其后数年连筑长城；前214年秦军开凿灵渠通湘漓，平定岭南置桂林、象、南海三郡；前213年秦始皇采李斯议下“焚书令”，次年于咸阳坑杀方士儒生。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=-100"><strong>西汉历史地图（前202—25 · Western Han）</strong></a> — 都城：长安。代表事件：前202年韩信等垓下十面埋伏灭项羽，汉高祖刘邦称帝，旋都关中；前200年汉高祖亲征匈奴困于白登，汉初遂行和亲之策；前180年周勃、陈平诛灭诸吕迎立汉文帝，开启休养生息之政；前167年汉文帝废除肉刑、免收全国田租，与景帝轻徭薄赋共创“文景之治”。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=-403"><strong>战国历史地图（前403—前221 · Warring States）</strong></a> — 都城：咸阳（秦）· 洛阳（周）· 七雄都城。代表事件：前403年周威烈王命韩、赵、魏为诸侯（三家分晋）；前400年魏文侯任李悝变法、吴起守西河，魏国率先称霸中原；前386年周安王册命田和为齐侯，田氏代齐，七雄形成；前381年楚悼王任吴起变法强兵，南平百越、北并陈蔡却三晋、西伐秦。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=-214"><strong>秦历史地图（前221—前202 · Qin）</strong></a> — 都城：咸阳。代表事件：前221年王贲受齐王建降，秦王嬴政统一六国称始皇帝，行郡县、书同文车同轨；前219年秦始皇东巡郡县，登泰山行封禅礼，于琅琊刻石颂秦德；前215年蒙恬北击匈奴收复河套，其后数年连筑长城；前214年秦军开凿灵渠通湘漓，平定岭南置桂林、象、南海三郡。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=-100"><strong>西汉历史地图（前202—25 · Western Han）</strong></a> — 都城：长安。代表事件：前202年韩信等垓下十面埋伏灭项羽，汉高祖刘邦称帝，旋都关中；前200年汉高祖亲征匈奴困于白登，汉初遂行和亲之策；前195年汉高祖诛韩信彭越定白马之盟；高祖崩，吕后掌政；前180年吕后称制崩后，周勃、陈平、刘章诛灭诸吕迎立汉文帝，休养生息。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=100"><strong>东汉历史地图（25—220 · Eastern Han）</strong></a> — 都城：洛阳。代表事件：25年赤眉军入长安覆灭更始政权；萧王刘秀于鄗城称帝兴复汉室，定都洛阳；36年吴汉攻克成都灭公孙述，光武帝刘秀统一全国；39年光武帝下诏核查全国垦田与户口（度田），打击豪强隐匿田赋；43年伏波将军马援南征交趾平二征起义，立铜柱定汉界。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=250"><strong>三国历史地图（220—280 · Three Kingdoms）</strong></a> — 都城：洛阳 / 成都 / 建业。代表事件：220年魏王曹操病逝；曹丕采陈群议行九品官人法，旋迫汉献帝禅让建曹魏；221年闻汉献帝遇害传言，刘备在成都称帝延续汉室正统，国号汉（蜀汉）；222年夷陵之战，陆逊火烧连营大破刘备；223年刘备病逝永安白帝城，临终托孤于丞相诸葛亮。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=250"><strong>三国历史地图（220—280 · Three Kingdoms）</strong></a> — 都城：洛阳 / 成都 / 建业。代表事件：220年魏王曹操病逝；曹丕采陈群议行九品官人法，旋迫汉献帝禅让建曹魏；221年闻汉献帝遇害传言，刘备在成都称帝延续汉室正统，国号汉（蜀汉）；222年夷陵之战：刘备称帝后东征伐吴报关羽仇，陆逊火烧连营大破蜀军；223年刘备病逝永安白帝城，临终托孤于丞相诸葛亮。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=300"><strong>西晋历史地图（280—316 · Western Jin）</strong></a> — 都城：洛阳。代表事件：280年西晋灭吴，三国归晋；颁占田制与罢州郡兵，开启“太康之治”；289年太康年间门阀骄奢斗富；武帝大封诸王出镇重兵，命刘渊领并州匈奴部；291年晋武帝崩后惠帝即位，次年贾南风诛杨骏与辅政宗王，八王之乱爆发；299年关陇氐羌齐万年之乱历两年余始平；江统著《徙戎论》警诫五胡内迁隐患。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=383"><strong>东晋十六国历史地图（317—420 · Eastern Jin &amp; Sixteen Kingdoms）</strong></a> — 都城：建康（东晋）。代表事件：317年司马睿在建康即晋王位建东晋；河西前凉、代北代国、辽东前燕并立；319年刘曜于长安改汉为前赵，石勒在襄国称赵王建后赵，汉赵分裂；322年王敦之乱：王敦自武昌举兵攻入建康，控制东晋朝政；327年前凉张骏擒戊己校尉赵贞，以其地置高昌郡。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=500"><strong>南北朝历史地图（420—581 · Northern &amp; Southern Dynasties）</strong></a> — 都城：平城→洛阳（北朝）/ 建康（南朝）。代表事件：420年刘裕代晋建宋，南朝开始；427年北魏取河南关中，太武帝又袭克胡夏都城统万城；431年赫连定灭西秦后被俘，北魏灭胡夏；宋文帝元嘉之治；436年北魏攻入龙城，北燕亡。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=605"><strong>隋历史地图（581—618 · Sui）</strong></a> — 都城：大兴（长安）。代表事件：581年杨坚建隋，定都大兴；确立三省六部制，颁《开皇律》；587年隋文帝废西梁国，江陵并入隋境，大造战船备战伐陈；589年晋王杨广统军渡江，韩擒虎、贺若弼攻克建康擒陈后主，隋灭陈统一全国；599年东突厥启民可汗内附，隋于河套北筑大利城。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=605"><strong>隋历史地图（581—618 · Sui）</strong></a> — 都城：大兴（长安）。代表事件：581年杨坚迫周静帝禅让建隋，旋营新都大兴；立三省六部，颁《开皇律》；587年隋文帝废西梁国，江陵并入隋境，大造战船备战伐陈；589年晋王杨广统军渡江，韩擒虎、贺若弼攻克建康擒陈后主，隋灭陈统一全国；599年东突厥启民可汗内附，隋于河套北筑大利城。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=741"><strong>唐历史地图（618—907 · Tang）</strong></a> — 都城：长安。代表事件：618年隋炀帝江都遇弑后，唐王李渊迫隋恭帝杨侑禅让，于长安称帝建立唐朝；621年虎牢之战李世民擒窦建德、降王世充；李靖平萧铣；622年刘黑闼称汉东王复据河北，次年败亡；岭南冯盎、交州丘和归唐；624年李孝恭、李靖平辅公祏，江南悉定；唐颁武德律令，定均田、租庸调制。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=950"><strong>五代十国历史地图（907—960 · Five Dynasties &amp; Ten Kingdoms）</strong></a> — 都城：开封。代表事件：907年朱温代唐建后梁；王建在成都称帝建前蜀，契丹耶律阿保机称汗；909年后梁册封王审知为闽王，定都福州保境安民；910年吴越王钱镠筑钱塘捍海石塘；徐温掌淮南政固杨吴基业；911年刘守光在幽州称大燕皇帝，晋王李存勖兴兵讨燕（913年灭桀燕）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=1100"><strong>北宋历史地图（960—1127 · Northern Song）</strong></a> — 都城：东京开封府。代表事件：960年殿前都点检赵匡胤发动陈桥兵变，回师开封受后周恭帝禅位，建立北宋；961年宋太祖“杯酒释兵权”定重文轻武，继设通判、转运使收地方权；963年慕容延钊假道灭虢，北宋平定荆南与湖南；965年王全斌攻入成都灭后蜀孟昶降，花蕊夫人赋诗叹亡国。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=1200"><strong>南宋历史地图（1127—1279 · Southern Song）</strong></a> — 都城：临安。代表事件：1127年赵构即位于南京应天府，南宋开始；1129年苗刘兵变：苗傅、刘正彦于杭州逼高宗禅位，韩世忠平叛；1130年韩世忠黄天荡阻击金兀术水军；1134年岳飞挥师北伐收复襄阳、随、郢、唐、邓、信阳六郡。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=1200"><strong>南宋历史地图（1127—1279 · Southern Song）</strong></a> — 都城：临安。代表事件：1127年徽钦北狩后康王赵构即位于南京应天府，延续宋室，南宋开启；1129年金军南侵高宗渡江奔杭州，苗傅、刘正彦发动苗刘兵变，韩世忠平叛；1130年韩世忠黄天荡阻击金兀术水军；1134年岳飞挥师北伐收复襄阳、随、郢、唐、邓、信阳六郡。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=1300"><strong>元历史地图（1279—1368 · Yuan）</strong></a> — 都城：大都。代表事件：1279年张弘范于崖山海战灭南宋，元朝统一全国；1281年元廷置澎湖巡检司管辖澎湖与琉球，并第二次东征日本；1283年元廷采纳朱清、张瑄议开辟江南刘家港至直沽海上漕运航线；1287年忽必烈亲征平定辽东乃颜之乱，设辽阳行省。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=1450"><strong>明历史地图（1368—1644 · Ming）</strong></a> — 都城：顺天府（北京）。代表事件：1368年朱元璋于应天称帝建明；徐达北伐克大都，元廷北迁；1369年常遇春克元上都，徐达定陕西，北元退居漠北；1371年汤和、傅友德分道伐蜀，灭明夏政权平定四川；1380年明太祖兴胡惟庸案诛权臣，罢中书省、永废丞相制。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=1800"><strong>清历史地图（1644—1912 · Qing）</strong></a> — 都城：京师（北京）。代表事件：1644年山海关总兵吴三桂降清开关，多尔衮率清军大败李自成大顺军，定都北京；1645年清军破扬州、南京，弘光政权覆灭；颁剃发令，江南抗清；1661年郑成功横渡鹿耳门驱逐荷兰殖民者，收复台湾设承天府；1662年吴三桂于昆明杀南明永历帝，李定国病逝，南明大陆抗清终结。</li>
-          <li><a href="https://deanchen.me/jiangshan-map/?year=1936"><strong>中华民国历史地图（1912—1949 · Republic of China）</strong></a> — 都城：北京→南京。代表事件：1912年孙中山于南京就职建中华民国；清帝溥仪退位，二千年帝制终结；1915年蔡锷在云南起义，发起讨袁护国战争；1916年袁世凯病逝，北洋集团分裂为皖、直、奉系，南北军阀割据；1919年巴黎和会外交失利，北京爆发五四运动。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=1800"><strong>清历史地图（1644—1912 · Qing）</strong></a> — 都城：京师（北京）。代表事件：1644年山海关总兵吴三桂降清开关，多尔衮率清军大败李自成大顺军，定都北京；1645年清军破扬州、南京，弘光政权覆灭；颁剃发令，江南抗清；1652年李定国联明抗清，克桂林衡阳“两蹶名王”，永历复振；1661年郑成功横渡鹿耳门驱逐荷兰殖民者，收复台湾设承天府。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?year=1936"><strong>中华民国历史地图（1912—1949 · Republic of China）</strong></a> — 都城：北京→南京。代表事件：1912年孙中山于南京就职建中华民国；清帝溥仪退位，二千年帝制终结；1913年宋教仁遇刺后，李烈钧湖口独立、黄兴南京讨袁，“二次革命”爆发；1915年袁世凯复辟称帝，蔡锷于云南起义通电讨袁，爆发护国战争；1916年袁世凯病逝，北洋集团分裂为皖、直、奉系，南北军阀割据。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?year=2026"><strong>中华人民共和国历史地图（1949— · People&#39;s Republic of China）</strong></a> — 都城：北京。代表事件：1949年毛泽东于天安门宣告中华人民共和国成立；1951年中央政府与西藏地方签订《十七条协议》，西藏和平解放；1964年中国第一颗原子弹在罗布泊成功爆炸；1971年第26届联大通过第2758号决议，中华人民共和国恢复合法席位。</li>
         </ul>
       </section>
@@ -735,6 +833,7 @@
         <ul>
           <li><a href="https://deanchen.me/jiangshan-map/?person=zhangqian"><strong>张骞凿空西域行迹（Zhang Qian&#39;s Mission to the Western Regions · 前138年 — 前126年（西汉建元三年至元朔三年））</strong></a> — 长安（今陕西西安） → 陇西（今甘肃临洮） → 姑臧（今甘肃武威） → 焉耆（今新疆焉耆） → 大宛贰师城（今费尔干纳盆地） → 康居（今锡尔河中游） → 大月氏蓝氏城（今阿富汗巴尔赫） → 于阗（今新疆和田） → 长安（今陕西西安）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=zhugeliang"><strong>诸葛亮出山北伐行迹（Zhuge Liang&#39;s Southern &amp; Northern Campaigns · 207年 — 234年（东汉建安十二年至蜀汉建兴十二年））</strong></a> — 隆中（今湖北襄阳） → 柴桑（今江西九江） → 赤壁（今湖北赤壁） → 成都（今四川成都） → 成都（今四川成都） → 白帝城（今重庆奉节） → 滇池（今云南昆明） → 汉中（今陕西汉中） → 祁山（今甘肃礼县） → 木门道（今甘肃天水西南） → 五丈原（今陕西宝鸡岐山）。</li>
+          <li><a href="https://deanchen.me/jiangshan-map/?person=liuyu"><strong>刘裕北伐建宋行迹（Liu Yu&#39;s Northern Expeditions &amp; Founding of Liu Song · 404年 — 422年（东晋元兴三年至南朝宋永初三年））</strong></a> — 京口（今江苏镇江） → 广固（今山东潍坊青州） → 建康（今江苏南京） → 江陵（今湖北荆州） → 彭城（今江苏徐州） → 洛阳（今河南洛阳） → 长安（今陕西西安） → 建康（今江苏南京）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=xuanzang"><strong>玄奘西行求法行迹（Xuanzang&#39;s Pilgrimage to the Western Regions · 627年 — 645年（唐贞观元年至贞观十九年））</strong></a> — 长安（今陕西西安） → 凉州（今甘肃武威） → 瓜州（今甘肃瓜州） → 高昌王城（今新疆吐鲁番） → 龟兹（今新疆库车） → 碎叶城（今吉尔吉斯斯坦托克马克） → 缚喝（今阿富汗巴尔赫） → 健驮逻（今巴基斯坦白沙瓦） → 那烂陀寺（今印度比哈尔邦那烂陀） → 曲女城（今印度北方邦卡瑙季） → 于阗（今新疆和田） → 长安（今陕西西安）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=libai"><strong>李白仗剑壮游行迹（Li Bai&#39;s Grand Travels Across Tang China · 701年 — 762年（武周长安元年至唐宝应元年））</strong></a> — 碎叶城（今吉尔吉斯斯坦托克马克） → 绵州青莲（今四川江油青莲镇） → 渝州（今重庆） → 荆门（今湖北宜都） → 扬州（今江苏扬州） → 安陆（今湖北安陆） → 长安（今陕西西安） → 洛阳（今河南洛阳） → 睢阳（今河南商丘） → 任城（今山东济宁） → 白帝城（今重庆奉节） → 当涂（今安徽马鞍山·当涂）。</li>
           <li><a href="https://deanchen.me/jiangshan-map/?person=sushi"><strong>苏轼宦海贬谪行迹（Su Shi&#39;s Literary Exile Across Song China · 1056年 — 1101年（北宋嘉祐元年至建中靖国元年））</strong></a> — 眉州（今四川眉山） → 东京开封府（今河南开封） → 凤翔府（今陕西凤翔） → 杭州（今浙江杭州） → 密州（今山东诸城） → 徐州（今江苏徐州） → 湖州（今浙江湖州） → 黄州（今湖北黄冈） → 登州（今山东烟台蓬莱） → 杭州（今浙江杭州） → 惠州（今广东惠州） → 儋州（今海南儋州） → 常州（今江苏常州）。</li>
@@ -783,7 +882,7 @@
       <section id="seo-static-topics-section">
         <h3>五、静态历史地理专题图志索引（Static Historical Geography Topic Pages）</h3>
         <ul>
-          <li><a href="https://deanchen.me/jiangshan-map/topics/index.html"><strong>江山时序专题图志总览（125篇静态历史地理百科目录）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/index.html"><strong>江山时序专题图志总览（127篇静态历史地理百科目录）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/persons.html"><strong>江山时序历代人物志与国器流转总录（65篇独立人物图志）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/places.html"><strong>江山时序历代地区志与雄关总录（22篇核心名城沿革图志）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-anshi.html"><strong>安史之乱历史地图（755—763年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
@@ -791,6 +890,7 @@
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-qintongyi.html"><strong>秦灭六国历史地图（前238—前221年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-chuhan.html"><strong>楚汉之争历史地图（前207—前202年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/story-changzheng.html"><strong>红军长征历史地图（1934—1936年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/story-taiping.html"><strong>太平天国历史地图（1851—1864年）双阵营始末沙盘图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/dufu-763.html"><strong>杜甫《闻官军收河南河北》诗中归乡路线（763年 · 唐代宗广德元年）（静态图文考据专题）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/sushi-exile.html"><strong>苏轼《自题金山画像》跨年贬谪路线图（1079—1097年 · 北宋）（静态图文考据专题）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/wentianxiang-lingdingyang.html"><strong>文天祥《过零丁洋》抗元路线图（1275—1279年 · 南宋末）（静态图文考据专题）</strong></a></li>
@@ -820,6 +920,7 @@
           <li><a href="https://deanchen.me/jiangshan-map/topics/prc.html"><strong>中华人民共和国历史地图（1949—）疆域政区与古今地名表（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-zhangqian.html"><strong>张骞凿空西域行迹（前138年 — 前126年 · 西汉建元三年至元朔三年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-zhugeliang.html"><strong>诸葛亮出山北伐行迹（207年 — 234年 · 东汉建安十二年至蜀汉建兴十二年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/journey-liuyu.html"><strong>刘裕北伐建宋行迹（404年 — 422年 · 东晋元兴三年至南朝宋永初三年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-xuanzang.html"><strong>玄奘西行求法行迹（627年 — 645年 · 唐贞观元年至贞观十九年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-libai.html"><strong>李白仗剑壮游行迹（701年 — 762年 · 武周长安元年至唐宝应元年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/journey-sushi.html"><strong>苏轼宦海贬谪行迹（1056年 — 1101年 · 北宋嘉祐元年至建中靖国元年）生平行迹与诗词路线图志（静态专题页）</strong></a></li>
@@ -873,7 +974,7 @@
           <li><a href="https://deanchen.me/jiangshan-map/topics/person-zuti.html"><strong>祖逖（266—321）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/person-liukun.html"><strong>刘琨（271—318）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/person-huanwen.html"><strong>桓温（312—373）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
-          <li><a href="https://deanchen.me/jiangshan-map/topics/person-liuyu.html"><strong>刘裕（363—422）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
+          <li><a href="https://deanchen.me/jiangshan-map/topics/person-xiaoyan.html"><strong>萧衍（464—549）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/person-gaohuan.html"><strong>高欢（496—547）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/person-yuwentai.html"><strong>宇文泰（507—556）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
           <li><a href="https://deanchen.me/jiangshan-map/topics/person-yangguang.html"><strong>隋炀帝（569—618）时空轨迹与生平史事图志（静态专题页）</strong></a></li>
@@ -914,14 +1015,5 @@
         </ul>
       </section>
     </nav>
-
-  <script src="js/china_geo_data.js?v=5718efe8"></script>
-  <script src="js/atlas_boot.js?v=67cb36dd"></script>
-  <script src="js/map_data.js?v=b8ea359e"></script>
-  <script src="js/lore_core.js?v=d47f4dc9"></script>
-  <script id="atlas-app-script" src="js/app.js?v=072d301b" data-v-snapshots="26377765" data-v-i18n="c2c30c23" data-v-lore="d8271567" data-v-pinyin="e6b413bd" data-v-hant="3afdab47" data-v-quiz="706065c1" data-v-narrator="12cdf69d" data-v-sources="c9d5d609"></script>
-  <script src="js/atlas_trace.js?v=374c19da"></script>
-  <script src="js/atlas_search.js?v=cfc38510"></script>
-  <script src="js/atlas_api.js?v=1ee06042"></script>
 </body>
 </html>

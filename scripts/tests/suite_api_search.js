@@ -205,6 +205,81 @@ async function runApiSearchSuite(ctx) {
         b.maxY + pad < a.minY
       );
     }
+    function hexToLab(hex) {
+      if (!hex || typeof hex !== 'string') return null;
+      const m = hex.replace('#', '');
+      if (m.length !== 6) return null;
+      let [r, g, b] = [0, 2, 4].map((i) => parseInt(m.slice(i, i + 2), 16) / 255);
+      [r, g, b] = [r, g, b].map((c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)));
+      let x = (r * 0.4124564 + g * 0.3575761 + b * 0.1804375) / 0.95047;
+      let y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750;
+      let z = (r * 0.0193339 + g * 0.1191920 + b * 0.9503041) / 1.08883;
+      [x, y, z] = [x, y, z].map((t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116));
+      return [116 * y - 16, 500 * (x - y), 200 * (y - z)];
+    }
+    function deltaE76(hexA, hexB) {
+      const a = hexToLab(hexA);
+      const b = hexToLab(hexB);
+      if (!a || !b) return 999;
+      return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    }
+    function outerRingsOf(shape) {
+      if (!shape) return [];
+      if (shape.type === 'Polygon') return [shape.coordinates[0]];
+      if (shape.type === 'MultiPolygon') return shape.coordinates.map((p) => p[0]);
+      return [];
+    }
+    const ADJ_CELL = 0.15;
+    const ADJ_GRID_CACHE = new WeakMap();
+    function vertexGridFor(shape) {
+      let cached = ADJ_GRID_CACHE.get(shape);
+      if (!cached) {
+        const grid = new Map();
+        const pts = [];
+        for (const ring of outerRingsOf(shape)) {
+          for (const pt of ring) {
+            pts.push(pt);
+            const k = `${Math.floor(pt[0] / ADJ_CELL)},${Math.floor(pt[1] / ADJ_CELL)}`;
+            if (!grid.has(k)) grid.set(k, []);
+            grid.get(k).push(pt);
+          }
+        }
+        cached = { grid, pts };
+        ADJ_GRID_CACHE.set(shape, cached);
+      }
+      return cached;
+    }
+    function areShapesAdjacent(shapeA, shapeB) {
+      if (!shapeA || !shapeB) return false;
+      const boxA = shapeBbox(shapeA);
+      const boxB = shapeBbox(shapeB);
+      if (!bboxOverlapOrTouch(boxA, boxB, 0.15)) return false;
+      const { grid } = vertexGridFor(shapeA);
+      const { pts } = vertexGridFor(shapeB);
+      let near = 0;
+      for (let i = 0; i < pts.length; i++) {
+        const [x, y] = pts[i];
+        const cx = Math.floor(x / ADJ_CELL);
+        const cy = Math.floor(y / ADJ_CELL);
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            const list = grid.get(`${cx + dx},${cy + dy}`);
+            if (!list) continue;
+            for (let k = 0; k < list.length; k++) {
+              const [ax, ay] = list[k];
+              if (Math.hypot(ax - x, ay - y) <= 0.12 && ++near >= 2) return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+    // User-approved same-lineage regime exemptions (Japanese-occupied zones; Nanyue/Minyue Yue polities)
+    const COLOR_CONTRAST_EXEMPT_PAIRS = new Set([
+      '伪满洲国（日占）|关内日占区',
+      '南越|闽越',
+      '南越（赵佗）|闽越',
+    ]);
     for (const [sk, snap] of Object.entries(snapshots)) {
       if (!snap || Array.isArray(snap)) continue;
       const activePols = (snap.polities || []).filter(
@@ -222,6 +297,16 @@ async function runApiSearchSuite(ctx) {
               !bboxOverlapOrTouch(boxA, boxB),
               `Polity color collision in ${sk}: "${pA.title}" and "${pB.title}" share identical tint ${pA.tint} with overlapping/adjacent bounds`
             );
+          }
+          const pairKey = [pA.title, pB.title].sort().join('|');
+          if (!COLOR_CONTRAST_EXEMPT_PAIRS.has(pairKey)) {
+            const dE = deltaE76(pA.tint, pB.tint);
+            if (dE < 15) {
+              assert(
+                !areShapesAdjacent(pA.shape, pB.shape),
+                `Polity perceptual color collision in ${sk}: adjacent "${pA.title}" (${pA.tint}) and "${pB.title}" (${pB.tint}) have Lab ΔE=${dE.toFixed(1)} < 15`
+              );
+            }
           }
         }
       }
@@ -456,6 +541,25 @@ async function runApiSearchSuite(ctx) {
           );
         }
         assert(!withPref || prefFiles > 150, `--with-prefectures must export the prefecture layer, got ${prefFiles} files`);
+        if (withPref) continue;
+        // Settlements carry the same year range as their dynasty in index.json (a boundary year
+        // belongs to the later dynasty) and the appear / vanish years the app hides them by.
+        const exportIndex = JSON.parse(fs.readFileSync(path.join(outDir, 'index.json'), 'utf8'));
+        const exportDyn = new Map(exportIndex.dynasties.map((d) => [d.key, d]));
+        const exportSettlements = JSON.parse(fs.readFileSync(path.join(outDir, 'settlements.geojson'), 'utf8')).features;
+        for (const ft of exportSettlements) {
+          const sp = ft.properties;
+          const ed = exportDyn.get(sp.dynasty);
+          assert(
+            ed && sp.from === ed.from && sp.to === ed.to,
+            `Exported settlement "${sp.ancient}" (${sp.dynasty}) spans ${sp.from}..${sp.to} but index.json gives ${ed && ed.from}..${ed && ed.to}`
+          );
+        }
+        const exportTianjing = exportSettlements.find((ft) => ft.properties.dynasty === 'qing' && ft.properties.ancient === '天京');
+        assert(
+          exportTianjing && exportTianjing.properties.appear === 1853 && exportTianjing.properties.vanish === 1864,
+          'Exported settlement 天京 must carry appear 1853 / vanish 1864'
+        );
       }
     } finally {
       fs.rmSync(exportRoot, { recursive: true, force: true });
@@ -762,6 +866,7 @@ async function runApiSearchSuite(ctx) {
       's_qin_b',
       's_qin',
       's_xihan_a',
+      's_xihan_a2',
       's_xihan_b1',
       's_xihan_b2',
       's_xihan_b3a',
@@ -783,6 +888,7 @@ async function runApiSearchSuite(ctx) {
       's_nansong_a',
       's_yuan',
       's_ming_a',
+      's_qing_1755',
       's_qing_d',
       's_roc',
     ]) {
@@ -872,6 +978,63 @@ async function runApiSearchSuite(ctx) {
     assert(
       llmsSrc.includes(`| \`${d.key}\` |`) && llmsSrc.includes(`\`${d.fromYear}\` to \`${d.toYear}\``),
       `llms.txt must list exact dynasty key ${d.key} and year span ${d.fromYear} to ${d.toYear}`
+    );
+  }
+
+  // CONTRIBUTING must document the commands and data symbols that actually ship, so a
+  // contributor following the storyline checklist edits a file that exists and names a
+  // table that is really loaded. `scripts/gen_pinyin.js` never existed and `PERSON_EVENTS`
+  // was renamed to `PERSON_DETAILS` in #312, but both stayed in the checklist (added in #358).
+  for (const [label, docSrc] of [
+    ['CONTRIBUTING.md', contributingSrc],
+    ['CONTRIBUTING_ZH.md', contributingZhSrc],
+  ]) {
+    for (const [, scriptPath] of docSrc.matchAll(/node\s+(scripts\/[A-Za-z0-9_\-.]+\.(?:js|cjs))/g)) {
+      assert(
+        fs.existsSync(path.join(ROOT, scriptPath)),
+        `${label} documents "node ${scriptPath}", but that file does not exist`
+      );
+    }
+    assert(
+      !docSrc.includes('PERSON_EVENTS'),
+      `${label} must not tell contributors to edit PERSON_EVENTS; the story-line stops/camps table is PERSON_DETAILS`
+    );
+  }
+  assert(
+    loreData.PERSON_DETAILS &&
+      typeof loreData.PERSON_DETAILS === 'object' &&
+      Array.isArray((loreData.PERSON_DETAILS.anshi || {}).stops),
+    'PERSON_DETAILS must be the lore_detail.js table holding each story line\'s camps/stops'
+  );
+
+  // The Repository Structure block names the file that owns each data table, because that is
+  // where a contributor is sent to edit it. Rivers/lakes/paleo-sea masks moved to
+  // js/china_geo_data.js (HYDRO_DATA) and passes to js/lore_core.js (STRATEGIC_PASSES), but the
+  // map_data.js line kept claiming "rivers, passes" — pointing contributors at a file that has
+  // never contained either, so the edit would be silently wrong.
+  const dataGlobals = {
+    'map_data.js': (sandbox.window.DYNASTY_DATA || []).length > 0 && Array.isArray(sandbox.window.CORRIDOR_DATA),
+    'china_geo_data.js': Array.isArray(sandbox.window.PROVINCE_OUTLINES) && Boolean(sandbox.window.HYDRO_DATA),
+    'lore_core.js': Array.isArray(loreData.STRATEGIC_PASSES) && Array.isArray(loreData.PERSON_PROFILES),
+  };
+  for (const [label, docSrc] of [
+    ['CONTRIBUTING.md', contributingSrc],
+    ['CONTRIBUTING_ZH.md', contributingZhSrc],
+  ]) {
+    for (const [file, ok] of Object.entries(dataGlobals)) {
+      assert(
+        ok && docSrc.split('\n').some((l) => l.includes(`── ${file} `)),
+        `${label} must describe js/${file} in the Repository Structure block`
+      );
+    }
+    const mapDataLine = docSrc.split('\n').find((l) => l.includes('── map_data.js ')) || '';
+    assert(
+      !/\brivers?\b|水系/.test(mapDataLine),
+      `${label} must not credit js/map_data.js with rivers; they live in js/china_geo_data.js as HYDRO_DATA`
+    );
+    assert(
+      !/\bpasses?\b|雄关/.test(mapDataLine),
+      `${label} must not credit js/map_data.js with passes; they live in js/lore_core.js as STRATEGIC_PASSES`
     );
   }
 
@@ -989,7 +1152,7 @@ async function runApiSearchSuite(ctx) {
   let sawPassInDeck = false;
   for (let run = 0; run < 45; run++) {
     const deck = ctrl._buildChallengeDeck();
-    assert.strictEqual(deck.length, 10, `Expected 10 questions in challenge deck, got ${deck.length}`);
+    assert.strictEqual(deck.length, 5, `Expected 5 questions in challenge deck, got ${deck.length}`);
     assert(
       deck.every((q, i) => i === 0 || deck[i - 1].tier <= q.tier) && deck[0].tier === 0,
       `Expected challenge deck to climb from entry to hard tiers, got ${deck.map((q) => q.tier).join(',')}`
@@ -1422,6 +1585,7 @@ async function runApiSearchSuite(ctx) {
       snapshots.s_zhanguo_e2.prefectures.length === 26 &&
       snapshots.s_zhanguo_e4.prefectures.length === 27 &&
       snapshots.s_zhanguo_e5.prefectures.length === 34 &&
+      snapshots.s_zhanguo_e6.prefectures.length === 34 &&
       snapshots.s_qin_a.prefectures.length === 36 &&
       snapshots.s_qin_b.prefectures.length === 37 &&
       snapshots.s_qin.prefectures.length === 41 &&
@@ -1475,7 +1639,7 @@ async function runApiSearchSuite(ctx) {
       `s_zhanguo_a (-403 BCE) must not split State of Yue with post-222 BCE Qin commandery ${anachronistic}`
     );
   }
-  for (const qinSnapKey of ['s_zhanguo_e5', 's_qin_a', 's_qin_b', 's_qin', 's_qin_c', 's_qin_d', 's_qin_chuhan']) {
+  for (const qinSnapKey of ['s_zhanguo_e5', 's_zhanguo_e6', 's_qin_a', 's_qin_b', 's_qin', 's_qin_c', 's_qin_d', 's_qin_chuhan']) {
     const qSnap = snapshots[qinSnapKey];
     for (const cmdTitle of ['泗水郡', '东海郡', '鄣郡', '会稽郡']) {
       assert(
@@ -1505,7 +1669,7 @@ async function runApiSearchSuite(ctx) {
   assert.strictEqual(ctrl._resolveSnapKey(xihanDyn, 24), 's_xihan_e', 'Western Han at 24 CE must resolve to s_xihan_e');
   assert(
     snapshots.s_xihan_e.polities.some((p) => p.title === '更始（汉）') &&
-      snapshots.s_xihan_e.polities.some((p) => p.title === '刘秀（河北）') &&
+      snapshots.s_xihan_e.polities.some((p) => p.title === '刘秀') &&
       snapshots.s_xihan_e.polities.some((p) => p.title === '赤眉军'),
     's_xihan_e must map Gengshi, Liu Xiu (Hebei), and Chimei Army'
   );
@@ -1523,13 +1687,19 @@ async function runApiSearchSuite(ctx) {
     's_tang_d2 must map Late Tang regional warlords (Zhu Wen, Li Keyong, Wang Jian, Yang Xingmi)'
   );
 
-  // CUJ 20: Ming-Qing Transition (1616-1636 Later Jin -> 1636-1643 Qing -> 1643-1644 Dashun & Daxi -> 1644-1645 Qing/Southern Ming/Dashun/Daxi -> 1645-1661 Southern Ming -> 1661-1662 Final Mainland Southern Ming & Ming-Zheng Taiwan -> 1662-1673 Ming-Zheng Taiwan)
+  // CUJ 20: Ming-Qing Transition (1616-1621 Later Jin at Hetu Ala -> 1621-1636 Later Jin holds Shenyang/Liaoyang -> 1636-1643 Qing -> 1643-1644 Dashun & Daxi -> 1644-1645 Qing/Southern Ming/Dashun/Daxi -> 1645-1661 Southern Ming -> 1661-1662 Final Mainland Southern Ming & Ming-Zheng Taiwan -> 1662-1673 Ming-Zheng Taiwan)
   const mingDyn = dynasties.find((d) => d.key === 'ming');
-  assert.strictEqual(ctrl._resolveSnapKey(mingDyn, 1620), 's_ming_c0', 'Ming at 1620 CE must resolve to s_ming_c0');
+  assert.strictEqual(ctrl._resolveSnapKey(mingDyn, 1620), 's_ming_1616', 'Ming at 1620 CE must resolve to s_ming_1616');
+  assert(
+    snapshots.s_ming_1616.polities.some((p) => p.title === '后金') &&
+      !snapshots.s_ming_1616.polities.some((p) => p.title.includes('1636')),
+    's_ming_1616 (1616-1621) must name the Northeast rival polity 后金'
+  );
+  assert.strictEqual(ctrl._resolveSnapKey(mingDyn, 1625), 's_ming_c0', 'Ming at 1625 CE must resolve to s_ming_c0');
   assert(
     snapshots.s_ming_c0.polities.some((p) => p.title === '后金') &&
       !snapshots.s_ming_c0.polities.some((p) => p.title.includes('1636')),
-    's_ming_c0 (1616-1636) must name the Northeast rival polity 后金'
+    's_ming_c0 (1621-1636) must name the Northeast rival polity 后金'
   );
   assert.strictEqual(ctrl._resolveSnapKey(mingDyn, 1640), 's_ming_c', 'Ming at 1640 CE must resolve to s_ming_c');
   assert(
@@ -1583,6 +1753,34 @@ async function runApiSearchSuite(ctx) {
     );
   }
   assert.strictEqual(ctrl._resolveSnapKey(qingDyn, 1650), 's_qing_a0', 'Qing at 1650 CE must resolve to s_qing_a0');
+  assert.strictEqual(ctrl._resolveSnapKey(qingDyn, 1652), 's_qing_1652', 'Qing at 1652 CE must resolve to s_qing_1652');
+  assert.strictEqual(ctrl._resolveSnapKey(qingDyn, 1655), 's_qing_1652', 'Qing at 1655 CE must resolve to s_qing_1652');
+  if (!FAST_MODE) {
+    const q1650 = snapshots.s_qing_a0.polities.find((p) => p.title === '清');
+    const nm1650 = snapshots.s_qing_a0.polities.find((p) => p.title === '南明');
+    const q1652 = snapshots.s_qing_1652.polities.find((p) => p.title === '清');
+    const nm1652 = snapshots.s_qing_1652.polities.find((p) => p.title === '南明');
+    assert(
+      pointInShape(118.801, 32.061, q1650.shape) &&
+        pointInShape(119.3, 26.08, q1650.shape) &&
+        pointInShape(113.261, 23.131, nm1650.shape) &&
+        pointInShape(110.291, 25.271, nm1650.shape) &&
+        pointInShape(112.572, 26.894, nm1650.shape),
+      'In 1645-1652 s_qing_a0 清 must hold Nanjing & Fuzhou while 南明 holds Guangzhou, Guilin & Hengyang'
+    );
+    assert(
+      pointInShape(113.261, 23.131, q1652.shape) &&
+        pointInShape(116.623, 23.657, q1652.shape) &&
+        pointInShape(110.35, 19.95, q1652.shape) &&
+        !pointInShape(113.261, 23.131, nm1652.shape) &&
+        pointInShape(110.291, 25.271, nm1652.shape) &&
+        pointInShape(112.572, 26.894, nm1652.shape) &&
+        pointInShape(106.631, 26.651, nm1652.shape) &&
+        pointInShape(102.831, 24.881, nm1652.shape) &&
+        !pointInShape(110.291, 25.271, q1652.shape),
+      'In 1652-1661 s_qing_1652 清 must hold Guangdong & Hainan while 南明 retains Guilin, Hengyang, Guiyang & Kunming'
+    );
+  }
   assert.strictEqual(ctrl._resolveSnapKey(qingDyn, 1661), 's_qing_a0b', 'Qing at 1661 CE must resolve to s_qing_a0b');
   assert(
     snapshots.s_qing_a0b.polities.some((p) => p.title === '南明') &&
@@ -1873,6 +2071,150 @@ async function runApiSearchSuite(ctx) {
       }
     }
     assert(readmeHoverLinks >= 4, 'README hover deep links must be covered by this check');
+  }
+
+  // CUJ 23: Mobile Chronicle Peek Bar, Drawer Auto-Scroll to Current Milestone & Enhanced Pulse SVG
+  {
+    const tang = dynasties.find((d) => d.key === 'tang');
+    const idx755 = tang.milestones.findIndex((m) => m.year === 755);
+    assert(idx755 > 0, 'Expected tang:755 milestone at index > 0');
+    const peekClasses = new Set();
+    const mockPeekPane = {
+      scrollTop: 0,
+      scrollHeight: 900,
+      clientHeight: 310,
+      offsetTop: 0,
+      scrolledTo: null,
+      scrollTo(opts) {
+        this.scrolledTo = opts;
+        if (opts && typeof opts.top === 'number') this.scrollTop = opts.top;
+      },
+      classList: {
+        add(c) { peekClasses.add(c); },
+        remove(c) { peekClasses.delete(c); },
+        contains(c) { return peekClasses.has(c); },
+      },
+    };
+    const mockPills = {
+      innerHTML: '',
+      classList: { contains: () => false },
+      querySelectorAll: () => [],
+      querySelector: () => null,
+    };
+    const mockText = {
+      textContent: '',
+      attrs: {},
+      setAttribute(k, v) { this.attrs[k] = v; },
+    };
+    const mockListItems = tang.milestones.map((_, idx) => ({
+      offsetTop: 120 + idx * 54,
+      offsetHeight: 46,
+      classList: {
+        active: false,
+        toggle(c, val) { if (c === 'is-current') this.active = Boolean(val); },
+      },
+    }));
+    const mockUl = { children: mockListItems };
+    const mockBanner = { offsetHeight: 56 };
+    const mockMobBtn = { textContent: '', setAttribute() {} };
+    const prevId = ctrl._id;
+    const prevPane = ctrl.paneCollapsed;
+    const prevMob = ctrl.mobileChronicleOpen;
+    const prevIsMob = ctrl._isMobileViewport;
+    const prevPos = ctrl._positionMilestoneBalloon;
+    const prevScale = ctrl._updateScaleBar;
+    const prevCloseGen = ctrl.closeGenealogyCard;
+    const prevCloseBalloon = ctrl.closeMilestoneBalloon;
+    const prevHighlight = ctrl._highlightCurrentMilestone;
+    const prevSyncSource = ctrl._syncMilestoneSource;
+    const prevSvgNode = ctrl._svgNode;
+    const prevRescale = ctrl._rescaleSvgTypography;
+    ctrl._id = (id) => {
+      if (id === 'chronicle-pane') return mockPeekPane;
+      if (id === 'mobile-peek-pills') return mockPills;
+      if (id === 'mobile-peek-text') return mockText;
+      if (id === 'milestone-list') return mockUl;
+      if (id === 'dynasty-banner-bar') return mockBanner;
+      if (id === 'act-mobile-chronicle') return mockMobBtn;
+      if (id === 'workspace-body') return { classList: { remove() {}, toggle() {} } };
+      return prevId ? prevId.call(ctrl, id) : null;
+    };
+    delete ctrl._highlightCurrentMilestone;
+    delete ctrl.closeMilestoneBalloon;
+    ctrl._syncMilestoneSource = () => {};
+    ctrl._isMobileViewport = () => true;
+    ctrl._positionMilestoneBalloon = () => {};
+    ctrl._updateScaleBar = () => {};
+    ctrl.closeGenealogyCard = () => {};
+    ctrl.activePerson = null;
+    ctrl.activePolity = null;
+    ctrl.challenge = null;
+    ctrl.mobileChronicleOpen = false;
+    ctrl.paneCollapsed = false;
+    ctrl._lastHighlightedMilestoneKey = null;
+    ctrl.jumpToYear(-403);
+    ctrl.jumpToYear(755);
+    ctrl.openMilestoneBalloon(tang, tang.milestones[idx755]);
+    assert(
+      peekClasses.has('has-mobile-peek') &&
+        mockPills.innerHTML.includes('ep-place') &&
+        mockPills.innerHTML.includes('ep-story-seal') &&
+        mockText.textContent.includes('安史之乱') &&
+        mockMobBtn.textContent === `史志 · ${tang.milestones.length} ▲`,
+      `Expected mobile chronicle peek on tang:755 with place/story pills, headline, and compact button, got pills=${mockPills.innerHTML}, text=${mockText.textContent}, btn=${mockMobBtn.textContent}`
+    );
+    ctrl.toggleMobileChronicle(true);
+    assert(
+      ctrl.mobileChronicleOpen === true &&
+        mockPeekPane.scrolledTo &&
+        mockPeekPane.scrolledTo.top > 0 &&
+        mockListItems[idx755].classList.active === true,
+      `Expanding mobile chronicle on tang:755 must auto-scroll toward active milestone instead of pinning top=0, got ${JSON.stringify(mockPeekPane.scrolledTo)}, active=${mockListItems[idx755].classList.active}`
+    );
+    ctrl.toggleMobileChronicle(false);
+    assert(
+      ctrl.mobileChronicleOpen === false &&
+        mockPeekPane.scrollTop === 0 &&
+        peekClasses.has('has-mobile-peek'),
+      'Collapsing mobile chronicle must reset scrollTop and re-sync mobile peek bar'
+    );
+    ctrl.closeMilestoneBalloon();
+    assert(
+      !peekClasses.has('has-mobile-peek') && mockPills.innerHTML === '' && mockText.textContent === '',
+      'Closing milestone must clear has-mobile-peek cleanly'
+    );
+    const svgClasses = new Set();
+    ctrl._svgNode = (tag, attrs) => {
+      if (attrs && attrs.class) {
+        String(attrs.class).split(/\s+/).forEach((c) => svgClasses.add(c));
+      }
+      return { tag, attrs, dataset: {}, appendChild() {}, setAttribute() {}, classList: { toggle() {}, contains: () => false } };
+    };
+    ctrl._rescaleSvgTypography = () => {};
+    ctrl._renderMilestones(tang);
+    assert(
+      svgClasses.has('ev-halo-bg') &&
+        svgClasses.has('ev-halo') &&
+        svgClasses.has('ev-ring') &&
+        svgClasses.has('ev-ring-2') &&
+        svgClasses.has('ev-core'),
+      `Milestone SVG pins must include double-halo and staggered pulse ring layers, got ${[...svgClasses].join(',')}`
+    );
+    ctrl._id = prevId;
+    ctrl._isMobileViewport = prevIsMob;
+    ctrl._positionMilestoneBalloon = prevPos;
+    ctrl._updateScaleBar = prevScale;
+    ctrl.closeGenealogyCard = prevCloseGen;
+    ctrl.closeMilestoneBalloon = prevCloseBalloon;
+    ctrl._highlightCurrentMilestone = prevHighlight;
+    if (prevSyncSource) ctrl._syncMilestoneSource = prevSyncSource;
+    else delete ctrl._syncMilestoneSource;
+    ctrl._svgNode = prevSvgNode;
+    if (prevRescale) ctrl._rescaleSvgTypography = prevRescale;
+    else delete ctrl._rescaleSvgTypography;
+    ctrl.mobileChronicleOpen = prevMob;
+    ctrl.paneCollapsed = prevPane;
+    ctrl.activeMilestone = null;
   }
 
   ctx.stats.sweptYears = sweptYears;

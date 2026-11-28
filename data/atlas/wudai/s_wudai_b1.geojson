@@ -4,7 +4,7 @@
   "snapshot": {
     "caption": "923 — 925 · 后唐灭后梁：李存勖定都洛阳统一北方，前蜀、渤海尚存",
     "note": "州郡政区：五代十国州府与割据政区",
-    "prefRef": "s_beisong_a",
+    "prefRef": "s_wudai_a",
     "polities": [
       "后唐",
       "s_wudai_a/前蜀",
@@ -45,7 +45,7 @@
       "s_wudai_a/萨曼王朝",
       "s_wudai_a/萨法尔王朝",
       "s_wudai_a/流求",
-      "s_wudai_a/静海军（交州）",
+      "s_wudai_a/静海军",
       "党项（定难军）",
       "s_wudai_a/沙州归义军",
       "s_wudai_a/甘州回鹘",
@@ -3964,7 +3964,7 @@
       "properties": {
         "title": "党项（定难军）",
         "role": "rival",
-        "tint": "#9b7653",
+        "tint": "#a6566e",
         "anchor": [109.1, 38.1]
       },
       "geometry": {

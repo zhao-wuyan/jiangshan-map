@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const { verifyIndexHtmlAssetHashes } = require('../sync_version');
+const { generateAllOutputs } = require('../build_seo_topics');
+const { computeIndexHtml, computeSitemapXml } = require('../topics/sync_site');
 
 async function runCoreDataSuite(ctx) {
   const {
@@ -44,10 +46,10 @@ async function runCoreDataSuite(ctx) {
       Array.isArray(loreData.PLACE_LANDMARK_EVENTS) &&
       loreData.PLACE_LANDMARK_EVENTS.length >= 60 &&
       Array.isArray(loreData.HISTORICAL_JOURNEYS) &&
-      loreData.HISTORICAL_JOURNEYS.length === 6 &&
+      loreData.HISTORICAL_JOURNEYS.length === 7 &&
       Array.isArray(loreData.STRATEGIC_PASSES) &&
       loreData.STRATEGIC_PASSES.length >= 18,
-    'ATLAS_LORE_DATA must provide era spans, landmark events, strategic passes, and 6 historical journeys'
+    'ATLAS_LORE_DATA must provide era spans, landmark events, strategic passes, and 7 historical journeys'
   );
   for (const p of loreData.STRATEGIC_PASSES) {
     assert(
@@ -146,6 +148,25 @@ async function runCoreDataSuite(ctx) {
       cjEstuary &&
       JSON.stringify(cjEstuary.lines[0][cjEstuary.lines[0].length - 1]) === JSON.stringify([121.15, 31.75]),
     'Huai (<1194), Yellow-Huai (1194–1855), and Yangtze Estuary ([121.15, 31.75]) river mouths must terminate on their respective paleo-coastlines'
+  );
+  const huangCanyon = hydro.rivers.find((r) => r.name === 'Huang' && r.rank === 1 && !r.appear && r.lines.length === 3);
+  const huangTongguanEast = hydro.rivers.find(
+    (r) => r.name === 'Huang' && r.rank === 1 && !r.appear && r.lines.length === 1 && r.lines[0][0][0] > 110
+  );
+  const weiRiver = hydro.rivers.find((r) => r.name === 'Wei' && r.rank === 2);
+  const fenRiver = hydro.rivers.find((r) => r.name === 'Fen' && r.rank === 2);
+  assert(
+    huangCanyon &&
+      huangTongguanEast &&
+      weiRiver &&
+      fenRiver &&
+      JSON.stringify(huangCanyon.lines[1][huangCanyon.lines[1].length - 1]) === JSON.stringify([110.27, 34.64]) &&
+      JSON.stringify(huangTongguanEast.lines[0][0]) === JSON.stringify([110.27, 34.64]) &&
+      JSON.stringify(weiRiver.lines[0][weiRiver.lines[0].length - 1]) === JSON.stringify([110.27, 34.64]) &&
+      huangCanyon.lines[1].some((p) => p[0] === 110.55 && p[1] === 35.5) &&
+      huangCanyon.lines[1].filter((p) => p[0] >= 109.5 && p[1] >= 35.0 && p[1] <= 39.0).every((p) => p[0] >= 110.25) &&
+      huangCanyon.lines[1].filter((p) => p[0] >= 109.8 && p[0] <= 111.5).every((p) => p[1] >= 34.6),
+    'Yellow River Jin-Shaan canyon (Huang lines[1]) must follow the real Jin-Shaan channel, connect with Fen ([110.55, 35.5]) and Wei ([110.27, 34.64]), and not bend westward or south of Tongguan'
   );
 
   // 2. Validate modern provincial outlines
@@ -376,6 +397,36 @@ async function runCoreDataSuite(ctx) {
       pointInShape(120.12, 23.08, qingLateTw.shape),
     'Tainan Taijiang Inner Sea ([120.12, 23.08]) must remain an open coastal lagoon prior to 1823 CE and silt into land in s_qing_e2 (>=1823)'
   );
+  // 4b. Validate 4-stage Taiping Heavenly Kingdom territorial evolution across s_qing_e / e2 / e3 / e4
+  {
+    const tpE = snapshots.s_qing_e.polities.find((p) => p.title === '太平天国');
+    const tpE2 = snapshots.s_qing_e2.polities.find((p) => p.title === '太平天国');
+    const qE2 = snapshots.s_qing_e2.polities.find((p) => p.title === '清');
+    const tpE3 = snapshots.s_qing_e3.polities.find((p) => p.title === '太平天国');
+    const qE3 = snapshots.s_qing_e3.polities.find((p) => p.title === '清');
+    const tpE4 = snapshots.s_qing_e4.polities.find((p) => p.title === '太平天国');
+    const qE4 = snapshots.s_qing_e4.polities.find((p) => p.title === '清');
+    assert(!tpE, 's_qing_e (1796–1853) must keep 1851 Jintian Uprising as a point without a Taiping territory polygon');
+    assert(tpE2 && qE2 && tpE3 && qE3 && tpE4 && qE4, 's_qing_e2/e3/e4 must each contain both 清 and 太平天国 polygons');
+    for (const [lng, lat] of [[114.31, 30.55], [115.99, 29.71], [114.99, 27.11], [116.36, 27.95], [117.05, 30.51], [118.43, 29.87], [118.80, 32.06]]) {
+      assert(pointInShape(lng, lat, tpE2.shape) && !pointInShape(lng, lat, qE2.shape), `s_qing_e2 must include [${lng},${lat}] in Taiping`);
+    }
+    for (const [lng, lat] of [[112.94, 28.23], [114.93, 25.83], [120.58, 31.30], [120.15, 30.27]]) {
+      assert(!pointInShape(lng, lat, tpE2.shape) && pointInShape(lng, lat, qE2.shape), `s_qing_e2 must keep [${lng},${lat}] in Qing`);
+    }
+    for (const [lng, lat] of [[117.05, 30.51], [117.28, 31.86], [118.43, 29.87], [118.80, 32.06]]) {
+      assert(pointInShape(lng, lat, tpE3.shape) && !pointInShape(lng, lat, qE3.shape), `s_qing_e3 must retain [${lng},${lat}] in Taiping`);
+    }
+    for (const [lng, lat] of [[114.31, 30.55], [115.99, 29.71], [114.99, 27.11], [116.36, 27.95], [120.58, 31.30], [120.15, 30.27]]) {
+      assert(!pointInShape(lng, lat, tpE3.shape) && pointInShape(lng, lat, qE3.shape), `s_qing_e3 must return [${lng},${lat}] to Qing`);
+    }
+    for (const [lng, lat] of [[118.80, 32.06], [118.38, 31.33], [118.43, 29.87], [120.58, 31.30], [120.15, 30.27], [119.65, 29.08], [121.55, 29.87]]) {
+      assert(pointInShape(lng, lat, tpE4.shape) && !pointInShape(lng, lat, qE4.shape), `s_qing_e4 must include [${lng},${lat}] in Taiping`);
+    }
+    for (const [lng, lat] of [[114.31, 30.55], [115.99, 29.71], [114.99, 27.11], [117.05, 30.51], [121.47, 31.23]]) {
+      assert(!pointInShape(lng, lat, tpE4.shape) && pointInShape(lng, lat, qE4.shape), `s_qing_e4 must return [${lng},${lat}] to Qing`);
+    }
+  }
   for (const d of dynasties) {
     const snap = snapshots[d.snapKey];
     if (!snap || !Array.isArray(snap.polities)) continue;
@@ -503,10 +554,12 @@ async function runCoreDataSuite(ctx) {
       !appCode.toLowerCase().includes('deanchensj.github.io'),
     'SEO/GEO files (index.html, sitemap.xml, robots.txt, app.js) must canonicalize to https://deanchen.me/jiangshan-map/ and allow Baiduspider/Bytespider'
   );
-  const topicsDir = path.join(ROOT, 'topics');
+  const generatedTopicMap = new Map(
+    generateAllOutputs().allTopicPages.map((p) => [p.filename, p.html])
+  );
   assert(
-    fs.existsSync(path.join(topicsDir, 'index.html')),
-    'Missing topics/index.html static SEO directory page'
+    generatedTopicMap.has('index.html'),
+    'Missing topics/index.html static SEO directory page in generator output'
   );
   const placesCatalog = JSON.parse(
     fs.readFileSync(path.join(ROOT, 'data/topics/places.json'), 'utf8')
@@ -533,9 +586,8 @@ async function runCoreDataSuite(ctx) {
     'battle-feishui.html',
   ];
   for (const tf of expectedTopicFiles) {
-    const tfPath = path.join(topicsDir, tf);
-    assert(fs.existsSync(tfPath), `Missing static SEO topic page: topics/${tf}`);
-    const tfHtml = fs.readFileSync(tfPath, 'utf8');
+    const tfHtml = generatedTopicMap.get(tf);
+    assert(typeof tfHtml === 'string' && tfHtml.length > 0, `Missing static SEO topic page: topics/${tf}`);
     const expectedCanon = `https://deanchen.me/jiangshan-map/topics/${tf}`;
     assert(
       tfHtml.includes(`rel="canonical" href="${expectedCanon}"`) &&
@@ -555,10 +607,70 @@ async function runCoreDataSuite(ctx) {
   }
   verifyIndexHtmlAssetHashes(ROOT, indexHtml, appCode);
 
+  // CRLF regression check for Windows checkouts of index.html & sitemap.xml
+  {
+    const crlfIndex = indexHtml.replace(/\r?\n/g, '\r\n');
+    const expectedNavCloses = (indexHtml.match(/<\/nav>/g) || []).length;
+    const idx1 = computeIndexHtml(
+      [],
+      [],
+      [],
+      [],
+      dynasties,
+      snapshots,
+      loreData,
+      enLocale,
+      [],
+      [],
+      crlfIndex
+    );
+    const idx2 = computeIndexHtml(
+      [],
+      [],
+      [],
+      [],
+      dynasties,
+      snapshots,
+      loreData,
+      enLocale,
+      [],
+      [],
+      idx1.content
+    );
+    assert.strictEqual(
+      (idx1.content.match(/<\/nav>/g) || []).length,
+      expectedNavCloses,
+      'CRLF computeIndexHtml must not duplicate closing </nav> tag'
+    );
+    assert(
+      !/[^\r]\n/.test(idx1.content),
+      'CRLF computeIndexHtml output must preserve CRLF line endings'
+    );
+    assert.strictEqual(
+      idx2.content,
+      idx1.content,
+      'CRLF computeIndexHtml must be idempotent across repeated runs'
+    );
+
+    const crlfSitemap = sitemapXml.replace(/\r?\n/g, '\r\n');
+    const sm1 = computeSitemapXml([], [], [], [], [], [], crlfSitemap);
+    const sm2 = computeSitemapXml([], [], [], [], [], [], sm1.content);
+    assert(
+      !/[^\r]\n/.test(sm1.content),
+      'CRLF computeSitemapXml output must preserve CRLF line endings'
+    );
+    assert.strictEqual(
+      sm2.content,
+      sm1.content,
+      'CRLF computeSitemapXml must be idempotent across repeated runs'
+    );
+  }
+
   // 8. Verify AI-Native API (window.atlasAPI: locate / resolvePlace / inspect), PLACE_GAZETTEER, llms.txt & skill
   for (const strayFile of [
     'app.js',
-    'atlas_trace.js',
+    'atlas_person.js',
+    'atlas_genealogy.js',
     'atlas_search.js',
     'atlas_api.js',
     'atlas_quiz.js',
@@ -581,6 +693,10 @@ async function runCoreDataSuite(ctx) {
     !fs.existsSync(path.join(JS_DIR, 'lore_data.js')),
     'Legacy monolithic js/lore_data.js must not exist; lore data is split into js/lore_core.js and js/lore_detail.js'
   );
+  assert(
+    !fs.existsSync(path.join(JS_DIR, 'atlas_trace.js')),
+    'Legacy monolithic js/atlas_trace.js must not exist; it is split into js/atlas_person.js and js/atlas_genealogy.js'
+  );
   assert(fs.existsSync(llmsTxtPath), 'llms.txt must exist in repository root');
   assert(fs.existsSync(skillMdPath), 'skills/jiangshan-atlas/SKILL.md must exist');
   assert(fs.existsSync(skillPyPath), 'skills/jiangshan-atlas/scripts/jiangshan.py must exist');
@@ -602,17 +718,11 @@ async function runCoreDataSuite(ctx) {
     'app.js & llms.txt must expose window.atlasAPI (locate, resolvePlace, inspect), multi-stop route rendering, PLACE_GAZETTEER, and URL deep-link protocol'
   );
 
-  const TRACE_METHODS = [
-    'toggleGenealogySheetExpand',
-    '_clearActiveTrace',
+  const PERSON_METHODS = [
     '_clearActivePerson',
-    'closeGenealogyCard',
-    '_personSearchAliases',
-    '_resolvePersonProfile',
     '_formatPersonSpan',
     '_tailorPersonEvent',
     '_collectPersonEvents',
-    '_resolvePersonProfiles',
     '_eventsSharePlace',
     '_buildPersonTracksAndEvents',
     'openPersonChronicle',
@@ -635,26 +745,28 @@ async function runCoreDataSuite(ctx) {
     '_renderPersonChronicleCard',
     '_renderPersonFooter',
     '_hidePersonFooter',
+    '_getCustomRouteVisibleTopFrac',
+    '_buildJourneySegmentInfo',
+    '_renderCartographicTrajectory',
+  ];
+  const GENEALOGY_METHODS = [
+    'toggleGenealogySheetExpand',
+    '_clearActiveTrace',
     '_syncTracedPrefecture',
     '_resolvePlaceLoreBanner',
     '_findNearbyPass',
     '_collectPlaceEventsForDynasty',
-    '_findNearestTouchNode',
     '_stripModernProvincePrefix',
     '_resolveModernLocationAt',
     '_getCanonicalPlaces',
     '_findNearestSettlement',
-    '_polityAt',
     '_shapeAnchorOrCentroid',
     '_minVertexDistSq',
     '_resolveEraPlaceAt',
     '_resolveModernIdentity',
     'openGenealogyAt',
-    '_getCustomRouteVisibleTopFrac',
-    '_buildJourneySegmentInfo',
-    '_renderCartographicTrajectory',
   ];
-  const TRACE_STATIC_PROPS = [
+  const CONTROLLER_STATIC_PROPS = [
     'PERSON_PROFILES',
     'PERSON_TRACK_PALETTE',
     'PLACE_LANDMARK_EVENTS',
@@ -667,6 +779,9 @@ async function runCoreDataSuite(ctx) {
     '_searchPlaceholder',
     '_getSearchSampleQueries',
     '_getSearchShowcasePool',
+    '_personSearchAliases',
+    '_resolvePersonProfile',
+    '_resolvePersonProfiles',
     '_ensureSearchIndex',
     '_parseChineseNumber',
     '_getCompiledEraSpans',
@@ -714,6 +829,7 @@ async function runCoreDataSuite(ctx) {
     '_renderChallengeAnsweredVerdict',
     '_evaluateLocateClick',
     '_finishChallenge',
+    '_openQuizPoster',
   ];
   const NARRATOR_METHODS = [
     '_hasSpeechSynthesis',
@@ -724,7 +840,6 @@ async function runCoreDataSuite(ctx) {
     '_spokenSiteIfAbsent',
     '_cleanSpokenText',
     '_candidateSpeechVoices',
-    '_selectSpeechVoice',
     '_duckMusicForNarration',
     '_updateNarratorUi',
     '_isMajorStopYear',
@@ -738,18 +853,37 @@ async function runCoreDataSuite(ctx) {
     'stopNarrator',
     'toggleNarrator',
   ];
-  for (const traceMethod of TRACE_METHODS) {
-    const desc = Object.getOwnPropertyDescriptor(ControllerClass.prototype, traceMethod);
+  const FEEDBACK_METHODS = [
+    '_fbText',
+    '_buildFeedbackContext',
+    '_ensureFeedbackModalDom',
+    '_switchFeedbackTab',
+    '_updateFeedbackUi',
+    '_renderFeedbackList',
+    '_fetchPublicComments',
+    '_submitFeedbackForm',
+    'openFeedbackModal',
+    '_closeFeedbackModal',
+  ];
+  for (const personMethod of PERSON_METHODS) {
+    const desc = Object.getOwnPropertyDescriptor(ControllerClass.prototype, personMethod);
     assert(
       desc && typeof desc.value === 'function' && desc.enumerable === false,
-      `atlas_trace.js must attach ${traceMethod} as a non-enumerable method on HistoricalAtlasController.prototype`
+      `atlas_person.js must attach ${personMethod} as a non-enumerable method on HistoricalAtlasController.prototype`
     );
   }
-  for (const traceStaticProp of TRACE_STATIC_PROPS) {
-    const sDesc = Object.getOwnPropertyDescriptor(ControllerClass, traceStaticProp);
+  for (const genealogyMethod of GENEALOGY_METHODS) {
+    const desc = Object.getOwnPropertyDescriptor(ControllerClass.prototype, genealogyMethod);
+    assert(
+      desc && typeof desc.value === 'function' && desc.enumerable === false,
+      `atlas_genealogy.js must attach ${genealogyMethod} as a non-enumerable method on HistoricalAtlasController.prototype`
+    );
+  }
+  for (const ctrlStaticProp of CONTROLLER_STATIC_PROPS) {
+    const sDesc = Object.getOwnPropertyDescriptor(ControllerClass, ctrlStaticProp);
     assert(
       sDesc && (typeof sDesc.get === 'function' || Array.isArray(sDesc.value)),
-      `atlas_trace.js must attach static property ${traceStaticProp} onto HistoricalAtlasController`
+      `HistoricalAtlasController must expose static property ${ctrlStaticProp}`
     );
   }
   for (const searchMethod of SEARCH_METHODS) {
@@ -780,6 +914,13 @@ async function runCoreDataSuite(ctx) {
       `atlas_narrator.js must attach ${narratorMethod} as a non-enumerable method on HistoricalAtlasController.prototype`
     );
   }
+  for (const fbMethod of FEEDBACK_METHODS) {
+    const desc = Object.getOwnPropertyDescriptor(ControllerClass.prototype, fbMethod);
+    assert(
+      desc && typeof desc.value === 'function' && desc.enumerable === false,
+      `atlas_feedback.js must attach ${fbMethod} as a non-enumerable method on HistoricalAtlasController.prototype`
+    );
+  }
   {
     // Verify clean separation: app.js alone must not define any trace, search, api, quiz, or narrator mixin methods.
     const appOnlySandbox = { console, addEventListener: () => {} };
@@ -788,11 +929,13 @@ async function runCoreDataSuite(ctx) {
     controllerBundles[0].script.runInContext(appOnlySandbox);
     const BaseClass = appOnlySandbox.window.HistoricalAtlasController;
     for (const m of [
-      ...TRACE_METHODS,
+      ...PERSON_METHODS,
+      ...GENEALOGY_METHODS,
       ...SEARCH_METHODS,
       ...API_METHODS,
       ...QUIZ_METHODS,
       ...NARRATOR_METHODS,
+      ...FEEDBACK_METHODS,
     ]) {
       assert.strictEqual(
         Object.prototype.hasOwnProperty.call(BaseClass.prototype, m),
@@ -809,14 +952,16 @@ async function runCoreDataSuite(ctx) {
     const ReorderedClass = orderSandbox.window.HistoricalAtlasController;
     assert(
       typeof ReorderedClass === 'function' &&
-        TRACE_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
+        PERSON_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
+        GENEALOGY_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
         SEARCH_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
         API_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
         QUIZ_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
         NARRATOR_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
+        FEEDBACK_METHODS.every((m) => typeof ReorderedClass.prototype[m] === 'function') &&
         Array.isArray(ReorderedClass.PERSON_TRACK_PALETTE) &&
         ReorderedClass.PERSON_TRACK_PALETTE.length >= 3,
-      'atlas_trace.js, atlas_search.js, atlas_api.js, atlas_quiz.js, and atlas_narrator.js loaded before app.js must attach all mixin methods via window.__ATLAS_MIXINS'
+      'atlas_person.js, atlas_genealogy.js, atlas_search.js, atlas_api.js, atlas_quiz.js, and atlas_narrator.js loaded before app.js must attach all mixin methods via window.__ATLAS_MIXINS'
     );
     assert.strictEqual(
       orderSandbox.window.__ATLAS_MIXINS.length,
@@ -878,6 +1023,58 @@ async function runCoreDataSuite(ctx) {
     probe._setEnglishLocale(null);
     assert.strictEqual(probe._hasEnDict(), false, 'A missing locale remains supported');
   }
+  {
+    const hasSynth = Object.prototype.hasOwnProperty.call(sandbox.window, 'speechSynthesis');
+    const savedSynth = sandbox.window.speechSynthesis;
+    const hasUtter = Object.prototype.hasOwnProperty.call(sandbox.window, 'SpeechSynthesisUtterance');
+    const savedUtter = sandbox.window.SpeechSynthesisUtterance;
+    const savedUnsupported = ctrl._ttsUnsupported;
+    const savedLocale = ctrl.locale;
+    let mockVoices = [];
+    try {
+      ctrl._ttsUnsupported = false;
+      ctrl.locale = 'zh';
+      sandbox.window.speechSynthesis = { getVoices: () => mockVoices };
+      sandbox.window.SpeechSynthesisUtterance = function () {};
+      mockVoices = [
+        { name: 'Tingting', lang: 'zh-CN', localService: true, default: true },
+        { name: 'Tingting (Enhanced)', lang: 'zh-CN', localService: true, default: false },
+        { name: 'Tingting (Premium)', lang: 'zh-CN', localService: true, default: false },
+        { name: 'Siri Voice 1', lang: 'zh-CN', localService: true, default: false },
+        { name: 'Google 普通话（中国大陆）', lang: 'zh-CN', localService: false, default: false },
+      ];
+      assert.strictEqual(
+        ctrl._candidateSpeechVoices()[0].name,
+        'Tingting (Premium)',
+        'Premium local voice must rank ahead of Enhanced, Siri, and compact Tingting'
+      );
+      mockVoices = [
+        { name: 'Tingting', lang: 'zh-CN', localService: true, default: true },
+        { name: 'Tingting (Enhanced)', lang: 'zh-CN', localService: true, default: false },
+      ];
+      assert.strictEqual(
+        ctrl._candidateSpeechVoices()[0].name,
+        'Tingting (Enhanced)',
+        'Enhanced local voice must rank ahead of compact default Tingting'
+      );
+      mockVoices = [
+        { name: 'Tingting', lang: 'zh-CN', localService: true, default: true },
+        { name: 'Tingting（优化）', lang: 'zh-CN', localService: true, default: false },
+      ];
+      assert.strictEqual(
+        ctrl._candidateSpeechVoices()[0].name,
+        'Tingting（优化）',
+        'Localized Chinese 优化 voice must rank ahead of compact default Tingting'
+      );
+    } finally {
+      if (hasSynth) sandbox.window.speechSynthesis = savedSynth;
+      else delete sandbox.window.speechSynthesis;
+      if (hasUtter) sandbox.window.SpeechSynthesisUtterance = savedUtter;
+      else delete sandbox.window.SpeechSynthesisUtterance;
+      ctrl._ttsUnsupported = savedUnsupported;
+      ctrl.locale = savedLocale;
+    }
+  }
   assert.strictEqual(
     typeof ctrl._lazyAssetUrl,
     'function',
@@ -896,7 +1093,9 @@ async function runCoreDataSuite(ctx) {
                 vLore: '11223344',
                 vHant: '55667788',
                 vQuiz: '99aabbcc',
+                vQuizPoster: '00112233',
                 vNarrator: 'ddeeff00',
+                vFeedback: '1122aabb',
               },
             }
           : null,
@@ -927,9 +1126,19 @@ async function runCoreDataSuite(ctx) {
       '_lazyAssetUrl must read data-v-quiz from #atlas-app-script'
     );
     assert.strictEqual(
+      ctrl._lazyAssetUrl('js/quiz_poster.js', 'vQuizPoster'),
+      'js/quiz_poster.js?v=00112233',
+      '_lazyAssetUrl must read data-v-quiz-poster from #atlas-app-script'
+    );
+    assert.strictEqual(
       ctrl._lazyAssetUrl('js/atlas_narrator.js', 'vNarrator'),
       'js/atlas_narrator.js?v=ddeeff00',
       '_lazyAssetUrl must read data-v-narrator from #atlas-app-script'
+    );
+    assert.strictEqual(
+      ctrl._lazyAssetUrl('js/atlas_feedback.js', 'vFeedback'),
+      'js/atlas_feedback.js?v=1122aabb',
+      '_lazyAssetUrl must read data-v-feedback from #atlas-app-script'
     );
     assert.strictEqual(ctrl._hasZhHant(), true, '_hasZhHant must detect loaded ZH_HANT_CONV');
     assert.strictEqual(ctrl._isQuizLoaded(), true, '_isQuizLoaded must detect installed AtlasQuizMixin');
@@ -999,11 +1208,15 @@ async function runCoreDataSuite(ctx) {
         !perfReport.syncScripts.some((s) => s.relPath === 'js/zh_hant.js') &&
         !perfReport.syncScripts.some((s) => s.relPath === 'js/atlas_quiz.js') &&
         !perfReport.syncScripts.some((s) => s.relPath === 'js/atlas_narrator.js') &&
+        !perfReport.syncScripts.some((s) => s.relPath === 'js/atlas_person.js') &&
+        !perfReport.syncScripts.some((s) => s.relPath === 'js/atlas_genealogy.js') &&
         perfReport.lazyScripts.some((s) => s.relPath === 'js/lore_detail.js') &&
         perfReport.lazyScripts.some((s) => s.relPath === 'js/zh_hant.js') &&
         perfReport.lazyScripts.some((s) => s.relPath === 'js/atlas_quiz.js') &&
-        perfReport.lazyScripts.some((s) => s.relPath === 'js/atlas_narrator.js'),
-      'index.html must load js/lore_core.js synchronously and defer js/lore_detail.js, js/zh_hant.js, js/atlas_quiz.js, and js/atlas_narrator.js as lazy bundles'
+        perfReport.lazyScripts.some((s) => s.relPath === 'js/atlas_narrator.js') &&
+        perfReport.lazyScripts.some((s) => s.relPath === 'js/atlas_person.js') &&
+        perfReport.lazyScripts.some((s) => s.relPath === 'js/atlas_genealogy.js'),
+      'index.html must load js/lore_core.js synchronously and defer js/lore_detail.js, js/zh_hant.js, js/atlas_quiz.js, js/atlas_narrator.js, js/atlas_person.js, and js/atlas_genealogy.js as lazy bundles'
     );
   }
 

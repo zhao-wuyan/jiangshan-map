@@ -364,7 +364,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
       ]
     },
     {
-      "regime": "孙吴", "polities": ["吴"], "until": 280,
+      "regime": "孙吴", "polities": ["吴", "孙权"], "until": 280,
       "spans": [
       [222,"吴黄武",1,"吴大帝","Emp. Da of Wu"],
       [229,"吴黄龙",1,"吴大帝","Emp. Da of Wu"],
@@ -524,7 +524,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
       ]
     },
     {
-      "regime": "金", "polities": ["金","金（迁都汴京）"], "until": 1234,
+      "regime": "金", "polities": ["金"], "until": 1234,
       "spans": [
       [1115,"金收国",1,"金太祖","Emp. Taizu of Jin"],
       [1117,"金天辅",1,"金太祖","Emp. Taizu of Jin"],
@@ -824,7 +824,9 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"name":"武川镇","aliases":["武川","北魏六镇","六镇"],"modern":"内蒙古呼和浩特·武川","coord":[111.65,40.68],"zoom":2.3},
     {"name":"怀朔镇","aliases":["怀朔","沃野镇"],"modern":"内蒙古包头·固阳","coord":[109.84,40.66],"zoom":2.3},
     {"name":"赤嵌","aliases":["热兰遮城","安平","东都","东宁","承天府（东宁）","夷洲","流求","瑠求","小琉球","东番"],"asciiAliases":["chikan","tayouan","zeelandia","dongning","tungning","yizhou","liuqiu","xiaoliuqiu","dongfan"],"modern":"台湾台南","coord":[120.21,23],"zoom":2.4},
-    {"name":"桐城","aliases":["桐城县","桐城市"],"asciiAliases":["tongcheng","tongchengshi"],"modern":"安徽桐城","coord":[116.951,31.051],"zoom":2.6}
+    {"name":"桐城","aliases":["桐城县","桐城市"],"asciiAliases":["tongcheng","tongchengshi"],"modern":"安徽桐城","coord":[116.951,31.051],"zoom":2.6},
+    {"name":"皖城","aliases":["皖县","皖国","潜山","梅城"],"asciiAliases":["wancheng","qianshan"],"modern":"安徽安庆潜山","coord":[116.57,30.63],"zoom":2.6},
+    {"name":"铜官山","aliases":["铜官","五松山"],"asciiAliases":["tongguanshan"],"modern":"安徽铜陵","coord":[117.81,30.93],"zoom":2.6}
   ],
   "PERSON_PROFILES": [
     {"key":"mengzi","zh":"孟子","en":"Mencius","courtesyZh":"孟轲 · 亚圣 · 仁政民本","courtesyEn":"Meng Ke, Second Sage of Confucianism","dynastyKey":"zhanguo","span":[-372,-289],"aliases":["孟轲","亚圣","孟子舆"],"evCount":3},
@@ -834,7 +836,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"baiqi","zh":"白起","en":"Bai Qi","courtesyZh":"秦武安君 · 战国名将","courtesyEn":"Lord Wu'an of Qin","dynastyKey":"zhanguo","span":[-332,-257],"spanUnknown":"birth","aliases":["武安君白起"],"evCount":5},
     {"key":"limu","zh":"李牧","en":"Li Mu","courtesyZh":"赵国名将 · 武安君","courtesyEn":"General of Zhao","dynastyKey":"zhanguo","span":[-290,-229],"spanUnknown":"birth","aliases":[],"evCount":3},
     {"key":"wangjian","zh":"王翦","en":"Wang Jian","courtesyZh":"秦灭六国主帅 · 武成侯","courtesyEn":"Chief General of Qin","dynastyKey":"zhanguo","span":[-300,-213],"spanUnknown":"both","aliases":[],"evCount":5},
-    {"key":"qinshihuang","zh":"秦始皇","en":"Qin Shi Huang","courtesyZh":"嬴政 · 始皇帝","courtesyEn":"First Emperor of China","dynastyKey":"qin","span":[-259,-210],"aliases":["嬴政","秦王政","始皇帝","祖龙","First Emperor"],"evCount":9},
+    {"key":"qinshihuang","zh":"秦始皇","en":"Qin Shi Huang","courtesyZh":"嬴政 · 始皇帝","courtesyEn":"First Emperor of China","dynastyKey":"qin","span":[-259,-210],"aliases":["嬴政","秦王政","始皇帝","祖龙","First Emperor"],"evCount":10},
     {"key":"mengtian","zh":"蒙恬","en":"Meng Tian","courtesyZh":"秦大将 · 威振匈奴","courtesyEn":"General of Qin","dynastyKey":"qin","span":[-250,-210],"spanUnknown":"birth","aliases":[],"evCount":3},
     {"key":"xiangyu","zh":"项羽","en":"Xiang Yu","courtesyZh":"西楚霸王 · 名籍字羽","courtesyEn":"Hegemon-King of Western Chu","dynastyKey":"qin","span":[-232,-202],"aliases":["项籍","西楚霸王","霸王"],"evCount":7},
     {"key":"liubang","zh":"刘邦","en":"Liu Bang","courtesyZh":"汉高祖 · 字季","courtesyEn":"Emperor Gaozu of Han","dynastyKey":"xihan","span":[-256,-195],"aliases":["汉高祖","汉高帝","沛公","汉王刘邦"],"evCount":14},
@@ -851,7 +853,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"banchao","zh":"班超","en":"Ban Chao","courtesyZh":"定远侯 · 字仲升","courtesyEn":"Protector-General of Western Regions","dynastyKey":"donghan","span":[32,102],"aliases":["定远侯","班仲升"],"evCount":5},
     {"key":"caocao","zh":"曹操","en":"Cao Cao","courtesyZh":"魏武帝 · 字孟德","courtesyEn":"King Wu of Wei","dynastyKey":"donghan","span":[155,220],"aliases":["魏武帝","孟德","曹孟德","阿瞒","曹阿瞒","曹公"],"evCount":16},
     {"key":"liubei","zh":"刘备","en":"Liu Bei","courtesyZh":"汉昭烈帝 · 字玄德","courtesyEn":"Emperor Zhaolie of Shu Han","dynastyKey":"sanguo","eraRegimes":["蜀汉"],"span":[161,223],"aliases":["玄德","刘玄德","汉昭烈帝","昭烈帝","先主"],"evCount":13},
-    {"key":"sunquan","zh":"孙权","en":"Sun Quan","courtesyZh":"吴大帝 · 字仲谋","courtesyEn":"Emperor Da of Eastern Wu","dynastyKey":"sanguo","eraRegimes":["孙吴"],"span":[182,252],"aliases":["仲谋","孙仲谋","吴大帝"],"evCount":7},
+    {"key":"sunquan","zh":"孙权","en":"Sun Quan","courtesyZh":"吴大帝 · 字仲谋","courtesyEn":"Emperor Da of Eastern Wu","dynastyKey":"sanguo","eraRegimes":["孙吴"],"span":[182,252],"aliases":["仲谋","孙仲谋","吴大帝"],"evCount":8},
     {"key":"zhugeliang","zh":"诸葛亮","en":"Zhuge Liang","courtesyZh":"武乡侯 · 字孔明 · 卧龙","courtesyEn":"Kongming, Chancellor of Shu","dynastyKey":"sanguo","eraRegimes":["蜀汉"],"span":[181,234],"journeyKey":"zhugeliang","aliases":["孔明","诸葛孔明","卧龙","武侯","诸葛武侯","Kongming"],"evCount":11},
     {"key":"guanyu","zh":"关羽","en":"Guan Yu","courtesyZh":"汉寿亭侯 · 字云长","courtesyEn":"General of Shu Han","dynastyKey":"sanguo","eraRegimes":["蜀汉"],"span":[160,220],"spanUnknown":"birth","aliases":["云长","关云长","关公","美髯公","武圣"],"evCount":7},
     {"key":"zhouyu","zh":"周瑜","en":"Zhou Yu","courtesyZh":"东吴大都督 · 字公瑾","courtesyEn":"Grand Commander of Eastern Wu","dynastyKey":"donghan","span":[175,210],"aliases":["公瑾","周公瑾","周郎"],"evCount":5},
@@ -860,11 +862,11 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"wangxizhi","zh":"王羲之","en":"Wang Xizhi","courtesyZh":"书圣 · 字逸少 · 王右军","courtesyEn":"Sage of Calligraphy","dynastyKey":"dongjin","span":[303,361],"aliases":["逸少","王右军","书圣"],"evCount":3},
     {"key":"xiean","zh":"谢安","en":"Xie An","courtesyZh":"东晋太傅 · 字安石","courtesyEn":"Chancellor of Eastern Jin","dynastyKey":"dongjin","span":[320,385],"aliases":["谢安石","谢太傅","谢公"],"evCount":3},
     {"key":"taoyuanming","zh":"陶渊明","en":"Tao Yuanming","courtesyZh":"靖节先生 · 字元亮 · 五柳先生","courtesyEn":"Master of Five Willows","dynastyKey":"dongjin","span":[365,427],"aliases":["陶潜","五柳先生","靖节先生","元亮"],"evCount":3},
-    {"key":"liuyu","zh":"刘裕","en":"Liu Yu","courtesyZh":"南朝宋武帝 · 寄奴","courtesyEn":"Emperor Wu of Liu Song","dynastyKey":"nanbei","span":[363,422],"aliases":["宋武帝","寄奴","刘寄奴"],"evCount":5},
+    {"key":"liuyu","zh":"刘裕","en":"Liu Yu","courtesyZh":"南朝宋武帝 · 寄奴","courtesyEn":"Emperor Wu of Liu Song","dynastyKey":"nanbei","journeyKey":"liuyu","span":[363,422],"aliases":["宋武帝","寄奴","刘寄奴","刘宋武帝"],"evCount":8},
     {"key":"xiaowendi","zh":"北魏孝文帝","en":"Emperor Xiaowen of Northern Wei","courtesyZh":"拓跋宏（元宏） · 汉化改革","courtesyEn":"Tuoba Hong / Yuan Hong","dynastyKey":"nanbei","eraRegimes":["北魏"],"span":[467,499],"aliases":["拓跋宏","元宏","孝文帝"],"evCount":3},
     {"key":"yangjian","zh":"杨坚","en":"Emperor Wen of Sui","courtesyZh":"隋文帝 · 开皇之治","courtesyEn":"Yang Jian","dynastyKey":"sui","span":[541,604],"aliases":["隋文帝"],"evCount":4},
     {"key":"yangguang","zh":"隋炀帝","en":"Emperor Yang of Sui","courtesyZh":"杨广 · 开凿大运河","courtesyEn":"Yang Guang","dynastyKey":"sui","span":[569,618],"aliases":["杨广","晋王广"],"evCount":9},
-    {"key":"lishimin","zh":"唐太宗","en":"Emperor Taizong of Tang","courtesyZh":"李世民 · 贞观之治 · 天可汗","courtesyEn":"Li Shimin","dynastyKey":"tang","span":[598,649],"aliases":["李世民","秦王李世民","天可汗"],"evCount":12},
+    {"key":"lishimin","zh":"唐太宗","en":"Emperor Taizong of Tang","courtesyZh":"李世民 · 贞观之治 · 天可汗","courtesyEn":"Li Shimin","dynastyKey":"tang","span":[598,649],"aliases":["李世民","秦王李世民","天可汗"],"evCount":13},
     {"key":"lijing","zh":"李靖","en":"Li Jing","courtesyZh":"卫国公 · 字药师 · 唐初名将","courtesyEn":"Duke of Wei","dynastyKey":"tang","span":[571,649],"aliases":["李药师","卫国公"],"evCount":4},
     {"key":"xuanzang","zh":"玄奘","en":"Xuanzang","courtesyZh":"三藏法师 · 西行求法","courtesyEn":"Master Tripitaka","dynastyKey":"tang","span":[602,664],"journeyKey":"xuanzang","aliases":["唐僧","唐三藏","陈祎","三藏法师"],"evCount":12},
     {"key":"wuzetian","zh":"武则天","en":"Wu Zetian","courtesyZh":"武曌 · 则天大圣皇帝","courtesyEn":"Empress Regnant of Zhou","dynastyKey":"tang","span":[624,705],"aliases":["武曌","武后","则天皇帝"],"evCount":7},
@@ -903,7 +905,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"hairui","zh":"海瑞","en":"Hai Rui","courtesyZh":"海忠介 · 字汝贤 · 刚峰先生","courtesyEn":"Upright Censor & Reformer of Ming","dynastyKey":"ming","span":[1514,1587],"aliases":["海汝贤","海刚峰","海忠介","海青天"],"evCount":7},
     {"key":"zhangjuzheng","zh":"张居正","en":"Zhang Juzheng","courtesyZh":"张太岳 · 字叔大 · 万历首辅","courtesyEn":"Grand Secretary & Reformer","dynastyKey":"ming","span":[1525,1582],"aliases":["张叔大","张太岳","张江陵","张文忠"],"evCount":8},
     {"key":"zhengchenggong","zh":"郑成功","en":"Zheng Chenggong","courtesyZh":"延平王 · 国姓爷 · 收复台湾","courtesyEn":"Koxinga, Prince of Yanping","dynastyKey":"ming","span":[1624,1662],"aliases":["国姓爷","郑森","延平王","koxinga"],"evCount":4},
-    {"key":"kangxi","zh":"康熙帝","en":"Kangxi Emperor","courtesyZh":"爱新觉罗·玄烨 · 清圣祖","courtesyEn":"Xuanye, Emperor Shengzu of Qing","dynastyKey":"qing","span":[1654,1722],"aliases":["康熙","玄烨","清圣祖","爱新觉罗玄烨"],"evCount":12},
+    {"key":"kangxi","zh":"康熙帝","en":"Kangxi Emperor","courtesyZh":"爱新觉罗·玄烨 · 清圣祖","courtesyEn":"Xuanye, Emperor Shengzu of Qing","dynastyKey":"qing","span":[1654,1722],"aliases":["康熙","玄烨","清圣祖","爱新觉罗玄烨"],"evCount":13},
     {"key":"linzexu","zh":"林则徐","en":"Lin Zexu","courtesyZh":"林文忠公 · 字元抚 · 虎门销烟","courtesyEn":"Imperial Commissioner","dynastyKey":"qing","span":[1785,1850],"aliases":["林元抚","林少穆","林文忠公"],"evCount":3},
     {"key":"zengguofan","zh":"曾国藩","en":"Zeng Guofan","courtesyZh":"曾文正公 · 字伯涵 · 湘军统帅","courtesyEn":"Statesman & Founder of Hunan Army","dynastyKey":"qing","span":[1811,1872],"aliases":["曾伯涵","曾涤生","曾文正公"],"evCount":4},
     {"key":"zuozongtang","zh":"左宗棠","en":"Zuo Zongtang","courtesyZh":"左文襄公 · 字季高 · 收复新疆","courtesyEn":"Statesman & Recoverer of Xinjiang","dynastyKey":"qing","span":[1812,1885],"aliases":["左季高","左文襄公"],"evCount":8},
@@ -919,7 +921,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"jiangwei","zh":"姜维","en":"Jiang Wei","courtesyZh":"大将军 · 字伯约 · 九伐中原","courtesyEn":"Supreme General of Late Shu Han","dynastyKey":"sanguo","eraRegimes":["蜀汉"],"span":[202,264],"aliases":["姜伯约"],"evCount":4},
     {"key":"dengai","zh":"邓艾","en":"Deng Ai","courtesyZh":"太尉 · 字士载 · 偷渡阴平灭蜀","courtesyEn":"Conqueror of Shu Han","dynastyKey":"sanguo","span":[197,264],"aliases":["邓士载"],"evCount":3},
     {"key":"huanwen","zh":"桓温","en":"Huan Wen","courtesyZh":"东晋大司马 · 字元子 · 三次北伐","courtesyEn":"Grand Marshal of Eastern Jin","dynastyKey":"dongjin","span":[312,373],"aliases":["桓元子"],"evCount":5},
-    {"key":"fujian","zh":"苻坚","en":"Fu Jian","courtesyZh":"前秦世祖天王 · 统一北方","courtesyEn":"Heavenly King of Former Qin","dynastyKey":"dongjin","span":[338,385],"aliases":["前秦苻坚"],"evCount":3},
+    {"key":"fujian","zh":"苻坚","en":"Fu Jian","courtesyZh":"前秦世祖天王 · 统一北方","courtesyEn":"Heavenly King of Former Qin","dynastyKey":"dongjin","span":[338,385],"aliases":["前秦苻坚"],"evCount":4},
     {"key":"xiexuan","zh":"谢玄","en":"Xie Xuan","courtesyZh":"康乐公 · 北府兵统帅","courtesyEn":"Commander of Northern Garrison","dynastyKey":"dongjin","span":[343,388],"aliases":["谢幼度"],"evCount":3},
     {"key":"anlushan","zh":"安禄山","en":"An Lushan","courtesyZh":"三镇节度使 · 燕帝","courtesyEn":"Instigator of An Lushan Rebellion","dynastyKey":"tang","span":[703,757],"aliases":["安史"],"evCount":3},
     {"key":"huangchao","zh":"黄巢","en":"Huang Chao","courtesyZh":"冲天大将军 · 大齐皇帝","courtesyEn":"Leader of Late Tang Peasant War","dynastyKey":"tang","span":[820,884],"aliases":["冲天大将军"],"evCount":4},
@@ -956,7 +958,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"sunce","zh":"孙策","en":"Sun Ce","courtesyZh":"江东小霸王 · 字伯符","courtesyEn":"Little Conqueror of Jiangdong","dynastyKey":"donghan","span":[175,200],"aliases":["孙伯符","小霸王"],"evCount":4},
     {"key":"shile","zh":"石勒","en":"Shi Le","courtesyZh":"后赵明帝 · 字世龙","courtesyEn":"Founder of Later Zhao","dynastyKey":"dongjin","span":[274,333],"aliases":["石世龙","后赵明帝"],"evCount":4},
     {"key":"wangmeng","zh":"王猛","en":"Wang Meng","courtesyZh":"字景略 · 前秦丞相","courtesyEn":"Chancellor of Former Qin","dynastyKey":"dongjin","span":[325,375],"aliases":["王景略"],"evCount":3},
-    {"key":"xiaoyan","zh":"萧衍","en":"Emperor Wu of Liang","courtesyZh":"梁武帝 · 字叔达 · 南朝梁开国皇帝","courtesyEn":"Xiao Yan, Founder of Liang","dynastyKey":"nanbei","span":[464,549],"aliases":["梁武帝","萧叔达"],"evCount":4},
+    {"key":"xiaoyan","zh":"萧衍","en":"Emperor Wu of Liang","courtesyZh":"梁武帝 · 字叔达 · 南朝梁开国皇帝","courtesyEn":"Xiao Yan, Founder of Liang","dynastyKey":"nanbei","span":[464,549],"aliases":["梁武帝","萧叔达"],"evCount":5},
     {"key":"gaohuan","zh":"高欢","en":"Gao Huan","courtesyZh":"字贺六浑 · 东魏权臣 · 北齐奠基者","courtesyEn":"Paramount General of Eastern Wei","dynastyKey":"nanbei","eraRegimes":["东魏","北魏"],"span":[496,547],"aliases":["高贺六浑","齐神武帝"],"evCount":6},
     {"key":"yuwentai","zh":"宇文泰","en":"Yuwen Tai","courtesyZh":"字黑獭 · 西魏权臣 · 北周奠基者","courtesyEn":"Paramount General of Western Wei","dynastyKey":"nanbei","eraRegimes":["西魏","北魏"],"span":[507,556],"aliases":["宇文黑獭","周文帝"],"evCount":5},
     {"key":"zhaogou","zh":"宋高宗","en":"Emperor Gaozong of Song","courtesyZh":"赵构 · 南宋开国皇帝","courtesyEn":"Zhao Gou, Founder of Southern Song","dynastyKey":"nansong","span":[1107,1187],"aliases":["赵构","康王赵构","高宗"],"evCount":5},
@@ -970,7 +972,8 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"jingkang","zh":"靖康之变","en":"Jingkang Catastrophe & Southern Crossing","courtesyZh":"宣和七年（1125）— 绍兴十二年（1142） · 汴京陆沉、建炎南渡与岳飞北伐","courtesyEn":"1125–1142 CE · Fall of Bianjing, Southern Crossing & Yue Fei's Expeditions","isStory":true,"dynastyKey":"beisong","span":[1125,1142],"aliases":["靖康","靖康之变","靖康之耻","靖康之难","建炎南渡","岳飞北伐","宋金之战","jingkang","jingkangzhibian","Jingkang Incident","Song-Jin Wars"],"evCount":10},
     {"key":"qintongyi","zh":"秦灭六国","en":"Qin's Conquest of the Six States","courtesyZh":"秦王政九年（前238）— 二十六年（前221） · 六王毕，四海一","courtesyEn":"238–221 BCE · The Wars That Unified China","isStory":true,"dynastyKey":"zhanguo","span":[-238,-221],"aliases":["秦灭","秦灭六国","灭六国","扫六合","秦扫六合","秦王扫六合","六王毕","秦统一六国","qinmieliuguo","qintongyi","Qin unification","Qin's Wars of Unification"],"evCount":10},
     {"key":"chuhan","zh":"楚汉之争","en":"Chu-Han Contention","courtesyZh":"秦二世三年（前207）— 汉五年（前202） · 破秦分封、暗度陈仓与垓下决战","courtesyEn":"207–202 BCE · Fall of Qin, Feast at Hongmen & Battle of Gaixia","isStory":true,"dynastyKey":"qin","span":[-207,-202],"aliases":["楚汉","楚汉之争","楚汉相争","楚汉争霸","鸿门宴","霸王别姬","十面埋伏","chuhan","chuhanzhizheng","Chu-Han Contention","Chu-Han War"],"evCount":10},
-    {"key":"changzheng","zh":"红军长征","en":"The Long March","courtesyZh":"1934年10月 — 1936年10月 · 自赣南至陕甘的万里战略转移","courtesyEn":"Oct 1934 – Oct 1936 · Strategic March from Jiangxi to Shaanxi-Gansu","isStory":true,"dynastyKey":"roc","span":[1934,1936],"aliases":["长征","红军长征","二万五千里长征","万里长征","四渡赤水","遵义会议","飞夺泸定桥","巧渡金沙江","血战湘江","三军会师","会宁会师","changzheng","hongjunchangzheng","Long March","Red Army Long March"],"evCount":10}
+    {"key":"changzheng","zh":"红军长征","en":"The Long March","courtesyZh":"1934年10月 — 1936年10月 · 自赣南至陕甘的万里战略转移","courtesyEn":"Oct 1934 – Oct 1936 · Strategic March from Jiangxi to Shaanxi-Gansu","isStory":true,"dynastyKey":"roc","span":[1934,1936],"aliases":["长征","红军长征","二万五千里长征","万里长征","四渡赤水","遵义会议","飞夺泸定桥","巧渡金沙江","血战湘江","三军会师","会宁会师","changzheng","hongjunchangzheng","Long March","Red Army Long March"],"evCount":10},
+    {"key":"taiping","zh":"太平天国","en":"Taiping Heavenly Kingdom","courtesyZh":"1851—1864 · 金田起义、建都天京与湘淮合围","courtesyEn":"1851–1864 · Jintian Uprising, Tianjing Capital & the Xiang–Huai Campaigns","isStory":true,"dynastyKey":"qing","span":[1851,1864],"aliases":["太平","太平天国","太平天国运动","金田起义","天京事变","湘军","taiping","taipingtianguo","Taiping Heavenly Kingdom","Taiping Rebellion"],"evCount":10}
   ],
   "POLITY_PROFILES": [
     {"key":"shu_state","zh":"古蜀国","en":"Ancient Kingdom of Shu","titles":["蜀"],"from":-403,"to":-316,"seatZh":"成都","seatEn":"Chengdu","aliases":["开明蜀","蜀国"]},
@@ -994,10 +997,10 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"xiyu_duhufu","zh":"西域都护府","en":"Protectorate of the Western Regions","titles":["西域都护府","西域都护（伊吾 · 南道）","西域长史府"],"from":-60,"to":188,"seatZh":"乌垒城（轮台）→ 它乾城（龟兹）→ 柳中（西域长史府）","seatEn":"Wulei (Luntai) → Taqian (Kucha) → Liuzhong","aliases":["西域都护","西域长史府"]},
     {"key":"xin_wangmang","zh":"新朝","en":"Xin Dynasty","titles":["新（王莽）"],"from":9,"to":23,"matchFrom":8,"seatZh":"常安（长安）","seatEn":"Chang'an","aliases":["新莽","王莽新朝"]},
     {"key":"chengjia","zh":"成家","en":"Chengjia (Gongsun Shu)","titles":["成家（公孙述）"],"from":25,"to":36,"matchFrom":23,"seatZh":"成都","seatEn":"Chengdu","aliases":["公孙述政权","大成（公孙述）"]},
-    {"key":"gongsun_liaodong","zh":"辽东公孙氏（燕）","en":"Gongsun Clan of Liaodong (Yan)","titles":["公孙氏（辽东）","燕（公孙氏辽东）"],"from":189,"to":238,"seatZh":"襄平（辽阳）","seatEn":"Xiangping (Liaoyang)","aliases":["辽东公孙氏","公孙燕"]},
+    {"key":"gongsun_liaodong","zh":"辽东公孙氏（燕）","en":"Gongsun Clan of Liaodong (Yan)","titles":["公孙氏（辽东）"],"from":189,"to":238,"seatZh":"襄平（辽阳）","seatEn":"Xiangping (Liaoyang)","aliases":["辽东公孙氏","公孙燕"]},
     {"key":"caowei","zh":"曹魏","en":"Cao Wei","titles":["魏"],"from":220,"to":265,"seatZh":"洛阳","seatEn":"Luoyang","aliases":["魏国"]},
-    {"key":"shuhan","zh":"蜀汉","en":"Shu Han","titles":["蜀汉","刘备（益州）","刘备（荆益）","刘备（荆州）"],"from":221,"to":263,"matchFrom":208,"seatZh":"成都","seatEn":"Chengdu","aliases":["蜀","季汉"]},
-    {"key":"sunwu","zh":"孙吴","en":"Eastern Wu","titles":["吴","孙权（江东）","孙权（荆扬）"],"from":222,"to":280,"matchFrom":200,"seatZh":"武昌 → 建业（229）","seatEn":"Wuchang → Jianye (229)","aliases":["东吴","吴国"]},
+    {"key":"shuhan","zh":"蜀汉","en":"Shu Han","titles":["蜀汉","刘备"],"from":221,"to":263,"matchFrom":208,"seatZh":"成都","seatEn":"Chengdu","aliases":["蜀","季汉"]},
+    {"key":"sunwu","zh":"孙吴","en":"Eastern Wu","titles":["吴","孙权"],"from":222,"to":280,"matchFrom":200,"seatZh":"武昌 → 建业（229）","seatEn":"Wuchang → Jianye (229)","aliases":["东吴","吴国"]},
     {"key":"xijin_rise","zh":"西晋（灭吴前）","en":"Western Jin (Pre-Unification)","titles":["晋"],"from":265,"to":280,"matchTo":279,"seatZh":"洛阳","seatEn":"Luoyang","aliases":["司马晋"]},
     {"key":"qianliang","zh":"前凉","en":"Former Liang","titles":["前凉"],"from":301,"to":376,"seatZh":"姑臧","seatEn":"Guzang"},
     {"key":"hanzhao","zh":"汉赵（前赵）","en":"Han-Zhao (Former Zhao)","titles":["汉赵","前赵"],"from":304,"to":329,"seatZh":"左国城 → 平阳 → 长安（319）","seatEn":"Zuoguocheng → Pingyang → Chang'an (319)","aliases":["前赵","汉赵"]},
@@ -1031,7 +1034,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"wagang_wei","zh":"瓦岗军（魏）","en":"Wagang Army (Wei)","titles":["魏（李密）"],"from":616,"to":618,"matchFrom":614,"seatZh":"洛口仓 → 金墉城（洛阳）","seatEn":"Luokou Granary → Jinyong (Luoyang)","aliases":["瓦岗军","李密魏政权"]},
     {"key":"douxia","zh":"夏（窦建德）","en":"Xia (Dou Jiande)","titles":["夏（窦建德）"],"from":617,"to":621,"matchFrom":614,"seatZh":"乐寿（河间）→ 洺州（邯郸永年）","seatEn":"Leshou → Mingzhou","aliases":["大夏（窦建德）","河北夏"]},
     {"key":"xiaoxian_liang","zh":"梁（萧铣）","en":"Liang (Xiao Xian)","titles":["梁（萧铣）"],"from":617,"to":621,"matchFrom":614,"seatZh":"巴陵（岳阳）→ 江陵","seatEn":"Baling (Yueyang) → Jiangling","aliases":["后梁（萧铣）"]},
-    {"key":"tubo","zh":"吐蕃","en":"Tibetan Empire","titles":["吐蕃"],"from":618,"to":842,"matchTo":879,"seatZh":"逻些（拉萨）","seatEn":"Rasa (Lhasa)","aliases":["Tibet","Tubo"]},
+    {"key":"tubo","zh":"吐蕃","en":"Tibetan Empire","titles":["吐蕃"],"from":618,"to":842,"matchTo":847,"seatZh":"逻些（拉萨）","seatEn":"Rasa (Lhasa)","aliases":["Tibet","Tubo"]},
     {"key":"wangzheng","zh":"郑（王世充）","en":"Zheng (Wang Shichong)","titles":["郑（王世充）"],"from":619,"to":621,"matchFrom":618,"seatZh":"洛阳","seatEn":"Luoyang","aliases":["王郑"]},
     {"key":"anxi_duhufu","zh":"安西都护府","en":"Anxi Protectorate","titles":["安西都护府（西州）","安西都护府","安西都护府（孤悬坚守）"],"from":640,"to":790,"seatZh":"西州（交河城）→ 龟兹（648 起统辖安西四镇）","seatEn":"Xizhou (Jiaohe) → Kucha (Four Garrisons of Anxi)","aliases":["安西大都护府","安西四镇"]},
     {"key":"anbei_duhufu","zh":"安北都护府（燕然）","en":"Anbei (Yanran) Protectorate","titles":["漠北羁縻府州（薛延陀）","燕然（安北）都护府","安北都护府"],"from":647,"to":687,"matchFrom":630,"seatZh":"故单于台（阴山北）→ 回纥本部（鄂尔浑河）→ 同城","seatEn":"Chanyu Terrace → Orkhon Valley → Tongcheng","aliases":["燕然都护府","瀚海都护府"]},
@@ -1049,7 +1052,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"minguo","zh":"闽","en":"Min","titles":["闽","威武（王审知）"],"from":909,"to":945,"matchFrom":885,"seatZh":"福州（长乐府）","seatEn":"Fuzhou","aliases":["闽国","王闽"]},
     {"key":"liao","zh":"辽（契丹）","en":"Liao (Khitan)","titles":["契丹","辽"],"from":916,"to":1125,"matchFrom":907,"seatZh":"上京临潢府（五京制）","seatEn":"Shangjing Linhuang (five capitals)","aliases":["契丹","辽国","大辽","Khitan"]},
     {"key":"nanhan","zh":"南汉","en":"Southern Han","titles":["南汉","岭南（刘隐）"],"from":917,"to":971,"matchFrom":885,"seatZh":"兴王府（广州）","seatEn":"Xingwang Fu (Guangzhou)","aliases":["刘汉（南汉）"]},
-    {"key":"houtang","zh":"后唐","en":"Later Tang","titles":["后唐","晋（河东）","河东（李克用）"],"from":923,"to":936,"matchFrom":885,"seatZh":"洛阳","seatEn":"Luoyang","monarchPrefix":["后唐"],"aliases":["沙陀唐"]},
+    {"key":"houtang","zh":"后唐","en":"Later Tang","titles":["后唐","晋","河东（李克用）"],"from":923,"to":936,"matchFrom":885,"seatZh":"洛阳","seatEn":"Luoyang","monarchPrefix":["后唐"],"aliases":["沙陀唐"]},
     {"key":"jingnan","zh":"荆南（南平）","en":"Jingnan (Nanping)","titles":["荆南（南平）"],"from":924,"to":963,"matchFrom":907,"seatZh":"江陵（荆州）","seatEn":"Jiangling (Jingzhou)","aliases":["南平","高氏荆南","北楚"]},
     {"key":"houshu","zh":"后蜀","en":"Later Shu","titles":["后蜀"],"from":934,"to":965,"seatZh":"成都","seatEn":"Chengdu","aliases":["孟蜀"]},
     {"key":"houjin","zh":"后晋","en":"Later Jin","titles":["后晋"],"from":936,"to":947,"seatZh":"开封","seatEn":"Kaifeng","monarchPrefix":["后晋"],"aliases":["石晋"]},
@@ -1059,7 +1062,7 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"houzhou","zh":"后周","en":"Later Zhou","titles":["后周"],"from":951,"to":960,"seatZh":"开封","seatEn":"Kaifeng","monarchPrefix":["后周"],"aliases":["柴周"]},
     {"key":"beihan","zh":"北汉","en":"Northern Han","titles":["北汉"],"from":951,"to":979,"seatZh":"太原","seatEn":"Taiyuan"},
     {"key":"xixia","zh":"西夏","en":"Western Xia","titles":["西夏","党项（定难军）"],"from":1038,"to":1227,"matchFrom":936,"seatZh":"兴庆府（中兴府）","seatEn":"Xingqing (Zhongxing)","aliases":["大夏（西夏）","党项","Tangut"]},
-    {"key":"jin_jurchen","zh":"金","en":"Jin (Jurchen)","titles":["金","金（迁都汴京）"],"from":1115,"to":1234,"seatZh":"会宁府 → 中都（1153）→ 汴京（1214）","seatEn":"Huining → Zhongdu (1153) → Bianjing (1214)","aliases":["大金","女真","金国","Jurchen"]},
+    {"key":"jin_jurchen","zh":"金","en":"Jin (Jurchen)","titles":["金"],"from":1115,"to":1234,"seatZh":"会宁府 → 中都（1153）→ 汴京（1214）","seatEn":"Huining → Zhongdu (1153) → Bianjing (1214)","aliases":["大金","女真","金国","Jurchen"]},
     {"key":"mongol","zh":"大蒙古国","en":"Mongol Empire","titles":["大蒙古国"],"from":1206,"to":1271,"seatZh":"哈拉和林（1235 起）","seatEn":"Karakorum (from 1235)","aliases":["蒙古","蒙古帝国","Mongol"]},
     {"key":"dayuan_rise","zh":"大元（灭宋之战）","en":"Great Yuan (Conquest of Song)","titles":["元"],"from":1271,"to":1279,"matchTo":1278,"seatZh":"大都（北京）· 上都（开平）","seatEn":"Dadu (Beijing) & Shangdu","aliases":["元朝初立"]},
     {"key":"chenhan","zh":"陈汉（天完）","en":"Chen Han (Tianwan)","titles":["天完 · 陈友谅"],"from":1351,"to":1364,"seatZh":"蕲水 → 江州（九江）→ 武昌","seatEn":"Qishui → Jiangzhou (Jiujiang) → Wuchang","aliases":["天完","大汉（陈友谅）"]},
@@ -1077,13 +1080,13 @@ window.ATLAS_LORE_DATA = Object.assign(window.ATLAS_LORE_DATA || {}, {
     {"key":"mingzheng","zh":"明郑","en":"Kingdom of Tungning","titles":["南明（明郑）"],"from":1661,"to":1683,"seatZh":"东都承天府 → 东宁承天府（台南）","seatEn":"Dongdu / Dongning Chengtian Fu (Tainan)","aliases":["东宁","东都","承天府（东宁）","郑氏台湾"],"matchFrom":1659},
     {"key":"sanfan","zh":"吴周 · 三藩","en":"Wu Zhou (Three Feudatories)","titles":["吴周 · 三藩"],"from":1673,"to":1681,"seatZh":"昆明 → 衡州（1678）","seatEn":"Kunming → Hengzhou (1678)","aliases":["三藩","吴周"]},
     {"key":"taiping","zh":"太平天国","en":"Taiping Heavenly Kingdom","titles":["太平天国"],"from":1851,"to":1864,"seatZh":"天京（南京）","seatEn":"Tianjing (Nanjing)"},
-    {"key":"beiyang_wanxi","zh":"北洋 · 皖系","en":"Anhui Clique (Beiyang)","titles":["北洋政府 · 皖系（段祺瑞）","皖系（卢永祥 · 浙江）"],"from":1916,"to":1924,"seatZh":"北京（1916—1920）→ 杭州（1920—1924）","seatEn":"Beijing (1916–1920) → Hangzhou (1920–1924)","aliases":["皖系军阀"]},
+    {"key":"beiyang_wanxi","zh":"北洋 · 皖系","en":"Anhui Clique (Beiyang)","titles":["北洋政府 · 皖系（段祺瑞）","皖系（卢永祥）"],"from":1916,"to":1924,"seatZh":"北京（1916—1920）→ 杭州（1920—1924）","seatEn":"Beijing (1916–1920) → Hangzhou (1920–1924)","aliases":["皖系军阀"]},
     {"key":"beiyang_zhixi","zh":"北洋 · 直系","en":"Zhili Clique (Beiyang)","titles":["直系（冯国璋 · 曹锟）","北洋政府 · 直系（曹锟 · 吴佩孚）","直系（吴佩孚）","五省联军（孙传芳）"],"from":1916,"to":1927,"seatZh":"南京 · 保定 → 北京 · 洛阳 → 汉口 · 南京","seatEn":"Baoding & Luoyang → Beijing → Hankou & Nanjing","aliases":["直系军阀","五省联军"]},
     {"key":"beiyang_fengxi","zh":"北洋 · 奉系","en":"Fengtian Clique (Beiyang)","titles":["奉系（张作霖）","北洋政府 · 奉系（张作霖）","安国军政府 · 奉系（张作霖）"],"from":1916,"to":1928,"seatZh":"奉天（沈阳）→ 北京（1924—1928）","seatEn":"Fengtian (Shenyang) → Beijing (1924–1928)","aliases":["奉系军阀","安国军政府"]},
-    {"key":"guangzhou_gov","zh":"广州护法 · 国民政府","en":"Guangzhou Constitutional Protection & Nationalist Government","titles":["护法军政府 · 西南各系","广州政府（孙中山）","广州国民政府（两广统一）","国民政府（北伐军）","国民政府（北伐军与冯阎集团）"],"from":1917,"to":1927,"matchFrom":1916,"matchTo":1928,"seatZh":"广州 → 武汉 · 南京（1927）","seatEn":"Guangzhou → Wuhan & Nanjing (1927)","aliases":["护法军政府","广州国民政府"]},
+    {"key":"guangzhou_gov","zh":"广州护法 · 国民政府","en":"Guangzhou Constitutional Protection & Nationalist Government","titles":["护法军政府 · 西南各系","广州政府（孙中山）","广州国民政府","国民政府"],"from":1917,"to":1927,"matchFrom":1916,"matchTo":1928,"seatZh":"广州 → 武汉 · 南京（1927）","seatEn":"Guangzhou → Wuhan & Nanjing (1927)","aliases":["护法军政府","广州国民政府"]},
     {"key":"manchukuo","zh":"伪满洲国（日占）","en":"Manchukuo (Japanese Occupation)","titles":["辽吉（日军侵占）","伪满洲国（日占）"],"from":1932,"to":1945,"matchFrom":1931,"seatZh":"新京（长春）","seatEn":"Xinjing (Changchun)","aliases":["伪满洲国","满洲国"]},
     {"key":"shanganning","zh":"陕甘宁边区","en":"Shaan-Gan-Ning Border Region","titles":["陕甘宁边区"],"from":1937,"to":1948,"matchFrom":1935,"seatZh":"延安","seatEn":"Yan'an","aliases":["陕甘宁根据地","延安边区"]},
     {"key":"jp_occupied_china","zh":"关内日占区","en":"Japanese-Occupied Zones (China Proper)","titles":["关内日占区"],"from":1937,"to":1945,"seatZh":"北平 · 南京（日军与伪政权）","seatEn":"Beiping & Nanjing (Japanese Occupation)","aliases":["沦陷区","日占区"]},
-    {"key":"jinghai_jiaozhou","zh":"静海军（交州）","en":"Jinghai Circuit (Jiaozhou)","titles":["静海军（交州）"],"from":905,"to":938,"matchFrom":866,"matchTo":939,"seatZh":"大罗城（交州，今河内）","seatEn":"Dai La (Jiaozhou, modern Hanoi)","aliases":["静海军节度使","交州曲氏"]}
+    {"key":"jinghai_jiaozhou","zh":"静海军","en":"Jinghai Circuit","titles":["静海军"],"from":905,"to":938,"matchFrom":866,"matchTo":939,"seatZh":"大罗城（交州，今河内）","seatEn":"Dai La (Jiaozhou, modern Hanoi)","aliases":["静海军节度使","交州曲氏","静海军（交州）"]}
   ]
 });
