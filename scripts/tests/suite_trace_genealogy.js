@@ -168,11 +168,13 @@ async function runTraceGenealogySuite(ctx) {
   const controlStripMatch = indexHtml.match(/<div class="control-strip"[\s\S]*?<\/div>\s*<div id="layers-popover"/);
   assert(
     controlStripMatch &&
-      !controlStripMatch[0].includes('id="act-challenge"') &&
+      controlStripMatch[0].includes('id="act-challenge"') &&
+      controlStripMatch[0].indexOf('id="act-challenge"') <
+        controlStripMatch[0].indexOf('id="act-layers-menu"') &&
       !controlStripMatch[0].includes('id="act-journey-menu"') &&
       !indexHtml.includes('id="journey-popover"') &&
-      appCode.includes('sr-quiz-link'),
-    '.control-strip must stay minimal without #act-journey-menu or #act-challenge, and Quiz must mount cleanly in the search box dropdown'
+      !appCode.includes('sr-quiz-link'),
+    '.control-strip must include #act-challenge before #act-layers-menu without #act-journey-menu, and blank search dropdown must not duplicate .sr-quiz-link'
   );
   assert(
     indexHtml.includes('id="scale-label-text">500 km</div>') &&
@@ -370,6 +372,46 @@ async function runTraceGenealogySuite(ctx) {
       `English genealogy-lore for ${s.ancient} contains CJK: "${mockLoreEl.innerHTML}"`
     );
   }
+  // 23a-3. Verify ancient shoreline / coastal fallback
+  const getTimelineHtml = (lng, lat, label, locale) => {
+    ctrl.locale = locale;
+    ctrl.openGenealogyAt(lng, lat, label, { fromYearSync: true });
+    return mockTimelineItems.map((el) => el.innerHTML);
+  };
+  const shZh = getTimelineHtml(121.47, 31.23, '上海', 'zh');
+  assert(
+    shZh.some((t) => t.includes('秦') && t.includes('古海岸线外 / 滨海') && t.includes('近岸政区：') && t.includes('会稽郡')),
+    `Expected Shanghai in Qin (zh) to show coastal_unaccreted + nearest shore 会稽郡, got ${JSON.stringify(shZh.slice(0, 4))}`
+  );
+  assert(
+    shZh.some((t) => t.includes('西汉') && t.includes('古海岸线外 / 滨海') && t.includes('扬州') && t.includes('会稽郡')),
+    `Expected Shanghai in Western Han (zh) to show coastal_unaccreted + nearest shore 扬州·会稽郡, got ${JSON.stringify(shZh.slice(0, 4))}`
+  );
+  const shEn = getTimelineHtml(121.47, 31.23, '上海', 'en');
+  assert(
+    shEn.some((t) => t.includes('(Beyond ancient shoreline / Coastal)') && t.includes('Nearest shore:')),
+    `Expected Shanghai in Qin/Han (en) to show coastal_unaccreted + Nearest shore, got ${JSON.stringify(shEn.slice(0, 4))}`
+  );
+  const dyZh = getTimelineHtml(118.67, 37.43, '东营', 'zh');
+  assert(
+    dyZh.some((t) => t.includes('西汉') && t.includes('古海岸线外 / 滨海')),
+    `Expected Dongying in Western Han to show coastal_unaccreted, got ${JSON.stringify(dyZh.slice(0, 4))}`
+  );
+  const hhZh = getTimelineHtml(127.49, 50.25, '黑河', 'zh');
+  assert(
+    hhZh.some((t) => t.includes('西汉') && t.includes('域外 / 未设郡县') && !t.includes('古海岸线外')),
+    `Expected inland Heihe in Western Han NOT to trigger coastal_unaccreted, got ${JSON.stringify(hhZh.slice(0, 4))}`
+  );
+  const fsZh = getTimelineHtml(124.85, 41.72, '抚顺', 'zh');
+  assert(
+    fsZh.some((t) => t.includes('唐') && t.includes('域外 / 未设郡县') && !t.includes('古海岸线外')),
+    `Expected inland Fushun in Tang NOT to trigger coastal_unaccreted, got ${JSON.stringify(fsZh.slice(0, 4))}`
+  );
+  const twZh = getTimelineHtml(121.56, 25.03, '台北', 'zh');
+  assert(
+    !twZh.some((t) => t.includes('古海岸线外')),
+    `Expected Taiwan NOT to trigger coastal_unaccreted, got ${JSON.stringify(twZh.slice(0, 4))}`
+  );
   ctrl.locale = prevLocaleGen;
   ctrl._id = prevIdForGen;
   sandbox.document = prevDoc;
@@ -588,7 +630,7 @@ async function runTraceGenealogySuite(ctx) {
   assert.strictEqual(mockSearchInp.value, '', '_clearQuickSearchInput() must clear #inp-map-search value');
   ctrl._id = origId23e;
 
-  // 23f. Verify Dali (大理, 937–1253 CE), Nanzhao (南诏, 649–936 CE), and unified Tubo (吐蕃, 618–877 CE) vs fragmented Tibetan polities (吐蕃诸部, 880–1246 CE)
+  // 23f. Verify Dali (大理, 937–1253 CE), Nanzhao (南诏, 649–936 CE), and unified Tubo (吐蕃, 618–847 CE) vs fragmented Tibetan polities (吐蕃诸部, 848–1246 CE)
   if (!FAST_MODE) {
   const daliSnapKeys = [
     's_wudai_c0',
@@ -610,6 +652,7 @@ async function runTraceGenealogySuite(ctx) {
     's_beisong_b2',
     's_beisong_c',
     's_beisong_d',
+    's_nansong_1127',
     's_nansong_a0',
     's_nansong_a',
     's_nansong_b0',
@@ -638,7 +681,7 @@ async function runTraceGenealogySuite(ctx) {
     );
   }
   const tangSnapKeys = Object.keys(snapshots).filter((k) => k.startsWith('s_tang'));
-  assert(tangSnapKeys.length === 30, `Expected 30 s_tang* snapshots, found ${tangSnapKeys.length}`);
+  assert(tangSnapKeys.length === 31, `Expected 31 s_tang* snapshots, found ${tangSnapKeys.length}`);
   // Issue #267. Tang northeast: 平壤 is 安东's seat until 676, never 新罗's before 702;
   // 震国 (698–713) is renamed 渤海 only from 713; 安西 / 北庭 hold oases, not the desert, in 764–790;
   // the Four Garrisons fall to 吐蕃 in 670–679 and 686–692, when 安西 falls back to 西州.
@@ -699,7 +742,7 @@ async function runTraceGenealogySuite(ctx) {
       assert.strictEqual(ownerAt(sk, TENGCHONG), dali, `${sk}: 腾冲 must belong to ${dali}`);
     }
     // 唐 621–738: no 南诏 yet (六诏 + 唐 羁縻 in 滇东); 南诏 from 738.
-    for (const sk of ['s_tang_a0', 's_tang_a', 's_tang_wz1', 's_tang_a5y']) {
+    for (const sk of ['s_tang_a0', 's_tang_a', 's_tang_wz1', 's_tang_a5y', 's_tang_726']) {
       assert(!(snapshots[sk].polities || []).some((p) => p.title === '南诏'), `${sk}: 南诏 must not exist before 738`);
       assert.strictEqual(ownerAt(sk, [100.23, 25.6]), '六诏', `${sk}: 洱海 must belong to 六诏 before 738`);
       assert(['唐', '武周'].includes(ownerAt(sk, [102.71, 25.04])), `${sk}: 昆州 (昆明) must belong to 唐 / 武周 before 738`);
@@ -716,7 +759,7 @@ async function runTraceGenealogySuite(ctx) {
       assert.strictEqual(ownerAt(sk, [102.26, 27.9]), who, `${sk}: 嶲州 (西昌) must belong to ${who}`);
     }
     // 1351–1388: northern 越南 is 大越 / 安南, not blank.
-    for (const sk of ['s_yuan_b', 's_yuan_c', 's_ming_0a', 's_ming_0c', 's_ming_0d']) {
+    for (const sk of ['s_yuan_1351', 's_yuan_b', 's_yuan_c', 's_ming_0a', 's_ming_0c', 's_ming_0d']) {
       assert(ownerAt(sk, [104.5, 22.1]) || (snapshots[sk].polities || []).some((q) => q.role === 'neighbor' && pointInShape(104.5, 22.1, q.shape)), `${sk}: 104.5,22.1 must not be blank`);
     }
     // 东汉–隋: 叶榆 (大理) and 不韦 (保山) are Han counties; 永昌郡 (69 CE) adds 腾冲 for 73–347;
@@ -738,12 +781,12 @@ async function runTraceGenealogySuite(ctx) {
       assert.strictEqual(ownerAt(sk, TENGCHONG), main, `${sk}: 腾冲 must belong to ${main}`);
     }
   }
-  const unifiedTuboSnapKeys = tangSnapKeys.filter((k) => k !== 's_tang_d1' && k !== 's_tang_d2');
+  const unifiedTuboSnapKeys = tangSnapKeys.filter((k) => k !== 's_tang_c' && k !== 's_tang_d1' && k !== 's_tang_d2');
   for (const sk of unifiedTuboSnapKeys) {
     const tuboPol = (snapshots[sk].polities || []).find((p) => p.title === '吐蕃');
     assert(
       tuboPol && tuboPol.role === 'rival' && tuboPol.tint === '#a8583b',
-      `${sk} must model unified 吐蕃 (618–877 CE) as role="rival" with tint="#a8583b"`
+      `${sk} must model unified 吐蕃 (618–847 CE) as role="rival" with tint="#a8583b"`
     );
     assert(
       pointInShape(91.111, 29.651, tuboPol.shape),
@@ -751,6 +794,7 @@ async function runTraceGenealogySuite(ctx) {
     );
   }
   const fragmentedTuboSnapKeys = [
+    's_tang_c',
     's_tang_d1',
     's_tang_d2',
     's_wudai_a',
@@ -763,12 +807,12 @@ async function runTraceGenealogySuite(ctx) {
     const fragPol = (snapshots[sk].polities || []).find((p) => p.title === '吐蕃诸部');
     assert(
       fragPol && fragPol.role === 'neighbor' && !fragPol.tint,
-      `${sk} must model post-877 fragmented Tibet as uncolored 吐蕃诸部 (role="neighbor", tint=null)`
+      `${sk} must model post-847 fragmented Tibet as uncolored 吐蕃诸部 (role="neighbor", tint=null)`
     );
   }
   // 南诏 exists from 738 (before that: 六诏 plus 唐 羁縻 in 滇东; 618–621 爨 · 六诏).
   const preNanzhao = new Set(['s_tang_0', 's_tang_0b', 's_tang_a0', 's_tang_a1', 's_tang_a1b', 's_tang_a2', 's_tang_a2b', 's_tang_a3', 's_tang_a3b', 's_tang_a4', 's_tang_a4b',
-    's_tang_a6', 's_tang_a', 's_tang_a7', 's_tang_wz0', 's_tang_wz1', 's_tang_wz1b', 's_tang_wz2', 's_tang_a5z', 's_tang_a5y']);
+    's_tang_a6', 's_tang_a', 's_tang_a7', 's_tang_wz0', 's_tang_wz1', 's_tang_wz1b', 's_tang_wz2', 's_tang_a5z', 's_tang_a5y', 's_tang_726']);
   const nzSnapKeys = tangSnapKeys.filter((k) => !preNanzhao.has(k));
   assert.strictEqual(nzSnapKeys.length, tangSnapKeys.length - preNanzhao.size, 'every pre-738 Tang snapshot key must exist');
   for (const sk of nzSnapKeys) {
@@ -1267,11 +1311,11 @@ async function runTraceGenealogySuite(ctx) {
   // 23p. Verify Republic of China Warlord Era (1916–1928) multi-faction snapshots (s_roc_a0, s_roc_w1..w4, s_roc_a)
   for (const [rk, expectedTitles] of [
     ['s_roc_a0', ['中华民国', '外蒙古（自治/苏控）']],
-    ['s_roc_w1', ['北洋政府 · 皖系（段祺瑞）', '直系（冯国璋 · 曹锟）', '奉系（张作霖）', '护法军政府 · 西南各系', '晋系（阎锡山）', '西北诸马（甘宁青）', '新疆（杨增新）']],
-    ['s_roc_w2', ['北洋政府 · 直系（曹锟 · 吴佩孚）', '奉系（张作霖）', '皖系（卢永祥 · 浙江）', '广州政府（孙中山）', '西南川滇黔桂各系', '晋系（阎锡山）', '西北诸马（甘宁青）', '新疆（杨增新）']],
-    ['s_roc_w3', ['北洋政府 · 奉系（张作霖）', '五省联军（孙传芳）', '直系（吴佩孚）', '西北国民军（冯玉祥）', '广州国民政府（两广统一）', '川滇黔军阀（刘湘 · 唐继尧）', '晋系（阎锡山）', '新疆（杨增新）']],
-    ['s_roc_w3b', ['北洋政府 · 奉系（张作霖）', '国民政府（北伐军）', '五省联军（孙传芳）', '直系（吴佩孚）', '西北国民军（冯玉祥）', '川滇黔军阀（刘湘 · 唐继尧）', '晋系（阎锡山）', '新疆（杨增新）']],
-    ['s_roc_w4', ['国民政府（北伐军与冯阎集团）', '安国军政府 · 奉系（张作霖）', '新疆（杨增新）']],
+    ['s_roc_w1', ['北洋政府 · 皖系（段祺瑞）', '直系（冯国璋 · 曹锟）', '奉系（张作霖）', '护法军政府 · 西南各系', '晋系（阎锡山）', '西北诸马', '新疆（杨增新）']],
+    ['s_roc_w2', ['北洋政府 · 直系（曹锟 · 吴佩孚）', '奉系（张作霖）', '皖系（卢永祥）', '广州政府（孙中山）', '西南川滇黔桂各系', '晋系（阎锡山）', '西北诸马', '新疆（杨增新）']],
+    ['s_roc_w3', ['北洋政府 · 奉系（张作霖）', '五省联军（孙传芳）', '直系（吴佩孚）', '西北国民军（冯玉祥）', '广州国民政府', '川滇黔军阀（刘湘 · 唐继尧）', '晋系（阎锡山）', '新疆（杨增新）']],
+    ['s_roc_w3b', ['北洋政府 · 奉系（张作霖）', '国民政府', '五省联军（孙传芳）', '直系（吴佩孚）', '西北国民军（冯玉祥）', '川滇黔军阀（刘湘 · 唐继尧）', '晋系（阎锡山）', '新疆（杨增新）']],
+    ['s_roc_w4', ['国民政府', '安国军政府 · 奉系（张作霖）', '新疆（杨增新）']],
   ]) {
     const rs = snapshots[rk];
     assert(rs, `Missing ROC warlord snapshot ${rk}`);
@@ -1879,6 +1923,35 @@ async function runTraceGenealogySuite(ctx) {
         `Shangqiu (${dynKey}) must retain its 南京应天府 event`
       );
     }
+
+    // 37. Jiangnan / Shanghai historical prefecture & region chronology
+    const jnCases = [
+      [{ lng: 121.23, lat: 31.03, year: 100 }, '扬州(刺史部)', '会稽郡'],
+      [{ lng: 121.23, lat: 31.03, year: 150 }, '扬州(刺史部)', '吴郡'],
+      [{ lng: 121.23, lat: 31.03, year: 214 }, null, '吴郡'],
+      [{ lng: 121.47, lat: 31.23, year: 383 }, '扬州', '吴郡'],
+      [{ lng: 120.62, lat: 31.30, year: 383 }, '扬州', '吴郡'],
+      [{ lng: 121.47, lat: 31.23, year: 500 }, '扬州', '吴郡'],
+      [{ lng: 120.62, lat: 31.30, year: 500 }, '扬州', '吴郡'],
+      [{ lng: 120.75, lat: 30.75, year: 560 }, '扬州', '吴郡'],
+      [{ lng: 119.451, lat: 32.18, year: 383 }, '南徐州(侨州)', '南东海郡(侨郡)'],
+      [{ lng: 121.47, lat: 31.23, year: 920 }, '两浙(政区)', '苏州'],
+      [{ lng: 121.47, lat: 31.23, year: 950 }, '两浙(政区)', '秀州'],
+      [{ lng: 121.47, lat: 31.23, year: 1135 }, '两浙路', '秀州'],
+      [{ lng: 121.47, lat: 31.23, year: 1200 }, '两浙路', '嘉兴府'],
+    ];
+    for (const [opts, expReg, expPref] of jnCases) {
+      const info = ctrl.inspect(opts);
+      assert(
+        info && (!expReg || info.regions.includes(expReg)) && info.prefectures.includes(expPref),
+        `Expected (${opts.lng}, ${opts.lat}, ${opts.year}) to resolve to ${expReg} / ${expPref}, got regs=${JSON.stringify(info && info.regions)} prefs=${JSON.stringify(info && info.prefectures)}`
+      );
+    }
+    const shLore = (loreData.CITY_LORE || []).find((c) => c.modern === '上海');
+    assert(
+      shLore && shLore.descZh.includes('会稽郡') && shLore.descZh.includes('华亭县') && shLore.descZh.includes('嘉兴府'),
+      'Expected Shanghai CITY_LORE to document Kuaiji Commandery, Huating County, and Jiaxing Fu'
+    );
   }
 
 }

@@ -405,6 +405,92 @@ async function runSearchRuntimeSuite(ctx) {
         ctrl._syncUrlLangParam();
         assert.strictEqual(sandbox.location.search, '', 'Bare URL + zh must clear query string');
 
+        // 4a. Default locale follows the browser when ?lang= is absent; manual switches persist in
+        // localStorage (?lang= > localStorage > browser primary); on a non-Chinese browser, choosing
+        // Simplified must be written as lang=zh so a refresh does not flip back to English.
+        const savedNav = sandbox.navigator;
+        const savedDefault = ctrl.defaultLocale;
+        const savedStorage = sandbox.localStorage;
+        const savedEmbed = ctrl.embed;
+        const detect = (nav) => {
+          sandbox.navigator = nav;
+          return ctrl._detectDefaultLocale();
+        };
+        try {
+          assert.strictEqual(detect({ language: 'en-US', languages: ['en-US', 'zh-CN'], userAgent: 'Mozilla/5.0 Chrome/120' }), 'en');
+          assert.strictEqual(detect({ language: 'de-DE', userAgent: 'Mozilla/5.0 Firefox/120' }), 'en');
+          assert.strictEqual(detect({ language: 'zh-CN', languages: ['zh-CN', 'en'], userAgent: 'Mozilla/5.0' }), 'zh');
+          assert.strictEqual(detect({ language: 'zh-TW', userAgent: 'Mozilla/5.0' }), 'zh-tw');
+          assert.strictEqual(detect({ languages: ['zh-Hant-HK'], userAgent: 'Mozilla/5.0' }), 'zh-tw');
+          assert.strictEqual(
+            detect({ language: 'en-US', userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }),
+            'zh',
+            'Crawlers keep the x-default Simplified Chinese root'
+          );
+          assert.strictEqual(detect({ language: 'en-US', userAgent: 'Mozilla/5.0 HeadlessChrome/120' }), 'zh');
+          assert.strictEqual(ctrl._parseLangParam('EN'), 'en');
+          assert.strictEqual(ctrl._parseLangParam('zh-CN'), 'zh');
+          assert.strictEqual(ctrl._parseLangParam('zh-HK'), 'zh-tw');
+          assert.strictEqual(ctrl._parseLangParam('fr'), null);
+          const store = new Map();
+          sandbox.localStorage = {
+            getItem: (k) => (store.has(k) ? store.get(k) : null),
+            setItem: (k, v) => store.set(k, String(v)),
+          };
+          ctrl.embed = false;
+          assert.strictEqual(ctrl._readStoredLocale(), null);
+          ctrl._saveStoredLocale('zh');
+          assert.strictEqual(store.get('jiangshan_locale'), 'zh');
+          assert.strictEqual(ctrl._readStoredLocale(), 'zh');
+          ctrl._saveStoredLocale('zh-Hant');
+          assert.strictEqual(store.get('jiangshan_locale'), 'zh-tw');
+          assert.strictEqual(ctrl._readStoredLocale(), 'zh-tw');
+          ctrl._saveStoredLocale('fr');
+          assert.strictEqual(store.get('jiangshan_locale'), 'zh-tw', 'Unknown locale must not overwrite stored preference');
+          store.set('jiangshan_locale', 'bogus');
+          assert.strictEqual(ctrl._readStoredLocale(), null);
+          store.set('jiangshan_locale', 'zh');
+          assert.strictEqual(
+            ctrl._parseLangParam('en') || ctrl._readStoredLocale() || 'zh',
+            'en',
+            'Explicit ?lang= must take precedence over stored localStorage preference'
+          );
+          assert.strictEqual(
+            ctrl._parseLangParam('') || ctrl._readStoredLocale() || 'en',
+            'zh',
+            'Stored preference must override non-Chinese browser default when ?lang= is absent'
+          );
+          ctrl.embed = true;
+          assert.strictEqual(ctrl._readStoredLocale(), null, 'Embed mode must ignore stored locale');
+          ctrl._saveStoredLocale('en');
+          assert.strictEqual(store.get('jiangshan_locale'), 'zh', 'Embed mode must not persist locale');
+          ctrl.embed = false;
+          sandbox.localStorage = {
+            getItem() {
+              throw new Error('blocked');
+            },
+            setItem() {
+              throw new Error('blocked');
+            },
+          };
+          assert.strictEqual(ctrl._readStoredLocale(), null, 'Storage errors must fail closed to null');
+          ctrl._saveStoredLocale('en');
+          ctrl.defaultLocale = 'en';
+          sandbox.location.search = '?lang=en';
+          ctrl.locale = 'zh';
+          ctrl._syncUrlLangParam();
+          assert.strictEqual(sandbox.location.search, '?lang=zh', 'Non-Chinese default + zh must pin ?lang=zh');
+          ctrl.locale = 'en';
+          ctrl._syncUrlLangParam();
+          assert.strictEqual(sandbox.location.search, '?lang=en');
+          sandbox.location.search = '';
+        } finally {
+          sandbox.navigator = savedNav;
+          ctrl.defaultLocale = savedDefault;
+          sandbox.localStorage = savedStorage;
+          ctrl.embed = savedEmbed;
+        }
+
         // 4b. Once armed, the URL mirrors restorable state (refresh/share land on the same view)
         // and one-shot params (place, q, quiz) are dropped because they no longer describe the screen.
         const urlSaved = {
@@ -658,6 +744,115 @@ async function runSearchRuntimeSuite(ctx) {
             ctrl.searchIndex = null;
           }
         }
+        // 5b. Failed _ensureFullSnapshots() must stay retryable instead of permanently setting _fullSnapshotsLoaded
+        {
+          const savedFullLoaded = ctrl._fullSnapshotsLoaded;
+          const savedFullPromise = ctrl._fullSnapshotsPromise;
+          const savedFullSentinel = sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED;
+          const savedSnapshots = sandbox.window.ATLAS_SNAPSHOTS;
+          const savedLoadScriptOnce = ctrl._loadScriptOnce;
+          let calls = 0;
+          try {
+            ctrl._fullSnapshotsLoaded = false;
+            ctrl._fullSnapshotsPromise = null;
+            sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED = false;
+            sandbox.window.ATLAS_SNAPSHOTS = { s_zhanguo_a: savedSnapshots.s_zhanguo_a };
+            ctrl._loadScriptOnce = () => {
+              calls += 1;
+              if (calls >= 2) {
+                sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED = true;
+                sandbox.window.ATLAS_SNAPSHOTS = savedSnapshots;
+              }
+              return Promise.resolve();
+            };
+            await ctrl._ensureFullSnapshots();
+            assert.strictEqual(
+              ctrl._fullSnapshotsLoaded,
+              false,
+              '_ensureFullSnapshots() must not set _fullSnapshotsLoaded when script load failed'
+            );
+            assert.strictEqual(
+              ctrl._fullSnapshotsPromise,
+              null,
+              '_ensureFullSnapshots() must clear _fullSnapshotsPromise on failed load so later calls retry'
+            );
+            await ctrl._ensureFullSnapshots();
+            assert.strictEqual(calls, 2, '_ensureFullSnapshots() must retry after a failed load');
+            assert.strictEqual(
+              ctrl._fullSnapshotsLoaded,
+              true,
+              '_ensureFullSnapshots() must mark _fullSnapshotsLoaded after retry succeeds'
+            );
+          } finally {
+            sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED = savedFullSentinel;
+            sandbox.window.ATLAS_SNAPSHOTS = savedSnapshots;
+            ctrl._fullSnapshotsLoaded = savedFullLoaded;
+            ctrl._fullSnapshotsPromise = savedFullPromise;
+            ctrl._loadScriptOnce = savedLoadScriptOnce;
+          }
+        }
+        // 5c. Per-dynasty snapshot chunk loading, failure non-caching, and retryability
+        {
+          const savedFullLoaded = ctrl._fullSnapshotsLoaded;
+          const savedFullPromise = ctrl._fullSnapshotsPromise;
+          const savedLoadedChunks = ctrl._loadedDynastyChunks;
+          const savedChunkPromises = ctrl._dynastyChunkPromises;
+          const savedSnapCache = ctrl.snapshotCache;
+          const savedCtrlSnapshots = ctrl.snapshots;
+          const savedFullSentinel = sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED;
+          const savedWinSnapshots = sandbox.window.ATLAS_SNAPSHOTS;
+          const savedLoadScriptOnce = ctrl._loadScriptOnce;
+          const requestedSrcs = [];
+          try {
+            ctrl._fullSnapshotsLoaded = false;
+            ctrl._fullSnapshotsPromise = null;
+            ctrl._loadedDynastyChunks = new Set();
+            ctrl._dynastyChunkPromises = {};
+            ctrl.snapshotCache = {};
+            const tangSnap = savedWinSnapshots.s_tang_a;
+            const bootOnly = { s_zhanguo_a: savedWinSnapshots.s_zhanguo_a };
+            sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED = false;
+            sandbox.window.ATLAS_SNAPSHOTS = bootOnly;
+            ctrl.snapshots = bootOnly;
+            ctrl._loadScriptOnce = (src) => {
+              requestedSrcs.push(src);
+              if (requestedSrcs.length >= 2) {
+                bootOnly.s_tang_a = tangSnap;
+              }
+              return Promise.resolve();
+            };
+            const firstRes = await ctrl._fetchSnapshot('s_tang_a');
+            assert.strictEqual(requestedSrcs.length, 1, '_fetchSnapshot must request dynasty chunk once');
+            assert(
+              /^js\/snapshots\/tang\.js(\?|$)/.test(requestedSrcs[0]),
+              `_fetchSnapshot("s_tang_a") must request js/snapshots/tang.js, got ${requestedSrcs[0]}`
+            );
+            assert.strictEqual(
+              ctrl.snapshotCache.s_tang_a,
+              undefined,
+              '_fetchSnapshot() must not cache empty placeholder in snapshotCache on failed load'
+            );
+            assert.strictEqual(firstRes.polities.length, 0);
+            const secondRes = await ctrl._fetchSnapshot('s_tang_a');
+            assert.strictEqual(requestedSrcs.length, 2, '_fetchSnapshot() must retry after failed dynasty chunk load');
+            assert.strictEqual(secondRes, tangSnap, '_fetchSnapshot() must return decoded tang snapshot after retry');
+            assert.strictEqual(
+              ctrl._fullSnapshotsLoaded,
+              false,
+              'loading a single dynasty chunk must not falsely mark _fullSnapshotsLoaded = true'
+            );
+          } finally {
+            sandbox.window.ATLAS_FULL_SNAPSHOTS_LOADED = savedFullSentinel;
+            sandbox.window.ATLAS_SNAPSHOTS = savedWinSnapshots;
+            ctrl.snapshots = savedCtrlSnapshots;
+            ctrl.snapshotCache = savedSnapCache;
+            ctrl._loadedDynastyChunks = savedLoadedChunks;
+            ctrl._dynastyChunkPromises = savedChunkPromises;
+            ctrl._fullSnapshotsLoaded = savedFullLoaded;
+            ctrl._fullSnapshotsPromise = savedFullPromise;
+            ctrl._loadScriptOnce = savedLoadScriptOnce;
+          }
+        }
         // 6. WebMCP (navigator.modelContext) registration & Stdio MCP server (scripts/mcp_server.js)
         const registeredWebMcpTools = [];
         const origNav = sandbox.navigator;
@@ -908,23 +1103,133 @@ async function runSearchRuntimeSuite(ctx) {
             _rescaleSvgTypography: () => { qCtrl._rescaleQuizChip(1000, 1); },
           });
           qCtrl._initTimelineBands();
+          if (!sandbox.window.JiangshanQuizPoster) {
+            vm.runInContext(
+              fs.readFileSync(path.join(JS_DIR, 'quiz_poster.js'), 'utf8'),
+              sandbox
+            );
+          }
           for (const loc of ['zh', 'zh-tw', 'en']) {
             qCtrl.locale = loc;
             qCtrl.startChallenge({ preferCurrentDynasty: true });
-            assert(qCtrl.challenge && qCtrl.challenge.deck.length === 10, `Quiz deck failed for ${loc}`);
+            assert(qCtrl.challenge && qCtrl.challenge.deck.length === 5, `Quiz deck failed for ${loc}`);
+            assert.strictEqual(
+              getQuizEl('challenge-mobile-dock').classList.contains('is-hidden'),
+              false,
+              `Mobile dock must show on startChallenge (${loc})`
+            );
+            assert.strictEqual(
+              getQuizEl('act-quiz-mobile-cta').classList.contains('is-hidden'),
+              true,
+              `Mobile CTA must stay hidden before dropping a pin (${loc})`
+            );
             qCtrl._previewLocatePin(500, 350);
             assert(Array.isArray(qCtrl.challenge.pendingGuess), `pendingGuess not set for ${loc}`);
+            assert.strictEqual(
+              getQuizEl('act-quiz-mobile-cta').classList.contains('is-hidden'),
+              false,
+              `Mobile CTA must show after dropping a pin (${loc})`
+            );
             assert.strictEqual(qCtrl._quizChipAt(50, 20), true, `_quizChipAt hit failed for ${loc}`);
             assert.strictEqual(qCtrl._quizChipAt(500, 500), false, `_quizChipAt miss failed for ${loc}`);
             const [tx, ty] = qCtrl.projector.toScreen(...qCtrl.challenge.deck[0].settlement.coord);
             qCtrl._evaluateLocateClick(tx, ty);
             assert.strictEqual(qCtrl.challenge.answered, true);
-            assert.strictEqual(qCtrl.challenge.lastPts, 100);
+            assert.strictEqual(qCtrl.challenge.lastPts, 20);
+            assert.strictEqual(qCtrl.challenge.history.length, 1, `Expected quiz history for ${loc}`);
+            assert.strictEqual(
+              getQuizEl('act-quiz-mobile-cta').classList.contains('is-hidden'),
+              false,
+              `Mobile CTA must show Next Question after reveal (${loc})`
+            );
             qCtrl._finishChallenge();
             assert.strictEqual(qCtrl.challenge.finished, true);
+            assert.strictEqual(
+              getQuizEl('challenge-mobile-dock').classList.contains('is-hidden'),
+              false,
+              `Mobile dock must remain visible on quiz finish for bottom finish actions (${loc})`
+            );
+            assert.strictEqual(
+              getQuizEl('act-quiz-mobile-cta').classList.contains('is-hidden'),
+              true,
+              `Round CTA must hide on quiz finish (${loc})`
+            );
+            assert.strictEqual(
+              getQuizEl('challenge-mobile-finish-actions').classList.contains('is-hidden'),
+              false,
+              `Mobile finish action row must show on quiz finish (${loc})`
+            );
+            assert.strictEqual(
+              getQuizEl('act-share-quiz').classList.contains('is-hidden'),
+              false,
+              `#act-share-quiz must be visible after finishing quiz (${loc})`
+            );
+            const pData = sandbox.window.JiangshanQuizPoster.buildPosterData(qCtrl);
+            assert.strictEqual(pData.total, 20);
+            assert.strictEqual(pData.maxTotal, 100);
+            assert.strictEqual(pData.items.length, 1);
+            assert(pData.best && pData.rankTitle, `Poster metadata missing for ${loc}`);
+            assert(
+              loc === 'en'
+                ? pData.items[0].dynEn && !/[\u4e00-\u9fff]/.test(pData.items[0].dynEn + pData.items[0].ancEn)
+                : Boolean(pData.items[0].dynZh && pData.items[0].ancZh),
+              `Poster dynasty/place label invalid for ${loc}: ${JSON.stringify(pData.items[0])}`
+            );
             qCtrl.stopChallenge();
             assert.strictEqual(qCtrl.challenge, null);
+            assert.strictEqual(
+              getQuizEl('challenge-mobile-dock').classList.contains('is-hidden'),
+              true,
+              `Mobile dock must hide on stopChallenge (${loc})`
+            );
+            assert.strictEqual(
+              getQuizEl('challenge-mobile-finish-actions').classList.contains('is-hidden'),
+              true,
+              `Mobile finish action row must hide on stopChallenge (${loc})`
+            );
+            assert.strictEqual(
+              getQuizEl('act-share-quiz').classList.contains('is-hidden'),
+              true,
+              `#act-share-quiz must hide on stopChallenge (${loc})`
+            );
           }
+          // Verify smooth intermediate distance scoring (~140 km -> 17..19 pts; >750 km -> 0 pts)
+          qCtrl.locale = 'zh';
+          qCtrl.startChallenge();
+          const c0 = qCtrl.challenge.deck[0].settlement.coord;
+          const [midX, midY] = qCtrl.projector.toScreen(c0[0], c0[1] + 1.26);
+          qCtrl._evaluateLocateClick(midX, midY);
+          assert(
+            qCtrl.challenge.lastKm >= 120 &&
+              qCtrl.challenge.lastKm <= 160 &&
+              qCtrl.challenge.lastPts >= 17 &&
+              qCtrl.challenge.lastPts <= 19,
+            `Expected smooth intermediate score 17..19 near 140 km, got ${qCtrl.challenge.lastKm} km / ${qCtrl.challenge.lastPts} pts`
+          );
+          qCtrl.challenge.answered = false;
+          const [farX, farY] = qCtrl.projector.toScreen(c0[0] + 10, c0[1] + 6);
+          qCtrl._evaluateLocateClick(farX, farY);
+          assert.strictEqual(
+            qCtrl.challenge.lastPts,
+            0,
+            `Expected distant miss (>750 km) to score 0, got ${qCtrl.challenge.lastKm} km / ${qCtrl.challenge.lastPts} pts`
+          );
+          // A round must open on a year in which its place is still on the map
+          // (the map hides a settlement once year >= vanish).
+          qCtrl.locale = 'zh';
+          qCtrl.startChallenge();
+          for (const pick of qCtrl._challengeBaseTiers.flat()) {
+            const s = pick.settlement;
+            if (s.vanish === undefined) continue;
+            qCtrl.challenge.deck = [pick];
+            qCtrl.challenge.index = 0;
+            qCtrl.presentChallengeRound();
+            assert(
+              qCtrl.year < s.vanish && (s.appear === undefined || qCtrl.year >= s.appear),
+              `Quiz round for "${s.ancient}" (${pick.dynasty.key}) vanishes in ${s.vanish} but opens on ${qCtrl.year}`
+            );
+          }
+          qCtrl.stopChallenge();
         }
         assert.strictEqual(ctrl.trTerm('南郑'), 'Nanzheng');
         assert.strictEqual(ctrl.trTerm('刺史部'), 'Inspectorate Region');
@@ -1170,28 +1475,108 @@ async function runSearchRuntimeSuite(ctx) {
 
         // CUJ 42: Search Empty-State Solo Preservation + Multi-Person (2–3 Person) Discovery
         ctrl.locale = 'zh';
+        ctrl.searchIndex = null;
         const scPool = ctrl._getSearchShowcasePool();
+        assert.strictEqual(
+          ctrl.searchIndex,
+          null,
+          '_getSearchShowcasePool() must stay lightweight and avoid synchronously building searchIndex'
+        );
+        const allStoryProfiles = loreData.PERSON_PROFILES.filter((p) => p.isStory);
+        const expectedPoolLen = 26 + allStoryProfiles.length;
         assert(
-          scPool.length === 16 && scPool[0].kind === 'person' && scPool[0].personKey === 'sushi',
-          `Showcase pool must default to solo Su Shi at index 0 and contain 16 entries, got ${scPool.length}`
+          scPool.length === expectedPoolLen && scPool[0].kind === 'person' && scPool[0].personKey === 'sushi',
+          `Showcase pool must keep solo Su Shi at index 0 and auto-include all ${allStoryProfiles.length} stories (expected ${expectedPoolLen}, got ${scPool.length})`
         );
         for (const soloKey of [
           'sushi',
+          'liuyu',
           'zhugeliang',
+          'lishimin',
           'huoqubing',
+          'qinshihuang',
           'libai',
+          'yuefei',
           'caocao',
+          'liubang',
           'xinqiji',
+          'genghiskhan',
           'xuanzang',
+          'zhuyuanzhang',
           'wangyangming',
+          'zhangjuzheng',
+          'kangxi',
+          'maozedong',
           'zhangqian',
           'dufu',
         ]) {
+          const soloHit = scPool.find((item) => item.kind === 'person' && item.personKey === soloKey);
+          assert(soloHit, `Showcase pool must include solo figure "${soloKey}"`);
           assert(
-            scPool.some((item) => item.kind === 'person' && item.personKey === soloKey),
-            `Showcase pool must preserve solo figure "${soloKey}"`
+            !/[\u4e00-\u9fff]/.test(soloHit.titleEn) && !/[\u4e00-\u9fff]/.test(soloHit.subEn),
+            `Solo showcase "${soloKey}" must have CJK-free English strings: ${soloHit.titleEn} / ${soloHit.subEn}`
           );
         }
+        assert(
+          appCode.includes('let showcaseIdx = -1;') &&
+            appCode.includes('advanceShowcase: true'),
+          'Search showcase must randomize initial index on first open and auto-advance when re-focused from hidden state'
+        );
+        for (const sp of allStoryProfiles) {
+          const hit = scPool.find((item) => item.kind === 'story' && item.storyKey === sp.key);
+          assert(hit && hit.subZh && hit.subEn, `Showcase pool must include storyline "${sp.key}" with bilingual subtitles`);
+          assert(
+            !hit.subZh.includes('史事始末') && !hit.subEn.includes('Storyline'),
+            `Storyline showcase "${sp.key}" must omit redundant "史事始末" / "Storyline" from subtitle: ${hit.subZh} / ${hit.subEn}`
+          );
+          assert(
+            !/[\u4e00-\u9fff]/.test(hit.titleEn) && !/[\u4e00-\u9fff]/.test(hit.subEn),
+            `Storyline showcase "${sp.key}" must have CJK-free English strings: ${hit.titleEn} / ${hit.subEn}`
+          );
+        }
+        // Synthetic new isStory profile must auto-enter the showcase pool without editing showcaseSpecs.
+        const savedPoolCache = ctrl._showcasePoolCache;
+        loreData.PERSON_PROFILES.push({
+          key: '__synth_story__',
+          zh: '合成测试史事',
+          en: 'Synthetic Test Story',
+          isStory: true,
+          dynastyKey: 'ming',
+          span: [1399, 1402],
+          aliases: ['合成测试'],
+          evCount: 10,
+        });
+        try {
+          ctrl._showcasePoolCache = null;
+          const nextPool = ctrl._getSearchShowcasePool();
+          assert.strictEqual(
+            nextPool.length,
+            expectedPoolLen + 1,
+            '_getSearchShowcasePool() must auto-append newly registered isStory profiles'
+          );
+          const synthHit = nextPool.find((item) => item.kind === 'story' && item.storyKey === '__synth_story__');
+          assert(
+            synthHit && synthHit.subZh.includes('1399—1402') && synthHit.subEn.includes('10 key scenes'),
+            `Auto-included storyline must format bilingual summary fields: ${JSON.stringify(synthHit)}`
+          );
+        } finally {
+          loreData.PERSON_PROFILES.pop();
+          ctrl._showcasePoolCache = savedPoolCache;
+        }
+        assert(
+          scPool.every((item) => !(item.personProfile && item.personProfile.isRelic) && item.personKey !== 'yuxi'),
+          'Showcase pool must not include relics such as yuxi'
+        );
+        const qinStoryHit = scPool.find((item) => item.kind === 'story' && item.storyKey === 'qintongyi');
+        assert(
+          qinStoryHit.subZh.includes('前238—前221') && qinStoryHit.subEn.includes('238–221 BCE'),
+          `BCE storyline subtitle must format negative years cleanly: ${qinStoryHit.subZh} / ${qinStoryHit.subEn}`
+        );
+        const kangxiHit = scPool.find((item) => item.kind === 'person' && item.personKey === 'kangxi');
+        assert(
+          kangxiHit && kangxiHit.subZh.includes('爱新觉罗·玄烨'),
+          `Manchu figure subtitle must preserve full clan·given name without splitting on unspaced dot: ${kangxiHit && kangxiHit.subZh}`
+        );
         for (const pairKey of [
           'libai,dufu',
           'libai,dufu,gaoshi',
@@ -1210,19 +1595,28 @@ async function runSearchRuntimeSuite(ctx) {
           );
         }
         const zhChips = Array.from(ctrl._getSearchSampleQueries());
-        assert.deepStrictEqual(zhChips, ['长安', '赤壁', '霍去病', '李白 杜甫 高适']);
+        assert.deepStrictEqual(zhChips, ['长安', '霍去病', '安史之乱', '李白 杜甫']);
         assert.strictEqual(ctrl._queryQuickSearch('霍去病')[0].kind, 'person');
-        assert.strictEqual(ctrl._queryQuickSearch('李白 杜甫 高适')[0].kind, 'multi_person');
+        assert.strictEqual(ctrl._queryQuickSearch('安史之乱')[0].kind, 'story');
+        assert.strictEqual(ctrl._queryQuickSearch('李白 杜甫')[0].kind, 'multi_person');
         assert(
           ctrl._searchPlaceholder(false).length <= 22 &&
-            ctrl._searchPlaceholder(true).includes('李白 杜甫 高适'),
-          'Chinese compact placeholder must fit 248px pill while expanded placeholder hints 2–3 person syntax'
+            ctrl._searchPlaceholder(false).includes('史事') &&
+            ctrl._searchPlaceholder(true).includes('李白 杜甫'),
+          'Chinese compact placeholder must fit desktop pill, mention 史事, and expanded placeholder must hint dual-person syntax'
         );
 
         ctrl.locale = 'en';
         const enChips = Array.from(ctrl._getSearchSampleQueries());
-        assert.deepStrictEqual(enChips, ["Chang'an", 'Chibi', 'Cao Cao', 'Li Bai, Du Fu, Gao Shi']);
-        assert.strictEqual(ctrl._queryQuickSearch('Cao Cao')[0].kind, 'person');
+        // English chips are short enough not to ellipsize next to the "Quiz ›" link.
+        assert.deepStrictEqual(enChips, ["Chang'an", 'Huo Qubing', 'An-Shi Rebellion', 'Li Bai, Du Fu']);
+        assert.strictEqual(ctrl._queryQuickSearch('Huo Qubing')[0].kind, 'person');
+        assert.strictEqual(ctrl._queryQuickSearch('An-Shi Rebellion')[0].kind, 'story');
+        assert.strictEqual(ctrl._queryQuickSearch('Li Bai, Du Fu')[0].kind, 'multi_person');
+        assert(
+          ctrl._searchPlaceholder(false).length <= 28,
+          `English compact placeholder must fit the collapsed pill without ellipsis: ${ctrl._searchPlaceholder(false)}`
+        );
         const enPairHit = ctrl._queryQuickSearch('Li Bai, Du Fu, Gao Shi')[0];
         assert(
           enPairHit &&
@@ -1235,6 +1629,27 @@ async function runSearchRuntimeSuite(ctx) {
             !/[\u4e00-\u9fff]/.test(ctrl._searchPlaceholder(true)),
           'English search placeholders must contain zero CJK characters'
         );
+        const prevInnerWidth = sandbox.window.innerWidth;
+        try {
+          sandbox.window.innerWidth = 375;
+          ctrl.locale = 'zh';
+          assert(
+            ctrl._searchPlaceholder(false).length <= 14 &&
+              ctrl._searchPlaceholder(false).includes('史事') &&
+              ctrl._searchPlaceholder(true).length <= 20,
+            `Mobile ZH placeholders must fit 375px pill cleanly: ${ctrl._searchPlaceholder(false)} / ${ctrl._searchPlaceholder(true)}`
+          );
+          ctrl.locale = 'en';
+          assert(
+            ctrl._searchPlaceholder(false).length <= 24 &&
+              ctrl._searchPlaceholder(true).length <= 42 &&
+              !/[\u4e00-\u9fff]/.test(ctrl._searchPlaceholder(false)) &&
+              !/[\u4e00-\u9fff]/.test(ctrl._searchPlaceholder(true)),
+            `Mobile EN placeholders must fit 375px pill cleanly: ${ctrl._searchPlaceholder(false)} / ${ctrl._searchPlaceholder(true)}`
+          );
+        } finally {
+          sandbox.window.innerWidth = prevInnerWidth;
+        }
         ctrl.locale = 'zh';
 
         // CUJ 43: Polity focus — per-regime profile (割据/并立政权) inside the chronicle pane
@@ -1294,7 +1709,7 @@ async function runSearchRuntimeSuite(ctx) {
           ['吴', 920, 'yangwu'],
           ['魏', -350, 'wei_state'],
           ['魏', 240, 'caowei'],
-          ['晋（河东）', 910, 'houtang'],
+          ['晋', 910, 'houtang'],
         ]) {
           const r = ctrl._resolvePolity(title, yr);
           assert(r.curated && r.key === expKey, `Title "${title}" at ${yr} must resolve to ${expKey}, got ${r.key}`);
@@ -1312,12 +1727,32 @@ async function runSearchRuntimeSuite(ctx) {
           ctrl._polityRulers(ctrl._resolvePolity('宋', 450)).startsWith('武帝 → 少帝 → 文帝'),
           `Liu Song rulers must derive from monarchPrefix era spans, got ${ctrl._polityRulers(ctrl._resolvePolity('宋', 450))}`
         );
-        const ccDesc = ctrl._resolvePolity('曹操（北方）', 205);
+        const ccDesc = ctrl._resolvePolity('曹操', 205);
         assert(
-          !ccDesc.curated && ccDesc.from === 200 && ccDesc.to === 219 && ccDesc.keywords.includes('曹操'),
-          `Uncurated warlord must derive its on-map span 200–219 and name keyword, got ${JSON.stringify(ccDesc)}`
+          !ccDesc.curated && ccDesc.from === 189 && ccDesc.to === 219 && ccDesc.keywords.includes('曹操'),
+          `Uncurated warlord must derive its on-map span 189–219 and name keyword, got ${JSON.stringify(ccDesc)}`
         );
         assert(ctrl._polityEvents(ccDesc).length >= 5, 'Uncurated warlord must still surface related events');
+        assert(
+          ctrl._polityEvents(ctrl._resolvePolity('吐蕃', 750)).some((e) => e.year === 822),
+          'Tubo polity events must include the 822 Changqing Treaty'
+        );
+        assert(
+          ctrl._polityEvents(ctrl._resolvePolity('西夏', 1044)).some((e) => e.year === 1044),
+          'Western Xia polity events must include the 1044 Qingli Peace'
+        );
+        assert(
+          ctrl._polityEvents(ctrl._resolvePolity('赵', -260)).some((e) => e.year === -222),
+          'Zhao polity events must include the 222 BCE fall of Dai'
+        );
+        const jinEvents = ctrl._polityEvents(ctrl._resolvePolity('金', 1127));
+        assert(
+          jinEvents.length >= 25 &&
+            !jinEvents.some((e) =>
+              ((e.milestone && e.milestone.headline) || (e.landmark && e.landmark.zh) || '').includes('金石书画')
+            ),
+          'Jurchen Jin polity events must exclude Li Qingzhao epigraphy false positive'
+        );
         const dynByKey = (k) => ctrl.dynasties.find((d) => d.key === k);
         for (const [title, dk, expMain] of [
           ['唐', 'tang', true],
@@ -1589,8 +2024,11 @@ async function runSearchRuntimeSuite(ctx) {
           !appCode.includes('cap-hint-tag') &&
           !cssSrc.includes('.cap-hint-tag') &&
           cssSrc.includes('#inp-map-search,\n  #inp-year {\n    font-size: 16px;') &&
+          cssSrc.includes('overscroll-behavior: contain;') &&
+          cssSrc.includes('#atlas-shell.is-mobile-search-open') &&
+          indexHtml.includes('id="act-clear-search"') &&
           appCode.includes('if (!this._isMobileViewport()) searchInp.focus();'),
-        'css/style.css & js/app.js must use single-row collapsed mobile chronicle bar, omit removed .cap-hint-tag, prevent iOS Safari auto-zoom (#inp-map-search font-size: 16px), and avoid synchronous searchInp.focus() on mobile chip clicks'
+        'css/style.css, index.html & js/app.js must use single-row collapsed mobile chronicle bar, omit removed .cap-hint-tag, prevent iOS Safari auto-zoom (#inp-map-search font-size: 16px), support mobile search containment/clear button, and avoid synchronous searchInp.focus() on mobile chip clicks'
       );
 
       // Legend cleanup: deduplicate redundant stage year spans and omit redundant .key-note prose
@@ -1731,13 +2169,13 @@ async function runSearchRuntimeSuite(ctx) {
         ctrl.locale = 'zh';
       }
 
-      // Deep links (?year=383): the full snapshot bundle is preloaded from <head>, and while a
-      // snapshot is still downloading no other era's borders or key stay on screen.
+      // Deep links (?year=383): <head> avoids preloading the 786 KB monolithic bundle (per-dynasty
+      // chunks load on demand), and pending snapshots hide borders and the key until rendered.
       {
         assert(
-          /link\.href = 'js\/atlas_snapshots\.js\?v=[0-9a-f]{8}'/.test(indexHtml) &&
+          !/link\.href = 'js\/atlas_snapshots\.js/.test(indexHtml) &&
             indexHtml.indexOf('deeplink-boot') < indexHtml.indexOf('css/style.css'),
-          'index.html must preload the snapshot bundle for deep links before the stylesheet'
+          'index.html must mark deeplink-boot before the stylesheet without preloading monolithic atlas_snapshots.js'
         );
         const flags = () => {
           const set = new Set();
@@ -1868,6 +2306,92 @@ async function runSearchRuntimeSuite(ctx) {
         sandbox.navigator = { connection: { effectiveType: 'slow-2g' } };
         assert.strictEqual(level(125), null, 'Slow 2G links must skip terrain tiles');
         sandbox.navigator = origNav;
+
+        // Viewports using the 1 px/unit mobile preview must hand off to z5/z6 tiles immediately in
+        // the mid-zoom band (cam.w=250 on a 390 px screen -> 1.56 px/unit <= 1.70), while the
+        // unzoomed default view skips even fetching assets/terrain/index.json.
+        const mobCtrl = {
+          ...tCtrl,
+          _getDefaultCamera: () => ({ x: 430, y: 225, w: 340, h: 420, zoom: 1000 / 340 }),
+          _isMobileViewport: () => true,
+          _usingMobileRelief: false,
+        };
+        assert.strictEqual(
+          proto._terrainTileLevel.call(mobCtrl, { w: 250 }, 390 / 250, 'free'),
+          null,
+          '2 px/unit HD base needs no tiles at 1.56 px/unit'
+        );
+        mobCtrl._usingMobileRelief = true;
+        const zMobMid = proto._terrainTileLevel.call(mobCtrl, { w: 250 }, 390 / 250, 'free');
+        assert(
+          zMobMid !== null && mobCtrl._terrainIndex.has(zMobMid),
+          `1 px/unit mobile preview must hand off to tiles immediately at cam.w=250 (got ${zMobMid})`
+        );
+        let idxLoads = 0;
+        const lazyIdxCtrl = {
+          terrainTileLayer: {},
+          terrainMode: true,
+          camera: { x: 430, y: 225, w: 340, h: 420 },
+          _terrainIndex: null,
+          _terrainReady: () => true,
+          _getDefaultCamera: () => ({ x: 430, y: 225, w: 340, h: 420, zoom: 1000 / 340 }),
+          _loadTerrainIndex: () => {
+            idxLoads++;
+            return Promise.resolve(null);
+          },
+        };
+        proto._updateTerrainTiles.call(lazyIdxCtrl);
+        assert.strictEqual(
+          idxLoads,
+          0,
+          '_updateTerrainTiles must not fetch assets/terrain/index.json at unzoomed default camera'
+        );
+        lazyIdxCtrl.camera.w = 250;
+        proto._updateTerrainTiles.call(lazyIdxCtrl);
+        assert.strictEqual(
+          idxLoads,
+          1,
+          '_updateTerrainTiles must fetch assets/terrain/index.json once zoomed past 0.8 * defaultW'
+        );
+        const ldJsonPos = indexHtml.indexOf('application/ld+json');
+        const trackPos = indexHtml.indexOf('js/atlas_track.js?v=');
+        const bootScriptTags = [
+          'js/china_geo_data.js',
+          'js/atlas_boot.js',
+          'js/map_data.js',
+          'js/lore_core.js',
+          'js/app.js',
+          'js/atlas_search.js',
+          'js/atlas_api.js',
+        ];
+        for (const relPath of bootScriptTags) {
+          const m = indexHtml.match(
+            new RegExp(`<script\\b([^>]*?)\\bsrc="${relPath.replace('.', '\\.')}\\?v=[0-9a-f]+"([^>]*)><\\/script>`)
+          );
+          assert(
+            m && /\bdefer\b/i.test(`${m[1]} ${m[2]}`) && m.index > 0 && m.index < ldJsonPos && m.index < trackPos,
+            `Boot script ${relPath} must be discovered in <head> via <script defer> before JSON-LD and atlas_track.js`
+          );
+        }
+        // _ensureSearchIndex must reuse precomputed p.evCount instead of sweeping _collectPersonEvents x144
+        const savedSearchIdx = ctrl.searchIndex;
+        const savedCollect = ctrl._collectPersonEvents;
+        let collectCalls = 0;
+        ctrl._collectPersonEvents = function (...args) {
+          collectCalls++;
+          return savedCollect.apply(this, args);
+        };
+        try {
+          ctrl.searchIndex = null;
+          const rebuilt = ctrl._ensureSearchIndex();
+          assert(
+            Array.isArray(rebuilt) && rebuilt.length > 5000 && collectCalls === 0,
+            `_ensureSearchIndex must reuse precomputed p.evCount with 0 _collectPersonEvents calls (got ${collectCalls})`
+          );
+        } finally {
+          ctrl._collectPersonEvents = savedCollect;
+          ctrl.searchIndex = savedSearchIdx;
+        }
       }
 
       // CUJ 44: Strict Zero-Side-Effect Pan/Scrub/Hover Performance Invariants (Issue #196)
@@ -2350,15 +2874,15 @@ async function runSearchRuntimeSuite(ctx) {
 
         const earlyMingSet = new Set([
           's_ming_0a', 's_ming_0b', 's_ming_0c', 's_ming_0d',
-          's_ming_a0', 's_ming_a', 's_ming_a2', 's_ming_b0',
+          's_ming_a0', 's_ming_a', 's_ming_1409', 's_ming_a2', 's_ming_b0',
         ]);
         const lateMingDutchSet = new Set(['s_ming_c0', 's_ming_c', 's_ming_c2']);
-        const qingDutchSet = new Set(['s_qing_a00', 's_qing_a0']);
+        const qingDutchSet = new Set(['s_qing_a00', 's_qing_a0', 's_qing_1652']);
         const qingMingZhengSet = new Set(['s_qing_a0b', 's_qing_a1', 's_qing_a', 's_qing_a2']);
         const qingRuleSet = new Set([
-          's_qing_b1', 's_qing_b', 's_qing_c', 's_qing_d',
+          's_qing_b1', 's_qing_b', 's_qing_c', 's_qing_1755', 's_qing_d',
           's_qing_e', 's_qing_e2', 's_qing_e3', 's_qing_e4',
-          's_qing_f0', 's_qing_f',
+          's_qing_f0', 's_qing_1876', 's_qing_f',
         ]);
         const jpOccSet = new Set([
           's_qing_g0', 's_qing_g',
@@ -2384,7 +2908,7 @@ async function runSearchRuntimeSuite(ctx) {
             else if (/^s_(sui|tang|wudai|beisong|nansong)(_|$)/.test(sk)) expPol = '流求';
             else if (/^s_yuan(_|$)/.test(sk)) expPol = '瑠求';
             else if (earlyMingSet.has(sk)) expPol = '小琉球';
-            else if (sk === 's_ming_b') expPol = '东番';
+            else if (sk === 's_ming_b' || sk === 's_ming_1616') expPol = '东番';
             else if (lateMingDutchSet.has(sk) || qingDutchSet.has(sk)) expPol = '台湾（荷占）';
             else if (qingMingZhengSet.has(sk)) {
               expPol = '南明（明郑）';
@@ -2477,14 +3001,14 @@ async function runSearchRuntimeSuite(ctx) {
     assert(m1912 && m1912.headline.includes('清帝溥仪退位'), 'roc:1912 milestone must include Qing abdication');
 
     const gs23 = snapshots.s_xihan_e.polities.find((p) => p.title === '更始（汉）');
-    const lx23 = snapshots.s_xihan_e.polities.find((p) => p.title === '刘秀（河北）');
+    const lx23 = snapshots.s_xihan_e.polities.find((p) => p.title === '刘秀');
     assert(gs23.shape.coordinates.length <= 6, 's_xihan_e 更始（汉） must keep its mainland dissolved (no extra seam pieces)');
-    assert.strictEqual(lx23.shape.type, 'Polygon', 's_xihan_e 刘秀（河北） must be a single dissolved Polygon');
+    assert.strictEqual(lx23.shape.type, 'Polygon', 's_xihan_e 刘秀 must be a single dissolved Polygon');
 
     for (const sid of ['s_tang_d2', 's_wudai_a', 's_wudai_b1', 's_wudai_b', 's_wudai_b2', 's_wudai_c0']) {
       assert(
-        snapshots[sid].polities.some((p) => p.title === '静海军（交州）'),
-        `${sid} must include 静海军（交州）`
+        snapshots[sid].polities.some((p) => p.title === '静海军'),
+        `${sid} must include 静海军`
       );
     }
     for (const sid of ['s_wudai_c', 's_wudai_c2', 's_wudai_d', 's_wudai_e', 's_wudai_e1', 's_wudai_e2']) {
@@ -2523,7 +3047,9 @@ async function runSearchRuntimeSuite(ctx) {
       [1234, 's_nansong_e0'],
       [1246, 's_nansong_e0'],
       [1247, 's_nansong_e'],
-      [1270, 's_nansong_b'],
+      [1258, 's_nansong_b'],
+      [1259, 's_nansong_1259'],
+      [1270, 's_nansong_1259'],
       [1271, 's_nansong_f'],
       [1275, 's_nansong_f'],
       [1276, 's_nansong_g'],
@@ -2702,11 +3228,11 @@ async function runSearchRuntimeSuite(ctx) {
 
     // 6-era boundary & gap regression checks (195 Donghan, 322 Dongjin, 676 Tang, 1410 Ming, 1650 Qing, 1918 ROC)
     const ptIn = sandbox.window.MercatorProjector.pointInShape;
-    const dz195 = snapshots.s_donghan_d1.polities.find((p) => p.title === '董卓（长安）');
-    const mt195 = snapshots.s_donghan_d1.polities.find((p) => p.title === '马腾（凉州）');
+    const dz195 = snapshots.s_donghan_d1.polities.find((p) => p.title === '董卓');
+    const mt195 = snapshots.s_donghan_d1.polities.find((p) => p.title === '马腾');
     assert(
       !ptIn(106.5, 38.0, dz195.shape) && ptIn(106.5, 38.0, mt195.shape),
-      's_donghan_d1 (195 CE): Northern Ningxia [106.5, 38.0] must belong to 马腾（凉州）, not a Dong Zhuo horn'
+      's_donghan_d1 (195 CE): Northern Ningxia [106.5, 38.0] must belong to 马腾, not a Dong Zhuo horn'
     );
     for (const [sk, mainTitle] of [['s_tang_a', '唐'], ['s_tang_wz1', '武周']]) {
       const mPol = snapshots[sk].polities.find((p) => p.title === mainTitle);
@@ -3053,6 +3579,32 @@ async function runSearchRuntimeSuite(ctx) {
         'changzheng',
         'The 1935 Zunyi Conference milestone must carry the [始末] entry for the Long March storyline'
       );
+
+      const taipingProf = ctrl._resolvePersonProfile('taiping');
+      assert(
+        taipingProf && taipingProf.isStory === true && Array.isArray(taipingProf.stops) && taipingProf.stops.length === 10,
+        'taiping must resolve as an Event Storyline (isStory: true) with 10 chronological stops'
+      );
+      for (const sq of ['太平天国', '太平', '金田起义', '天京事变', 'taiping', 'Taiping Rebellion']) {
+        const sqHits = ctrl._queryQuickSearch(sq);
+        assert(
+          sqHits.length > 0 && sqHits[0].kind === 'story' && sqHits[0].storyKey === 'taiping',
+          `Quick search for "${sq}" must surface the Taiping storyline (kind="story") at index 0`
+        );
+      }
+      const qingDynForStory = dynasties.find((d) => d.key === 'qing');
+      assert.strictEqual(
+        ctrl._findStoryForMilestone(qingDynForStory, qingDynForStory.milestones.find((m) => m.year === 1851))?.key,
+        'taiping',
+        'The 1851 Jintian Uprising milestone must carry the single canonical [始末] entry for Taiping'
+      );
+      for (const otherY of [1853, 1856, 1864]) {
+        assert.strictEqual(
+          ctrl._findStoryForMilestone(qingDynForStory, qingDynForStory.milestones.find((m) => m.year === otherY)),
+          null,
+          `Qing milestone ${otherY} must not duplicate the taiping [始末] badge`
+        );
+      }
 
       // Universal Event Storyline (`isStory: true`) invariants:
       // 1) Must declare `dynastyKey` and a 2-char Chinese stem alias searchable as `kind: "story"`.
@@ -3452,6 +4004,19 @@ async function runSearchRuntimeSuite(ctx) {
           this.locale = 'en';
           this.activeTrace = null;
           this.activePerson = null;
+          this.dynasties = [
+            { key: 'zhanguo' },
+            { key: 'tang' },
+            { key: 'beisong' },
+            { key: 'ming' },
+            { key: 'qing' },
+            { key: 'roc' },
+          ];
+          this.dynastyIdx = 0;
+          this.playing = false;
+          this.isScrubbing = false;
+          this._scrubberPointerDown = false;
+          this.challenge = null;
         }
         openGenealogyAt(lng, lat) {
           this.activeTrace = [lng, lat];
@@ -3460,6 +4025,7 @@ async function runSearchRuntimeSuite(ctx) {
           this.activePerson = { profiles };
           return true;
         }
+        _revealScrubberYear() {}
       }
       const win = { innerWidth: 1280, addEventListener: on(listeners.window) };
       const box = {
@@ -3516,7 +4082,7 @@ async function runSearchRuntimeSuite(ctx) {
         `atlas_track.js hooks a controller method that no longer exists: ${method}`
       );
     }
-    const ctrlSrc = ['app.js', 'atlas_trace.js', 'atlas_quiz.js']
+    const ctrlSrc = ['app.js', 'atlas_person.js', 'atlas_genealogy.js', 'atlas_quiz.js']
       .map((f) => fs.readFileSync(path.join(JS_DIR, f), 'utf8'))
       .join('\n');
     for (const needle of [
@@ -3525,16 +4091,34 @@ async function runSearchRuntimeSuite(ctx) {
       'this.activePolity = ',
       'this.eraFocus = ',
       'this._scrubberView = ',
+      'this._scrubberPointerDown = ',
       '.finished = true',
       'act-return-person',
       'act-return-story',
+      'lnk-story-topic',
+      'lnk-person-topic',
+      'lnk-place-topic',
     ]) {
       assert(ctrlSrc.includes(needle), `atlas_track.js relies on controller code that no longer exists: ${needle}`);
     }
     assert(
+      /class="topic-inline-link"[^>]*data-track="\$\{topicTrack\}"/.test(ctrlSrc),
+      'atlas_person.js must expose data-track on inline person/story topic guide links'
+    );
+    assert(
+      /class="topic-inline-link"[^>]*data-track="lnk-place-topic"/.test(ctrlSrc),
+      'atlas_genealogy.js must expose data-track="lnk-place-topic" on inline place topic guide links'
+    );
+    assert(
       indexHtml.includes('id="milestone-list"') && indexHtml.includes('id="genealogy-timeline"'),
       'atlas_track.js counts clicks on rows inside #milestone-list and #genealogy-timeline'
     );
+    for (const d of dynasties) {
+      assert(
+        /^dyn:[a-z0-9_-]+$/i.test(`dyn:${d.key}`),
+        `Dynasty key "${d.key}" must form a valid track name`
+      );
+    }
 
     const { app } = t;
     // One user action is many calls: the app re-invokes openGenealogyAt after each lazy bundle
@@ -3558,6 +4142,7 @@ async function runSearchRuntimeSuite(ctx) {
     app.startChallenge();
     app._finishChallenge();
     app._finishChallenge();
+    app.challenge = null;
 
     app.openPersonChronicle([{ key: 'sushi' }]);
     // Opening a place card from a chronicle clears it; the return button brings it back.
@@ -3568,10 +4153,41 @@ async function runSearchRuntimeSuite(ctx) {
     app.openPersonChronicle([{ key: 'libai' }, { key: 'dufu' }]);
     app.openPersonChronicle([{ key: 'anshi', isStory: true }]);
 
+    // Initial landing dynasty must not count on idle redraws.
+    app._revealScrubberYear();
+
+    // Intentional visit to Tang counts once per transition.
+    app.dynastyIdx = 1;
+    app._revealScrubberYear();
+    app._revealScrubberYear();
+
+    // Dragging across Beisong to Ming must skip Beisong and record Ming on release.
+    app._scrubberPointerDown = true;
+    app.isScrubbing = true;
+    app.dynastyIdx = 2;
+    app._revealScrubberYear();
+    app.dynastyIdx = 3;
+    app._scrubberPointerDown = false;
+    app.isScrubbing = false;
+    app._revealScrubberYear();
+
+    // Autoplay and quiz jumps must not count as manual dynasty visits.
+    app.playing = true;
+    app.dynastyIdx = 4;
+    app._revealScrubberYear();
+    app.playing = false;
+    app.challenge = { finished: false };
+    app.dynastyIdx = 5;
+    app._revealScrubberYear();
+    app.challenge = null;
+
     t.click({ id: 'act-step-next' });
     t.click({ id: 'act-step-next' });
     t.click({ tagName: 'DIV', classList: ['is-active', 'band-cell'] });
     t.click({ tagName: 'LI', parentElement: { closest: () => ({ id: 'milestone-list' }) } });
+    t.click({ tagName: 'A', dataset: { track: 'lnk-story-topic' } });
+    t.click({ tagName: 'A', dataset: { track: 'lnk-person-topic' } });
+    t.click({ tagName: 'A', dataset: { track: 'lnk-place-topic' } });
 
     assert.deepStrictEqual(
       t.flush(),
@@ -3583,10 +4199,15 @@ async function runSearchRuntimeSuite(ctx) {
         'feat/person:sushi': 1,
         'feat/multi:dufu.libai': 1,
         'feat/story:anshi': 1,
+        'feat/dyn:tang': 1,
+        'feat/dyn:ming': 1,
         'btn/act-return-person': 1,
         'btn/act-step-next': 2,
         'btn/c.band-cell': 1,
         'btn/li.milestone-list': 1,
+        'btn/lnk-story-topic': 1,
+        'btn/lnk-person-topic': 1,
+        'btn/lnk-place-topic': 1,
       },
       'atlas_track.js must count each feature once per open and each named control once per click'
     );
@@ -3615,18 +4236,23 @@ async function runSearchRuntimeSuite(ctx) {
   {
     assert(
       !indexHtml.includes('github-pill-group') &&
+        !indexHtml.includes('locale-pill-group') &&
+        indexHtml.includes('id="act-locale-menu"') &&
+        indexHtml.includes('id="locale-popover"') &&
+        ['data-locale="zh"', 'data-locale="zh-tw"', 'data-locale="en"'].every((k) => indexHtml.includes(k)) &&
         indexHtml.includes('id="act-github-star"') &&
         indexHtml.includes('id="act-more-menu"') &&
         indexHtml.includes('more-menu-btn') &&
         indexHtml.includes('id="lnk-more-github"') &&
         indexHtml.includes('more-mobile-only') &&
         /<a id="lnk-dynasty-topic"[^>]*>图志<\/a>/.test(indexHtml),
-      'index.html must split #act-github-star and #act-more-menu on desktop, merge #lnk-more-github into #more-popover on mobile, and keep #lnk-dynasty-topic text clean without arrows'
+      'index.html must use compact #act-locale-menu + #locale-popover, split #act-github-star and #act-more-menu on desktop, merge #lnk-more-github into #more-popover on mobile, and keep #lnk-dynasty-topic text clean without arrows'
     );
     assert(
       cssSrc.includes('#viewport-frame.is-camera-moved .canvas-reset-btn') &&
+        cssSrc.includes('.locale-popover') &&
         cssSrc.includes('.more-pop-link.more-mobile-only'),
-      'css/style.css must gate #act-reset-camera visibility via .is-camera-moved and show .more-mobile-only menu items on <= 640px mobile'
+      'css/style.css must gate #act-reset-camera visibility via .is-camera-moved, style .locale-popover, and show .more-mobile-only menu items on <= 640px mobile'
     );
 
     const toggled = new Set();
@@ -3697,6 +4323,254 @@ async function runSearchRuntimeSuite(ctx) {
       toggled.has('is-camera-moved'),
       false,
       'Clearing an active custom route while at default camera must hide #act-reset-camera'
+    );
+
+    const locClasses = new Set(['is-hidden']);
+    const locBtnClasses = new Set();
+    const locAttrs = { 'aria-expanded': 'false' };
+    const makePopItem = (code) => {
+      const cls = new Set(code === 'zh' ? ['is-selected'] : []);
+      const attrs = { 'aria-checked': code === 'zh' ? 'true' : 'false' };
+      return {
+        dataset: { locale: code },
+        classList: {
+          toggle: (c, f) => (f ? cls.add(c) : cls.delete(c)),
+          contains: (c) => cls.has(c),
+        },
+        setAttribute: (k, v) => {
+          attrs[k] = v;
+        },
+        getAttribute: (k) => attrs[k],
+      };
+    };
+    const locItems = ['zh', 'zh-tw', 'en'].map(makePopItem);
+    const locPopoverStub = {
+      classList: {
+        contains: (c) => locClasses.has(c),
+        add: (c) => locClasses.add(c),
+        remove: (c) => locClasses.delete(c),
+      },
+      querySelectorAll: () => locItems,
+    };
+    const locBtnStub = {
+      classList: {
+        contains: (c) => locBtnClasses.has(c),
+        add: (c) => locBtnClasses.add(c),
+        remove: (c) => locBtnClasses.delete(c),
+      },
+      setAttribute: (k, v) => {
+        locAttrs[k] = v;
+      },
+    };
+    const locMap = { 'locale-popover': locPopoverStub, 'act-locale-menu': locBtnStub };
+    const locCtrl = Object.assign(Object.create(proto), {
+      locale: 'en',
+      _id: (id) => locMap[id] || null,
+    });
+    locCtrl._zh = (s) => s;
+    locPopoverStub.classList.remove('is-hidden');
+    locBtnStub.classList.add('is-active');
+    locAttrs['aria-expanded'] = 'true';
+    assert.strictEqual(proto._closeLocalePopover.call(locCtrl), true, '_closeLocalePopover must close an open #locale-popover');
+    assert(locPopoverStub.classList.contains('is-hidden') && !locBtnStub.classList.contains('is-active') && locAttrs['aria-expanded'] === 'false', 'Closing #locale-popover must reset classes and aria-expanded');
+    locPopoverStub.querySelectorAll().forEach((item) => {
+      const active = item.dataset.locale === 'en';
+      item.classList.toggle('is-selected', active);
+      item.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+    assert(
+      !locItems[0].classList.contains('is-selected') &&
+        locItems[2].classList.contains('is-selected') &&
+        locItems[2].getAttribute('aria-checked') === 'true',
+      'Selecting en in #locale-popover must update is-selected and aria-checked'
+    );
+  }
+
+  // Cold-boot behavior without lazy js/atlas_person.js or js/atlas_genealogy.js attached yet
+  {
+    const coldSandbox = {
+      console,
+      addEventListener: () => {},
+      ATLAS_LORE_DATA: {
+        PERSON_PROFILES: loreData.PERSON_PROFILES,
+        CHINESE_ERA_SPANS: loreData.CHINESE_ERA_SPANS,
+        REGIONAL_ERA_TRACKS: loreData.REGIONAL_ERA_TRACKS,
+        PLACE_GAZETTEER: loreData.PLACE_GAZETTEER,
+      },
+    };
+    coldSandbox.window = coldSandbox;
+    vm.createContext(coldSandbox);
+    for (const rel of ['js/app.js', 'js/atlas_search.js', 'js/atlas_api.js']) {
+      vm.runInContext(fs.readFileSync(path.join(ROOT, rel), 'utf8'), coldSandbox, {
+        filename: path.basename(rel),
+      });
+    }
+    const ColdClass = coldSandbox.window.HistoricalAtlasController;
+    assert.strictEqual(typeof ColdClass.prototype._buildPersonTracksAndEvents, 'undefined');
+    assert.strictEqual(typeof ColdClass.prototype.openGenealogyAt, 'undefined');
+    assert.strictEqual(typeof ColdClass.prototype.openPersonChronicle, 'undefined');
+
+    const loadedScripts = [];
+    let openedPersonArgs = null;
+    let openedGenArgs = null;
+    const coldCtrl = Object.assign(Object.create(ColdClass.prototype), {
+      locale: 'zh',
+      dynasties: ctrl.dynasties,
+      dynastyIdx: 0,
+      year: -221,
+      activeCustomRoute: null,
+      activeMilestone: null,
+      _loreDetailLoaded: false,
+      _id: () => null,
+      _zh: (s) => s,
+      _isLoreDetailLoaded: () => false,
+      _syncMobileOverlayState: () => {},
+      _lazyAssetUrl: (relPath, key) => `${relPath}?v=${key}`,
+      _loadScriptOnce(url) {
+        loadedScripts.push(url);
+        if (url.startsWith('js/atlas_person.js')) {
+          ColdClass.prototype.openPersonChronicle = function (who, idx) {
+            openedPersonArgs = [who, idx];
+            return true;
+          };
+        } else if (url.startsWith('js/atlas_genealogy.js')) {
+          ColdClass.prototype.openGenealogyAt = function (lng, lat, label, opts) {
+            openedGenArgs = [lng, lat, label, opts];
+            return true;
+          };
+        }
+        return Promise.resolve();
+      },
+    });
+    const coldPool = coldCtrl._getSearchShowcasePool();
+    assert(
+      Array.isArray(coldPool) && coldPool.length >= 10 && coldPool.some((x) => x.kind === 'multi_person'),
+      'Cold search showcase pool must populate solo and multi-person entries before atlas_person.js loads'
+    );
+    coldCtrl.closeGenealogyCard();
+    if (typeof coldCtrl._syncTracedPrefecture === 'function') coldCtrl._syncTracedPrefecture();
+
+    const pDone = Promise.resolve(coldCtrl._openPerson('libai', 2)).then((ok) => {
+      assert.strictEqual(ok, true, '_openPerson must resolve true after lazy loading atlas_person.js');
+      assert.deepStrictEqual(openedPersonArgs, ['libai', 2]);
+      assert(loadedScripts.some((u) => u.startsWith('js/atlas_person.js?')));
+    });
+    const gDone = Promise.resolve(coldCtrl._openGenealogy(108.94, 34.26, '长安', { testFlag: 1 })).then((ok) => {
+      assert.strictEqual(ok, true, '_openGenealogy must resolve true after lazy loading atlas_genealogy.js');
+      assert.deepStrictEqual(openedGenArgs, [108.94, 34.26, '长安', { testFlag: 1 }]);
+      assert(loadedScripts.some((u) => u.startsWith('js/atlas_genealogy.js?')));
+    });
+    await Promise.all([pDone, gDone]);
+
+    // Offline resilience: failed lazy fetch shows retry card, cancels cleanly on close, and auto-recovers on 'online'.
+    const onlineListeners = new Set();
+    let removedCount = 0;
+    const offlineSandbox = {
+      console,
+      addEventListener: (ev, fn) => {
+        if (ev === 'online') onlineListeners.add(fn);
+      },
+      removeEventListener: (ev, fn) => {
+        if (ev === 'online' && onlineListeners.delete(fn)) removedCount++;
+      },
+      ATLAS_LORE_DATA: {
+        PERSON_PROFILES: loreData.PERSON_PROFILES,
+        CHINESE_ERA_SPANS: loreData.CHINESE_ERA_SPANS,
+        REGIONAL_ERA_TRACKS: loreData.REGIONAL_ERA_TRACKS,
+        PLACE_GAZETTEER: loreData.PLACE_GAZETTEER,
+      },
+    };
+    offlineSandbox.window = offlineSandbox;
+    vm.createContext(offlineSandbox);
+    for (const rel of ['js/app.js', 'js/atlas_search.js', 'js/atlas_api.js']) {
+      vm.runInContext(fs.readFileSync(path.join(ROOT, rel), 'utf8'), offlineSandbox, {
+        filename: path.basename(rel),
+      });
+    }
+    const OfflineClass = offlineSandbox.window.HistoricalAtlasController;
+    const makeDomNode = () => {
+      const classes = new Set(['is-hidden']);
+      let html = '';
+      const listeners = {};
+      return {
+        textContent: '',
+        get innerHTML() {
+          return html;
+        },
+        set innerHTML(v) {
+          html = String(v);
+        },
+        classList: {
+          add: (...c) => c.forEach((x) => classes.add(x)),
+          remove: (...c) => c.forEach((x) => classes.delete(x)),
+          contains: (c) => classes.has(c),
+        },
+        addEventListener: (ev, fn) => {
+          (listeners[ev] = listeners[ev] || []).push(fn);
+        },
+        _listeners: listeners,
+      };
+    };
+    const retryBtnNode = makeDomNode();
+    const domNodes = {
+      'genealogy-card': makeDomNode(),
+      'txt-genealogy-kicker': makeDomNode(),
+      'genealogy-heading': makeDomNode(),
+      'genealogy-sub': makeDomNode(),
+      'genealogy-lore': makeDomNode(),
+      'genealogy-timeline': makeDomNode(),
+      'genealogy-foot': makeDomNode(),
+      'viewport-frame': makeDomNode(),
+      'act-retry-lazy': retryBtnNode,
+    };
+    let shouldFailLazy = true;
+    let recoveredGenArgs = null;
+    const offCtrl = Object.assign(Object.create(OfflineClass.prototype), {
+      locale: 'zh',
+      activeCustomRoute: null,
+      activeMilestone: null,
+      _id: (id) => domNodes[id] || null,
+      _zh: (s) => s,
+      _syncMobileOverlayState: () => {},
+      _lazyAssetUrl: (relPath, key) => `${relPath}?v=${key}`,
+      _loadScriptOnce() {
+        if (!shouldFailLazy) {
+          OfflineClass.prototype.openGenealogyAt = function (lng, lat, label, opts) {
+            recoveredGenArgs = [lng, lat, label, opts];
+            return true;
+          };
+        }
+        return Promise.resolve();
+      },
+    });
+    const offOk = await offCtrl._openGenealogy(108.94, 34.26, '长安');
+    assert.strictEqual(offOk, false, 'Offline _openGenealogy must return false cleanly when bundle fails to load');
+    assert.strictEqual(
+      domNodes['genealogy-card'].classList.contains('is-hidden'),
+      false,
+      'Offline failure must surface #genealogy-card instead of failing silently'
+    );
+    assert(
+      domNodes['genealogy-sub'].innerHTML.includes('id="act-retry-lazy"'),
+      'Offline failure card must render #act-retry-lazy retry action'
+    );
+    assert.strictEqual(onlineListeners.size, 1, 'Offline failure must register one online auto-recovery listener');
+
+    offCtrl.closeGenealogyCard();
+    assert.strictEqual(onlineListeners.size, 0, 'closeGenealogyCard must clear pending online auto-retry listener');
+    assert(removedCount >= 1, 'closeGenealogyCard must remove the online listener from window');
+
+    await offCtrl._openGenealogy(108.94, 34.26, '长安');
+    assert.strictEqual(onlineListeners.size, 1);
+    shouldFailLazy = false;
+    for (const fn of Array.from(onlineListeners)) {
+      onlineListeners.delete(fn);
+      await fn();
+    }
+    assert.deepStrictEqual(
+      JSON.parse(JSON.stringify(recoveredGenArgs)),
+      [108.94, 34.26, '长安', {}],
+      'Reconnecting online must automatically retry and open the deferred genealogy view'
     );
   }
 }

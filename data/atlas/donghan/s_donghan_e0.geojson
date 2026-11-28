@@ -2,19 +2,19 @@
   "type": "FeatureCollection",
   "license": "Approximate historical boundaries for illustration, not surveyed borders. When reusing, credit Jiangshan Atlas (https://github.com/DeanChensj/jiangshan-map) and the sources in data/atlas/README.md. Prefecture-level (郡/州/府) boundaries derive from CHGIS V6 and the Hartwell China Historical GIS: academic, non-commercial use only; do not redistribute; not licensed under GPL-3.0.",
   "snapshot": {
-    "caption": "208—213 年 · 赤壁之战：孙刘破曹与刘备据荆州",
+    "caption": "208—210 年 · 赤壁之战：孙刘破曹与刘备据荆州",
     "note": "208 年曹操南下荆州，孙权、刘备联军于赤壁大破曹军；战后刘备收江南荆州四郡并向孙权“借荆州”（南郡），据有荆州，此时巴蜀益州仍由刘璋割据，直至 214 年刘备入成都。",
-    "prefRef": "s_donghan",
+    "prefRef": "s_donghan_123",
     "regionRef": "s_donghan",
     "polities": [
-      "曹操（北方）",
+      "曹操",
       "s_donghan_d1/公孙氏（辽东）",
-      "s_donghan_d2/马腾·韩遂(关陇)",
-      "s_donghan_d2/张鲁（汉中）",
-      "刘备（荆州）",
-      "s_donghan_d2/刘璋（益州）",
-      "s_donghan_d/孙权（江东）",
-      "s_donghan_d1/士燮（交州）",
+      "s_donghan_d2/马腾 · 韩遂",
+      "s_donghan_d2/张鲁",
+      "刘备",
+      "s_donghan_d2/刘璋",
+      "s_donghan_d/孙权",
+      "s_donghan_d1/士燮",
       "s_xihan_b3a/塞种诸国",
       "s_donghan_d1/百济",
       "s_donghan_d1/摩揭陀",
@@ -38,9 +38,9 @@
   "features": [
     {
       "type": "Feature",
-      "id": "曹操（北方）",
+      "id": "曹操",
       "properties": {
-        "title": "曹操（北方）",
+        "title": "曹操",
         "tint": "#4a6fa5",
         "anchor": [114.8, 35.8],
         "role": "main"
@@ -792,9 +792,9 @@
     },
     {
       "type": "Feature",
-      "id": "刘备（荆州）",
+      "id": "刘备",
       "properties": {
-        "title": "刘备（荆州）",
+        "title": "刘备",
         "tint": "#c98a2b",
         "anchor": [112.2, 29.8],
         "role": "main"

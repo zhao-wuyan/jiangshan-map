@@ -41,10 +41,8 @@ test('Windows-style Git checkout preserves Linux asset hashes without weakening 
   write('.gitattributes', fs.readFileSync(path.join(ROOT, '.gitattributes')));
   const assets = new Set([...hashes.STATIC_TAG_ASSETS, ...hashes.LAZY_ATTR_ASSETS.map(asset => asset.relPath)]);
   for (const file of assets) write(file, `/* 中文 asset: ${file} */\n/* second line */\n`);
-  const tags = hashes.STATIC_TAG_ASSETS.map(file => file.endsWith('.css')
-    ? `<link rel="stylesheet" href="${file}?v=00000000">`
-    : `<script src="${file}?v=00000000"></script>`);
-  write('index.html', `<!doctype html>\n<html>\n<head>\n${tags.join('\n')}\n</head>\n<body>Atlas</body>\n</html>\n`);
+  // The real document carries every tagged asset and preload the hash script expects.
+  write('index.html', fs.readFileSync(path.join(ROOT, 'index.html')));
   const expected = hashes.computeAssetHashes(source);
   fs.writeFileSync(path.join(source, 'index.html'), hashes.applyHashesToIndexHtml(
     fs.readFileSync(path.join(source, 'index.html'), 'utf8'), expected));

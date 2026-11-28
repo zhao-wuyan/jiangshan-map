@@ -4,17 +4,17 @@
   "snapshot": {
     "caption": "200—207 年 · 官渡之战与曹操统一北方",
     "note": "200 年曹操于官渡之战以少胜多击败袁绍主力，随后平定冀、青、幽、并四州及乌桓，基本统一北方；南方刘表据荆州、刘璋据益州、孙权嗣位统事江东。",
-    "prefRef": "s_donghan",
+    "prefRef": "s_donghan_123",
     "regionRef": "s_donghan",
     "polities": [
-      "曹操（北方）",
+      "曹操",
       "s_donghan_d1/公孙氏（辽东）",
-      "s_donghan_d2/马腾·韩遂(关陇)",
-      "s_donghan_d2/张鲁（汉中）",
-      "s_donghan_d1/刘表（荆州）",
-      "s_donghan_d2/刘璋（益州）",
-      "孙权（江东）",
-      "s_donghan_d1/士燮（交州）",
+      "s_donghan_d2/马腾 · 韩遂",
+      "s_donghan_d2/张鲁",
+      "s_donghan_d1/刘表",
+      "s_donghan_d2/刘璋",
+      "孙权",
+      "s_donghan_d1/士燮",
       "s_xihan_b3a/塞种诸国",
       "s_donghan_d1/百济",
       "s_donghan_d1/摩揭陀",
@@ -38,9 +38,9 @@
   "features": [
     {
       "type": "Feature",
-      "id": "曹操（北方）",
+      "id": "曹操",
       "properties": {
-        "title": "曹操（北方）",
+        "title": "曹操",
         "tint": "#4a6fa5",
         "anchor": [114.8, 35.8],
         "role": "main"
@@ -792,9 +792,9 @@
     },
     {
       "type": "Feature",
-      "id": "孙权（江东）",
+      "id": "孙权",
       "properties": {
-        "title": "孙权（江东）",
+        "title": "孙权",
         "tint": "#3f8f6a",
         "anchor": [117.5, 28],
         "role": "main"

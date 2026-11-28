@@ -7,7 +7,7 @@
     "prefRef": "s_nansong_a",
     "polities": [
       "s_nansong_a/南宋",
-      "金（迁都汴京）",
+      "金",
       "s_nansong_a0/西夏",
       "大蒙古国",
       "s_beisong_a0/大理",
@@ -19,9 +19,9 @@
       "s_beisong_b0/孟人国",
       "s_nansong_a0/哈利奔猜",
       "s_beisong_b0/骠国",
-      "s_nansong_a0/花剌子模",
-      "s_beisong_a0/伽色尼王朝",
-      "s_beisong_a0/白益王朝",
+      "s_nansong_a0/信德",
+      "s_nansong_b0/花剌子模",
+      "s_nansong_b0/花剌子模~2",
       "s_nansong_a0/流求",
       "s_dongjin_a2/北亚林中诸部",
       "s_nansong_a0/钦察",
@@ -119,7 +119,7 @@
       "s_nansong_a0/平江府",
       "s_beisong_b0/常州",
       "s_beisong_b0/江阴军",
-      "s_beisong_b0/秀州",
+      "s_nansong_a/嘉兴府",
       "s_beisong_b0/邵武军",
       "s_nansong_a0/泉州",
       "s_nansong_a0/建宁府",
@@ -377,9 +377,9 @@
   "features": [
     {
       "type": "Feature",
-      "id": "金（迁都汴京）",
+      "id": "金",
       "properties": {
-        "title": "金（迁都汴京）",
+        "title": "金",
         "tint": "#c9a227",
         "role": "rival",
         "anchor": [113.5, 34]
