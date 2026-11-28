@@ -3,6 +3,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const { verifyIndexHtmlAssetHashes } = require('../scripts/sync_version.js');
 
 const root = path.resolve(__dirname, '..');
@@ -24,6 +25,10 @@ for (const file of [
 ]) {
   fs.accessSync(path.join(__dirname, 'fonts', file), fs.constants.R_OK);
 }
+
+// Upstream builds topics/*.html on deploy instead of committing them, so the offline
+// website has to generate the same pages before topics/ is staged.
+execFileSync(process.execPath, ['scripts/build_seo_topics.js', '--html-only'], { cwd: root, stdio: 'inherit' });
 
 fs.rmSync(destination, { recursive: true, force: true });
 fs.mkdirSync(destination, { recursive: true });
@@ -53,6 +58,12 @@ for (const file of ['index.html', ...fs.readdirSync(path.join(destination, 'topi
   .filter((name) => name.endsWith('.html')).map((name) => `topics/${name}`)]) {
   const target = path.join(destination, file);
   fs.writeFileSync(target, offlineHtml(fs.readFileSync(target, 'utf8'), file === 'index.html'));
+}
+
+// Every topic page the atlas document links to must be readable without the network.
+const stagedAtlas = fs.readFileSync(path.join(destination, 'index.html'), 'utf8');
+for (const [, page] of stagedAtlas.matchAll(/\bhref="(?:atlas:\/\/app\/)?(topics\/[^"#?]+\.html)"/g)) {
+  fs.accessSync(path.join(destination, page), fs.constants.R_OK);
 }
 
 // These local recordings must accompany the app; never rely on Wikimedia fallback URLs.
